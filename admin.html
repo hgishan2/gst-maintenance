@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>GST - Admin & Supervisor Dashboard</title>
+  <title>ARENCO - Admin & Supervisor Dashboard</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
@@ -14,6 +14,7 @@
       --border-color: #334155;
       --accent-blue: #38bdf8;
       --accent-amber: #f59e0b;
+      --accent-green: #10b981;
     }
     body {
       background-color: var(--bg-dark);
@@ -83,7 +84,7 @@
       <a class="navbar-brand d-flex align-items-center gap-2" href="#">
         <i class="bi bi-shield-check text-warning fs-4"></i>
         <div>
-          <div class="fw-bold fs-6 lh-1">Golden Sands Tower</div>
+          <div class="fw-bold fs-6 lh-1">ARENCO Real Estate</div>
           <small class="text-muted" style="font-size:0.75rem;">Admin & Management Portal</small>
         </div>
       </a>
@@ -130,43 +131,61 @@
   <!-- Admin Main Portal Content Container -->
   <div id="adminContent" class="container mt-3" style="display: none;">
     
-    <!-- Filter Controls Card -->
+    <!-- Filter & Export Controls Card -->
     <div class="card p-3 shadow-sm mb-3">
       <div class="row g-2 align-items-center">
-        <div class="col-md-4 col-6">
+        <div class="col-md-3 col-6">
           <label class="form-label small mb-1">From Date</label>
           <input type="date" id="filterFrom" class="form-control form-control-sm">
         </div>
-        <div class="col-md-4 col-6">
+        <div class="col-md-3 col-6">
           <label class="form-label small mb-1">To Date</label>
           <input type="date" id="filterTo" class="form-control form-control-sm">
         </div>
-        <div class="col-md-4 col-12 d-flex gap-2 mt-md-4">
+        <div class="col-md-3 col-6 d-flex gap-2 mt-md-4">
           <button class="btn btn-accent btn-sm w-100" onclick="loadDashboardData()">
-            <i class="bi bi-arrow-clockwise me-1"></i>Refresh Data
+            <i class="bi bi-arrow-clockwise me-1"></i>Filter / Refresh
           </button>
+        </div>
+        <div class="col-md-3 col-6 d-flex gap-2 mt-md-4">
+          <div class="dropdown w-100">
+            <button class="btn btn-outline-success btn-sm dropdown-toggle w-100 fw-semibold" type="button" data-bs-toggle="dropdown">
+              <i class="bi bi-download me-1"></i>Export CSV
+            </button>
+            <ul class="dropdown-menu dropdown-menu-dark w-100">
+              <li><a class="dropdown-item small" href="#" onclick="exportLogsCSV()"><i class="bi bi-file-earmark-excel me-2 text-success"></i>Job Logs CSV</a></li>
+              <li><a class="dropdown-item small" href="#" onclick="exportReadingsCSV()"><i class="bi bi-file-earmark-excel me-2 text-info"></i>Utility Readings CSV</a></li>
+              <li><a class="dropdown-item small" href="#" onclick="exportOtCSV()"><i class="bi bi-file-earmark-excel me-2 text-warning"></i>Overtime Logs CSV</a></li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Quick Stats Cards -->
     <div class="row g-2 mb-3">
-      <div class="col-4">
+      <div class="col-3">
         <div class="card p-2 text-center stat-card">
           <small class="text-muted d-block">Total Logs</small>
           <span id="statLogsCount" class="fw-bold fs-4 text-info">0</span>
         </div>
       </div>
-      <div class="col-4">
+      <div class="col-3">
+        <div class="card p-2 text-center stat-card" style="border-left-color: #10b981;">
+          <small class="text-muted d-block">Completed</small>
+          <span id="statCompletedCount" class="fw-bold fs-4 text-success">0</span>
+        </div>
+      </div>
+      <div class="col-3">
         <div class="card p-2 text-center stat-card" style="border-left-color: #f59e0b;">
           <small class="text-muted d-block">Pending</small>
           <span id="statPendingCount" class="fw-bold fs-4 text-warning">0</span>
         </div>
       </div>
-      <div class="col-4">
-        <div class="card p-2 text-center stat-card" style="border-left-color: #10b981;">
+      <div class="col-3">
+        <div class="card p-2 text-center stat-card" style="border-left-color: #38bdf8;">
           <small class="text-muted d-block">Readings</small>
-          <span id="statReadingsCount" class="fw-bold fs-4 text-success">0</span>
+          <span id="statReadingsCount" class="fw-bold fs-4 text-primary">0</span>
         </div>
       </div>
     </div>
@@ -174,7 +193,12 @@
     <!-- Admin Navigation Tabs -->
     <ul class="nav nav-pills nav-fill mb-3 gap-1 bg-slate-900 p-1 rounded-3" id="adminTabs" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="pills-admin-logs-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-logs" type="button" role="tab">
+        <button class="nav-link active" id="pills-perf-tab" data-bs-toggle="pill" data-bs-target="#pills-perf" type="button" role="tab">
+          <i class="bi bi-bar-chart-line me-1"></i>Performance
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-admin-logs-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-logs" type="button" role="tab">
           <i class="bi bi-journal-text me-1"></i>Job Logs
         </button>
       </li>
@@ -193,8 +217,35 @@
     <!-- Tab Panels -->
     <div class="tab-content" id="adminTabsContent">
       
+      <!-- TAB 0: TECHNICIAN PERFORMANCE DASHBOARD -->
+      <div class="tab-pane fade show active" id="pills-perf" role="tabpanel">
+        <div class="card p-3 shadow-sm">
+          <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
+            <h6 class="text-info fw-bold m-0"><i class="bi bi-person-check me-1"></i>Technician Activity & Output Breakdown</h6>
+            <span id="perfStatusBadge" class="badge bg-secondary">Summary</span>
+          </div>
+          <div class="table-responsive" style="max-height: 500px;">
+            <table class="table table-dark table-hover table-striped small align-middle">
+              <thead>
+                <tr>
+                  <th>Technician</th>
+                  <th class="text-center">Total Jobs</th>
+                  <th class="text-center">Completed</th>
+                  <th class="text-center">Pending</th>
+                  <th class="text-center">Meter Readings</th>
+                  <th class="text-center">Overtime Entries</th>
+                </tr>
+              </thead>
+              <tbody id="perfTableBody">
+                <tr><td colspan="6" class="text-center text-muted py-3">Loading performance breakdown...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- TAB 1: JOB LOGS TABLE -->
-      <div class="tab-pane fade show active" id="pills-admin-logs" role="tabpanel">
+      <div class="tab-pane fade" id="pills-admin-logs" role="tabpanel">
         <div class="card p-3 shadow-sm">
           <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
             <h6 class="text-info fw-bold m-0"><i class="bi bi-list-task me-1"></i>Maintenance Work Orders</h6>
@@ -211,7 +262,7 @@
                   <th>Technician</th>
                   <th>Complaint</th>
                   <th>Status</th>
-                  <th>Actions</th>
+                  <th>Action Taken</th>
                 </tr>
               </thead>
               <tbody id="logsTableBody">
@@ -284,6 +335,7 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     let adminModalInstance;
+    let fetchedLogs = [], fetchedReadings = [], fetchedOt = [];
 
     document.addEventListener("DOMContentLoaded", () => {
       adminModalInstance = new bootstrap.Modal(document.getElementById('adminLoginModal'));
@@ -359,9 +411,12 @@
         const data = await res.json();
 
         if (data.ok && data.rows) {
+          fetchedLogs = data.rows;
           renderLogsTable(data.rows);
           document.getElementById('statLogsCount').textContent = data.rows.length;
-          document.getElementById('statPendingCount').textContent = data.rows.filter(r => r.status === 'Pending' || r.status === 'On Hold').length;
+          const completed = data.rows.filter(r => r.status === 'Completed').length;
+          document.getElementById('statCompletedCount').textContent = completed;
+          document.getElementById('statPendingCount').textContent = data.rows.length - completed;
         }
       } catch (e) {
         console.error("Error fetching logs", e);
@@ -374,6 +429,7 @@
         const data = await res.json();
 
         if (data.ok && data.rows) {
+          fetchedReadings = data.rows;
           renderReadingsTable(data.rows);
           document.getElementById('statReadingsCount').textContent = data.rows.length;
         }
@@ -388,11 +444,63 @@
         const data = await res.json();
 
         if (data.ok && data.rows) {
+          fetchedOt = data.rows;
           renderOtTable(data.rows);
         }
       } catch (e) {
         console.error("Error fetching overtime", e);
       }
+
+      renderPerformanceTable();
+    }
+
+    function renderPerformanceTable() {
+      const tbody = document.getElementById('perfTableBody');
+      const techStats = {};
+
+      (CONFIG.TECHNICIANS || []).forEach(t => {
+        techStats[t] = { jobs: 0, completed: 0, pending: 0, readings: 0, ot: 0 };
+      });
+
+      fetchedLogs.forEach(r => {
+        const t = r.technician;
+        if (!techStats[t]) techStats[t] = { jobs: 0, completed: 0, pending: 0, readings: 0, ot: 0 };
+        techStats[t].jobs++;
+        if (r.status === 'Completed') techStats[t].completed++;
+        else techStats[t].pending++;
+      });
+
+      fetchedReadings.forEach(r => {
+        const t = r.technician;
+        if (!techStats[t]) techStats[t] = { jobs: 0, completed: 0, pending: 0, readings: 0, ot: 0 };
+        techStats[t].readings++;
+      });
+
+      fetchedOt.forEach(r => {
+        const t = r.technician;
+        if (!techStats[t]) techStats[t] = { jobs: 0, completed: 0, pending: 0, readings: 0, ot: 0 };
+        techStats[t].ot++;
+      });
+
+      const techList = Object.keys(techStats);
+      if (!techList.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No technician activity found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = techList.map(t => {
+        const s = techStats[t];
+        return `
+          <tr>
+            <td><strong>${t}</strong></td>
+            <td class="text-center"><span class="badge bg-secondary">${s.jobs}</span></td>
+            <td class="text-center"><span class="badge bg-success">${s.completed}</span></td>
+            <td class="text-center"><span class="badge bg-warning text-dark">${s.pending}</span></td>
+            <td class="text-center"><span class="badge bg-info text-dark">${s.readings}</span></td>
+            <td class="text-center"><span class="badge bg-primary">${s.ot}</span></td>
+          </tr>
+        `;
+      }).join('');
     }
 
     function renderLogsTable(rows) {
@@ -452,6 +560,51 @@
           <td>${r.work || ''}</td>
         </tr>
       `).join('');
+    }
+
+    // CSV Download Helpers
+    function downloadCSV(filename, csvContent) {
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function exportLogsCSV() {
+      if (!fetchedLogs.length) { alert("No log data to export."); return; }
+      const headers = ["Date", "Shift", "WO", "Location", "Technician", "Complaint", "Action", "Category", "Priority", "Status", "Pending Reason"];
+      const rows = fetchedLogs.map(r => [
+        `"${r.logDate || ''}"`, `"${r.shift || ''}"`, `"${r.wo || ''}"`, `"${r.location || ''}"`,
+        `"${r.technician || ''}"`, `"${(r.complaint || '').replace(/"/g, '""')}"`, `"${(r.action || '').replace(/"/g, '""')}"`,
+        `"${r.category || ''}"`, `"${r.priority || ''}"`, `"${r.status || ''}"`, `"${r.pending || ''}"`
+      ]);
+      const csv = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+      downloadCSV(`Job_Logs_${document.getElementById('filterFrom').value}_to_${document.getElementById('filterTo').value}.csv`, csv);
+    }
+
+    function exportReadingsCSV() {
+      if (!fetchedReadings.length) { alert("No utility reading data to export."); return; }
+      const headers = ["Date", "Technician", "Type", "Area", "Meter No", "Account No", "Reading Value"];
+      const rows = fetchedReadings.map(r => [
+        `"${r.date || ''}"`, `"${r.technician || ''}"`, `"${r.type || ''}"`, `"${r.area || ''}"`,
+        `"${r.meter || ''}"`, `"${r.account || ''}"`, `"${r.reading || ''}"`
+      ]);
+      const csv = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+      downloadCSV(`Utility_Readings_${document.getElementById('filterFrom').value}_to_${document.getElementById('filterTo').value}.csv`, csv);
+    }
+
+    function exportOtCSV() {
+      if (!fetchedOt.length) { alert("No overtime data to export."); return; }
+      const headers = ["Date", "Technician", "From Time", "To Time", "Type", "Location", "Work Description"];
+      const rows = fetchedOt.map(r => [
+        `"${r.otDate || ''}"`, `"${r.technician || ''}"`, `"${r.from || ''}"`, `"${r.to || ''}"`,
+        `"${r.type || ''}"`, `"${r.location || ''}"`, `"${(r.work || '').replace(/"/g, '""')}"`
+      ]);
+      const csv = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+      downloadCSV(`Overtime_Logs_${document.getElementById('filterFrom').value}_to_${document.getElementById('filterTo').value}.csv`, csv);
     }
   </script>
 </body>
