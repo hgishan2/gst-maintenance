@@ -1,6 +1,8 @@
 // Utility readings report: Summary + one sheet per type (Electricity / Water) + Daily Readings (with consumption formulas).
 const dObj = s => { const [y, m, d] = s.split("-").map(Number); return new Date(Date.UTC(y, m - 1, d)); };
 const addDays = (s, n) => { const d = dObj(s); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+window.addDays = addDays; // Expose globally for admin.html
+
 const NAVY = "FF0F2234", GRID = { style: "thin", color: { argb: "FFD0D7DE" } };
 const DR = "'Daily Readings'!";
 
