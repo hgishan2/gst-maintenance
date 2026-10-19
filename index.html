@@ -3,80 +3,125 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Technician Log App</title>
+  <title>Technician Daily Log & Operations</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   <style>
-    body { background-color: #f8f9fa; font-family: sans-serif; }
-    .header-bar { background-color: #0f2234; color: white; padding: 12px 16px; }
+    body { background-color: #f4f6f9; font-family: sans-serif; }
+    .header-bar { background-color: #0f2234; color: white; padding: 12px 20px; }
     .modal-backdrop.show { opacity: 0.8; }
   </style>
 </head>
 <body>
 
   <!-- Header Bar -->
-  <div class="header-bar d-flex justify-content-between align-items-center">
+  <div class="header-bar d-flex justify-content-between align-items-center shadow-sm">
     <div>
-      <h5 class="m-0">Maintenance Log</h5>
-      <small id="userDisplay" class="text-light opacity-75">Not signed in</small>
+      <h4 class="m-0">ARENCO Real Estate - GST Facility</h4>
+      <small id="userDisplay" class="text-light opacity-75">Checking session...</small>
     </div>
-    <button id="switchUserBtn" class="btn btn-sm btn-outline-light" style="display:none;" onclick="logout()">Sign Out / Switch</button>
+    <div>
+      <button id="switchUserBtn" class="btn btn-sm btn-outline-light" style="display:none;" onclick="logout()">Sign Out / Switch</button>
+    </div>
   </div>
 
-  <div class="container my-4">
-    <!-- Log Entry Form -->
-    <div id="appContent" style="display:none;">
-      <div class="card shadow-sm p-3 mb-4">
-        <h6>New Maintenance Entry</h6>
-        <form id="logForm" onsubmit="submitEntry(event)">
-          <div class="mb-2">
-            <label class="form-label">Work Order #</label>
-            <input type="text" id="wo" class="form-control" required>
+  <!-- Main Application Container (Hidden until logged in) -->
+  <div id="appContent" class="container my-4" style="display:none;">
+    <div class="card shadow-sm p-4 mb-4 bg-white rounded">
+      <h5 class="mb-3 text-primary border-bottom pb-2">Technician Job & Maintenance Log</h5>
+      <form id="logForm" onsubmit="submitEntry(event)">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label fw-bold">Date</label>
+            <input type="date" id="logDate" class="form-control" required>
           </div>
-          <div class="mb-2">
-            <label class="form-label">Location / Unit</label>
-            <input type="text" id="location" class="form-control" required>
+          <div class="col-md-4 mb-3">
+            <label class="form-label fw-bold">Shift</label>
+            <select id="shift" class="form-select">
+              <option value="Morning">Morning</option>
+              <option value="Evening">Evening</option>
+              <option value="Night">Night</option>
+            </select>
           </div>
-          <div class="mb-2">
-            <label class="form-label">Complaint / Work Description</label>
-            <textarea id="complaint" class="form-control" rows="2" required></textarea>
+          <div class="col-md-4 mb-3">
+            <label class="form-label fw-bold">Building</label>
+            <input type="text" id="building" class="form-control" readonly>
           </div>
-          <div class="mb-2">
-            <label class="form-label">Category</label>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label fw-bold">Work Order (WO) #</label>
+            <input type="text" id="wo" class="form-control" placeholder="e.g. 54321">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label fw-bold">Location / Unit</label>
+            <input type="text" id="location" class="form-control" required placeholder="e.g. Apt 205">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label fw-bold">Category</label>
             <select id="category" class="form-select"></select>
           </div>
-          <div class="mb-2">
-            <label class="form-label">Status</label>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label fw-bold">Complaint / Description</label>
+          <textarea id="complaint" class="form-control" rows="2" required placeholder="Describe the issue..."></textarea>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Action Taken</label>
+            <textarea id="action" class="form-control" rows="2" placeholder="Work done..."></textarea>
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label fw-bold">Materials Used</label>
+            <input type="text" id="materials" class="form-control" placeholder="Spare parts, pipes, etc.">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label fw-bold">Priority</label>
+            <select id="priority" class="form-select"></select>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label fw-bold">Status</label>
             <select id="status" class="form-select"></select>
           </div>
-          <button type="submit" class="btn btn-primary w-100 mt-2">Submit Log</button>
-        </form>
-      </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label fw-bold">Pending Reason (if any)</label>
+            <input type="text" id="pending" class="form-control" placeholder="Optional">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-success w-100 py-2 fw-bold mt-2">Submit Job Log</button>
+      </form>
     </div>
   </div>
 
   <!-- Login Modal -->
   <div class="modal fade" id="loginModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
+      <div class="modal-content shadow">
         <div class="modal-header bg-dark text-white">
           <h5 class="modal-title">Technician Sign In</h5>
         </div>
         <div class="modal-body">
           <div id="loginAlert" class="alert alert-danger d-none"></div>
           <div class="mb-3">
-            <label for="techSelect" class="form-label">Select Your Name</label>
+            <label for="techSelect" class="form-label fw-bold">Select Your Name</label>
             <select id="techSelect" class="form-select">
               <option value="">-- Choose Name --</option>
             </select>
           </div>
           <div class="mb-3">
-            <label for="pinInput" class="form-label">Employee ID / PIN</label>
-            <input type="password" id="pinInput" class="form-control" placeholder="Enter PIN">
+            <label for="pinInput" class="form-label fw-bold">Employee ID / PIN</label>
+            <input type="password" id="pinInput" class="form-control" placeholder="Enter your 4-digit PIN">
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-primary w-100" onclick="verifyLogin()">Sign In</button>
+          <button type="button" class="btn btn-primary w-100 py-2 fw-bold" onclick="verifyLogin()">Sign In</button>
         </div>
       </div>
     </div>
@@ -90,31 +135,39 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
-      populateOptions();
+      initializeFormDefaults();
       checkAuth();
     });
 
-    function populateOptions() {
-      const select = document.getElementById('techSelect');
-      select.innerHTML = '<option value="">-- Choose Name --</option>';
+    function initializeFormDefaults() {
+      // Set default date to today
+      document.getElementById('logDate').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('building').value = CONFIG.BUILDING || "GST1";
+
+      // Populate dropdowns from config
+      const techSelect = document.getElementById('techSelect');
+      techSelect.innerHTML = '<option value="">-- Choose Name --</option>';
       (CONFIG.TECHNICIANS || []).forEach(name => {
         const opt = document.createElement('option');
         opt.value = name;
         opt.textContent = name;
-        select.appendChild(opt);
+        techSelect.appendChild(opt);
       });
 
       const catSelect = document.getElementById('category');
-      CONFIG.CATEGORIES.forEach(c => catSelect.innerHTML += `<option value="${c}">${c}</option>`);
+      (CONFIG.CATEGORIES || []).forEach(c => catSelect.innerHTML += `<option value="${c}">${c}</option>`);
+
+      const priSelect = document.getElementById('priority');
+      (CONFIG.PRIORITIES || []).forEach(p => priSelect.innerHTML += `<option value="${p}">${p}</option>`);
 
       const statSelect = document.getElementById('status');
-      CONFIG.STATUSES.forEach(s => statSelect.innerHTML += `<option value="${s}">${s}</option>`);
+      (CONFIG.STATUSES || []).forEach(s => statSelect.innerHTML += `<option value="${s}">${s}</option>`);
     }
 
     function checkAuth() {
       const activeUser = localStorage.getItem("tech_name");
       if (activeUser) {
-        document.getElementById('userDisplay').textContent = "Signed in: " + activeUser;
+        document.getElementById('userDisplay').textContent = "Signed in as: " + activeUser;
         document.getElementById('switchUserBtn').style.display = "inline-block";
         document.getElementById('appContent').style.display = "block";
         loginModal.hide();
@@ -172,15 +225,21 @@
 
       const entry = {
         id: "LOG-" + Date.now(),
-        building: CONFIG.BUILDING,
-        supervisor: CONFIG.SUPERVISOR,
-        logDate: new Date().toISOString().slice(0, 10),
-        technician: tech,
+        submittedAt: new Date().toISOString(),
+        building: CONFIG.BUILDING || "GST1",
+        supervisor: CONFIG.SUPERVISOR || "Ishan Madhushanka",
+        logDate: document.getElementById('logDate').value,
+        shift: document.getElementById('shift').value,
         wo: document.getElementById('wo').value,
         location: document.getElementById('location').value,
         complaint: document.getElementById('complaint').value,
+        technician: tech,
+        action: document.getElementById('action').value,
         category: document.getElementById('category').value,
-        status: document.getElementById('status').value
+        priority: document.getElementById('priority').value,
+        status: document.getElementById('status').value,
+        pending: document.getElementById('pending').value,
+        materials: document.getElementById('materials').value
       };
 
       try {
@@ -196,6 +255,7 @@
         if (data.ok) {
           alert("Log submitted successfully!");
           document.getElementById('logForm').reset();
+          document.getElementById('logDate').value = new Date().toISOString().slice(0, 10);
         } else {
           alert("Failed to submit log: " + (data.error || "Invalid PIN"));
         }
