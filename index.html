@@ -3,13 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Technician Daily Log & Operations</title>
+  <title>ARENCO - Technician Daily Log & Operations</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   <style>
     body { background-color: #f4f6f9; font-family: sans-serif; }
     .header-bar { background-color: #0f2234; color: white; padding: 12px 20px; }
     .modal-backdrop.show { opacity: 0.8; }
+    .nav-tabs .nav-link.active { font-weight: bold; background-color: #ffffff; color: #0f2234; border-bottom: 3px solid #0f2234; }
   </style>
 </head>
 <body>
@@ -17,86 +18,175 @@
   <!-- Header Bar -->
   <div class="header-bar d-flex justify-content-between align-items-center shadow-sm">
     <div>
-      <h4 class="m-0">ARENCO Real Estate - GST Facility</h4>
+      <h4 class="m-0">ARENCO Real Estate - Facility Management</h4>
       <small id="userDisplay" class="text-light opacity-75">Checking session...</small>
     </div>
     <div>
-      <button id="switchUserBtn" class="btn btn-sm btn-outline-light" style="display:none;" onclick="logout()">Sign Out / Switch</button>
+      <a href="admin.html" class="btn btn-sm btn-outline-warning me-2">Admin Portal</a>
+      <button id="switchUserBtn" class="btn btn-sm btn-outline-light" style="display:none;" onclick="logout()">Sign Out</button>
     </div>
   </div>
 
   <!-- Main Application Container (Hidden until logged in) -->
   <div id="appContent" class="container my-4" style="display:none;">
-    <div class="card shadow-sm p-4 mb-4 bg-white rounded">
-      <h5 class="mb-3 text-primary border-bottom pb-2">Technician Job & Maintenance Log</h5>
-      <form id="logForm" onsubmit="submitEntry(event)">
-        <div class="row">
-          <div class="col-md-4 mb-3">
-            <label class="form-label fw-bold">Date</label>
-            <input type="date" id="logDate" class="form-control" required>
-          </div>
-          <div class="col-md-4 mb-3">
-            <label class="form-label fw-bold">Shift</label>
-            <select id="shift" class="form-select">
-              <option value="Morning">Morning</option>
-              <option value="Evening">Evening</option>
-              <option value="Night">Night</option>
-            </select>
-          </div>
-          <div class="col-md-4 mb-3">
-            <label class="form-label fw-bold">Building</label>
-            <input type="text" id="building" class="form-control" readonly>
-          </div>
-        </div>
+    
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs mb-4" id="appTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logsContent" type="button" role="tab">Job Logs</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="readings-tab" data-bs-toggle="tab" data-bs-target="#readingsContent" type="button" role="tab">Utility Readings</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="overtime-tab" data-bs-toggle="tab" data-bs-target="#overtimeContent" type="button" role="tab">Overtime</button>
+      </li>
+    </ul>
 
-        <div class="row">
-          <div class="col-md-4 mb-3">
-            <label class="form-label fw-bold">Work Order (WO) #</label>
-            <input type="text" id="wo" class="form-control" placeholder="e.g. 54321">
-          </div>
-          <div class="col-md-4 mb-3">
-            <label class="form-label fw-bold">Location / Unit</label>
-            <input type="text" id="location" class="form-control" required placeholder="e.g. Apt 205">
-          </div>
-          <div class="col-md-4 mb-3">
-            <label class="form-label fw-bold">Category</label>
-            <select id="category" class="form-select"></select>
-          </div>
-        </div>
+    <div class="tab-content" id="appTabsContent">
+      
+      <!-- Tab 1: Job Logs -->
+      <div class="tab-pane fade show active" id="logsContent" role="tabpanel">
+        <div class="card shadow-sm p-4 bg-white rounded">
+          <h5 class="mb-3 text-primary border-bottom pb-2">Technician Maintenance & Work Order Log</h5>
+          <form id="logForm" onsubmit="submitEntry(event)">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Date</label>
+                <input type="date" id="logDate" class="form-control" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Shift</label>
+                <select id="shift" class="form-select">
+                  <option value="Morning">Morning</option>
+                  <option value="Evening">Evening</option>
+                  <option value="Night">Night</option>
+                </select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Building</label>
+                <input type="text" id="building" class="form-control" readonly>
+              </div>
+            </div>
 
-        <div class="mb-3">
-          <label class="form-label fw-bold">Complaint / Description</label>
-          <textarea id="complaint" class="form-control" rows="2" required placeholder="Describe the issue..."></textarea>
-        </div>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Work Order (WO) #</label>
+                <input type="text" id="wo" class="form-control" placeholder="e.g. 54321">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Location / Unit</label>
+                <input type="text" id="location" class="form-control" required placeholder="e.g. Apt 205">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Category</label>
+                <select id="category" class="form-select"></select>
+              </div>
+            </div>
 
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <label class="form-label fw-bold">Action Taken</label>
-            <textarea id="action" class="form-control" rows="2" placeholder="Work done..."></textarea>
-          </div>
-          <div class="col-md-6 mb-3">
-            <label class="form-label fw-bold">Materials Used</label>
-            <input type="text" id="materials" class="form-control" placeholder="Spare parts, pipes, etc.">
-          </div>
-        </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Complaint / Description</label>
+              <textarea id="complaint" class="form-control" rows="2" required placeholder="Describe the issue..."></textarea>
+            </div>
 
-        <div class="row">
-          <div class="col-md-4 mb-3">
-            <label class="form-label fw-bold">Priority</label>
-            <select id="priority" class="form-select"></select>
-          </div>
-          <div class="col-md-4 mb-3">
-            <label class="form-label fw-bold">Status</label>
-            <select id="status" class="form-select"></select>
-          </div>
-          <div class="col-md-4 mb-3">
-            <label class="form-label fw-bold">Pending Reason (if any)</label>
-            <input type="text" id="pending" class="form-control" placeholder="Optional">
-          </div>
-        </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Action Taken</label>
+                <textarea id="action" class="form-control" rows="2" placeholder="Work done..."></textarea>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Materials Used</label>
+                <input type="text" id="materials" class="form-control" placeholder="Spare parts, pipes, etc.">
+              </div>
+            </div>
 
-        <button type="submit" class="btn btn-success w-100 py-2 fw-bold mt-2">Submit Job Log</button>
-      </form>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Priority</label>
+                <select id="priority" class="form-select"></select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Status</label>
+                <select id="status" class="form-select"></select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Pending Reason (if any)</label>
+                <input type="text" id="pending" class="form-control" placeholder="Optional">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-success w-100 py-2 fw-bold mt-2">Submit Job Log</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Tab 2: Utility Readings -->
+      <div class="tab-pane fade" id="readingsContent" role="tabpanel">
+        <div class="card shadow-sm p-4 bg-white rounded">
+          <h5 class="mb-3 text-primary border-bottom pb-2">Utility Meter Readings</h5>
+          <form id="readingForm" onsubmit="submitReading(event)">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Date</label>
+                <input type="date" id="readingDate" class="form-control" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Select Meter</label>
+                <select id="meterSelect" class="form-select" onchange="updateMeterInfo()" required>
+                  <option value="">-- Choose Meter --</option>
+                </select>
+              </div>
+            </div>
+            <div class="alert alert-secondary py-2" id="meterInfoBox">
+              <small>Meter Type, Area, and Account details will show here.</small>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Current Reading Value</label>
+              <input type="number" step="any" id="meterReadingVal" class="form-control" required placeholder="Enter meter digits">
+            </div>
+            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Submit Utility Reading</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Tab 3: Overtime -->
+      <div class="tab-pane fade" id="overtimeContent" role="tabpanel">
+        <div class="card shadow-sm p-4 bg-white rounded">
+          <h5 class="mb-3 text-primary border-bottom pb-2">Overtime Entry</h5>
+          <form id="otForm" onsubmit="submitOvertime(event)">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">Overtime Date</label>
+                <input type="date" id="otDate" class="form-control" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">From Time</label>
+                <input type="time" id="otFrom" class="form-control" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label fw-bold">To Time</label>
+                <input type="time" id="otTo" class="form-control" required>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Type / Reason</label>
+                <input type="text" id="otType" class="form-control" required placeholder="e.g. Emergency Breakdown">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label fw-bold">Location</label>
+                <input type="text" id="otLocation" class="form-control" required placeholder="Area / Building Location">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-bold">Work Description</label>
+              <textarea id="otWork" class="form-control" rows="2" required placeholder="Details of overtime work..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-warning w-100 py-2 fw-bold text-dark">Submit Overtime Log</button>
+          </form>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -140,11 +230,13 @@
     });
 
     function initializeFormDefaults() {
-      // Set default date to today
-      document.getElementById('logDate').value = new Date().toISOString().slice(0, 10);
+      const today = new Date().toISOString().slice(0, 10);
+      document.getElementById('logDate').value = today;
+      document.getElementById('readingDate').value = today;
+      document.getElementById('otDate').value = today;
       document.getElementById('building').value = CONFIG.BUILDING || "GST1";
 
-      // Populate dropdowns from config
+      // Populate technician dropdown
       const techSelect = document.getElementById('techSelect');
       techSelect.innerHTML = '<option value="">-- Choose Name --</option>';
       (CONFIG.TECHNICIANS || []).forEach(name => {
@@ -154,6 +246,7 @@
         techSelect.appendChild(opt);
       });
 
+      // Populate Categories, Priorities, Statuses
       const catSelect = document.getElementById('category');
       (CONFIG.CATEGORIES || []).forEach(c => catSelect.innerHTML += `<option value="${c}">${c}</option>`);
 
@@ -162,6 +255,23 @@
 
       const statSelect = document.getElementById('status');
       (CONFIG.STATUSES || []).forEach(s => statSelect.innerHTML += `<option value="${s}">${s}</option>`);
+
+      // Populate Meters dropdown
+      const meterSelect = document.getElementById('meterSelect');
+      (CONFIG.METERS || []).forEach((m, idx) => {
+        meterSelect.innerHTML += `<option value="${idx}">${m.type} - ${m.area} (Meter: ${m.meter})</option>`;
+      });
+    }
+
+    function updateMeterInfo() {
+      const idx = document.getElementById('meterSelect').value;
+      const box = document.getElementById('meterInfoBox');
+      if (idx === "") {
+        box.innerHTML = '<small>Meter Type, Area, and Account details will show here.</small>';
+        return;
+      }
+      const m = CONFIG.METERS[idx];
+      box.innerHTML = `<strong>Account No:</strong> ${m.account} | <strong>Meter No:</strong> ${m.meter}`;
     }
 
     function checkAuth() {
@@ -245,15 +355,11 @@
       try {
         const res = await fetch(CONFIG.SCRIPT_URL, {
           method: "POST",
-          body: JSON.stringify({
-            key: CONFIG.KEY,
-            pin: pin,
-            entries: [entry]
-          })
+          body: JSON.stringify({ key: CONFIG.KEY, pin: pin, entries: [entry] })
         });
         const data = await res.json();
         if (data.ok) {
-          alert("Log submitted successfully!");
+          alert("Job log submitted successfully!");
           document.getElementById('logForm').reset();
           document.getElementById('logDate').value = new Date().toISOString().slice(0, 10);
         } else {
@@ -261,6 +367,80 @@
         }
       } catch (err) {
         alert("Server error while submitting entry.");
+      }
+    }
+
+    async function submitReading(e) {
+      e.preventDefault();
+      const tech = localStorage.getItem("tech_name");
+      const pin = localStorage.getItem("tech_pin");
+      const mIdx = document.getElementById('meterSelect').value;
+      if (mIdx === "") { alert("Please select a meter."); return; }
+      const m = CONFIG.METERS[mIdx];
+
+      const reading = {
+        id: "RD-" + Date.now(),
+        submittedAt: new Date().toISOString(),
+        technician: tech,
+        date: document.getElementById('readingDate').value,
+        type: m.type,
+        area: m.area,
+        meter: m.meter,
+        account: m.account,
+        reading: document.getElementById('meterReadingVal').value
+      };
+
+      try {
+        const res = await fetch(CONFIG.SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({ key: CONFIG.KEY, pin: pin, readings: [reading] })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          alert("Utility reading submitted successfully!");
+          document.getElementById('readingForm').reset();
+          document.getElementById('readingDate').value = new Date().toISOString().slice(0, 10);
+          document.getElementById('meterInfoBox').innerHTML = '<small>Meter Type, Area, and Account details will show here.</small>';
+        } else {
+          alert("Failed: " + (data.error || "Invalid PIN"));
+        }
+      } catch (err) {
+        alert("Server error while submitting reading.");
+      }
+    }
+
+    async function submitOvertime(e) {
+      e.preventDefault();
+      const tech = localStorage.getItem("tech_name");
+      const pin = localStorage.getItem("tech_pin");
+
+      const ot = {
+        id: "OT-" + Date.now(),
+        submittedAt: new Date().toISOString(),
+        technician: tech,
+        otDate: document.getElementById('otDate').value,
+        from: document.getElementById('otFrom').value,
+        to: document.getElementById('otTo').value,
+        type: document.getElementById('otType').value,
+        location: document.getElementById('otLocation').value,
+        work: document.getElementById('otWork').value
+      };
+
+      try {
+        const res = await fetch(CONFIG.SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({ key: CONFIG.KEY, pin: pin, overtime: [ot] })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          alert("Overtime entry submitted successfully!");
+          document.getElementById('otForm').reset();
+          document.getElementById('otDate').value = new Date().toISOString().slice(0, 10);
+        } else {
+          alert("Failed: " + (data.error || "Invalid PIN"));
+        }
+      } catch (err) {
+        alert("Server error while submitting overtime.");
       }
     }
   </script>
