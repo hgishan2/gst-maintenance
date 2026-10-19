@@ -1,219 +1,342 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ARENCO - Technician Daily Log & Operations</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ARENCO - Technician Log & Operations</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <style>
-    body { background-color: #f4f6f9; font-family: sans-serif; }
-    .header-bar { background-color: #0f2234; color: white; padding: 12px 20px; }
-    .modal-backdrop.show { opacity: 0.8; }
-    .nav-tabs .nav-link.active { font-weight: bold; background-color: #ffffff; color: #0f2234; border-bottom: 3px solid #0f2234; }
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --border-color: #334155;
+      --accent-blue: #38bdf8;
+    }
+    body {
+      background-color: var(--bg-dark);
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding-bottom: 30px;
+    }
+    .navbar {
+      background-color: #1e293b !important;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+    }
+    .form-control, .form-select {
+      background-color: #0f172a;
+      border: 1px solid var(--border-color);
+      color: #f8fafc;
+      border-radius: 8px;
+    }
+    .form-control:focus, .form-select:focus {
+      background-color: #0f172a;
+      border-color: var(--accent-blue);
+      color: #f8fafc;
+      box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.25);
+    }
+    .nav-pills .nav-link {
+      color: #94a3b8;
+      font-weight: 600;
+      border-radius: 8px;
+      padding: 10px 18px;
+    }
+    .nav-pills .nav-link.active {
+      background-color: var(--accent-blue);
+      color: #0f172a;
+    }
+    .modal-content {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+    }
+    .btn-accent {
+      background-color: var(--accent-blue);
+      color: #0f172a;
+      font-weight: 700;
+    }
+    .btn-accent:hover {
+      background-color: #0284c7;
+      color: #fff;
+    }
+    .badge-offline {
+      background-color: #f59e0b;
+      color: #0f172a;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Header Bar -->
-  <div class="header-bar d-flex justify-content-between align-items-center shadow-sm">
-    <div>
-      <h4 class="m-0">ARENCO Real Estate - Facility Management</h4>
-      <small id="userDisplay" class="text-light opacity-75">Checking session...</small>
+  <!-- Top Navbar Header -->
+  <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-sm">
+    <div class="container-fluid px-3">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+        <i class="bi bi-tools text-info fs-4"></i>
+        <div>
+          <div class="fw-bold fs-6 lh-1">ARENCO Real Estate</div>
+          <small class="text-muted style-small" style="font-size:0.75rem;">GST Facility Operations</small>
+        </div>
+      </a>
+      <div class="d-flex align-items-center gap-2">
+        <span id="syncBadge" class="badge bg-success-subtle text-success border border-success px-2 py-1 small">Online</span>
+        <button id="logoutBtn" class="btn btn-sm btn-outline-light d-none" onclick="logout()">
+          <i class="bi bi-box-arrow-right me-1"></i>Sign Out
+        </button>
+      </div>
     </div>
-    <div>
-      <a href="admin.html" class="btn btn-sm btn-outline-warning me-2">Admin Portal</a>
-      <button id="switchUserBtn" class="btn btn-sm btn-outline-light" style="display:none;" onclick="logout()">Sign Out</button>
+  </nav>
+
+  <!-- Login Gate Modal -->
+  <div class="modal fade" id="loginModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-title fw-bold text-info"><i class="bi bi-shield-lock me-2"></i>Technician Authentication</h5>
+        </div>
+        <div class="modal-body py-4">
+          <div id="loginAlert" class="alert alert-danger d-none py-2 small"></div>
+          <div class="mb-3">
+            <label class="form-label text-slate-300 small fw-semibold">Technician Name</label>
+            <select id="techSelect" class="form-select form-select-lg">
+              <option value="">-- Select Your Name --</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-slate-300 small fw-semibold">Employee ID / PIN</label>
+            <input type="password" id="pinInput" class="form-control form-control-lg" placeholder="Enter 4-digit PIN" maxlength="10">
+          </div>
+        </div>
+        <div class="modal-footer border-top-0 pt-0">
+          <button type="button" class="btn btn-accent w-100 py-2 fs-6" onclick="verifyLogin()">Sign In to Access Logs</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Main Application Container (Hidden until logged in) -->
-  <div id="appContent" class="container my-4" style="display:none;">
+  <!-- App Main Content Container -->
+  <div id="appContent" class="container mt-3" style="display: none;">
     
+    <!-- User Welcome Banner -->
+    <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+      <div>
+        <small class="text-muted d-block">Logged in as:</small>
+        <span id="activeTechDisplay" class="fw-bold text-info fs-5">Technician</span>
+      </div>
+      <a href="admin.html" class="btn btn-sm btn-outline-warning">
+        <i class="bi bi-speedometer2 me-1"></i>Admin Portal
+      </a>
+    </div>
+
     <!-- Navigation Tabs -->
-    <ul class="nav nav-tabs mb-4" id="appTabs" role="tablist">
+    <ul class="nav nav-pills nav-fill mb-3 gap-1 bg-slate-900 p-1 rounded-3" id="mainTabs" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logsContent" type="button" role="tab">Job Logs</button>
+        <button class="nav-link active" id="pills-job-tab" data-bs-toggle="pill" data-bs-target="#pills-job" type="button" role="tab">
+          <i class="bi bi-journal-text me-1"></i>Job Log
+        </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="readings-tab" data-bs-toggle="tab" data-bs-target="#readingsContent" type="button" role="tab">Utility Readings</button>
+        <button class="nav-link" id="pills-utility-tab" data-bs-toggle="pill" data-bs-target="#pills-utility" type="button" role="tab">
+          <i class="bi bi-speedometer me-1"></i>Utilities
+        </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="overtime-tab" data-bs-toggle="tab" data-bs-target="#overtimeContent" type="button" role="tab">Overtime</button>
+        <button class="nav-link" id="pills-ot-tab" data-bs-toggle="pill" data-bs-target="#pills-ot" type="button" role="tab">
+          <i class="bi bi-clock-history me-1"></i>Overtime
+        </button>
       </li>
     </ul>
 
-    <div class="tab-content" id="appTabsContent">
+    <!-- Tab Content Panels -->
+    <div class="tab-content" id="mainTabsContent">
       
-      <!-- Tab 1: Job Logs -->
-      <div class="tab-pane fade show active" id="logsContent" role="tabpanel">
-        <div class="card shadow-sm p-4 bg-white rounded">
-          <h5 class="mb-3 text-primary border-bottom pb-2">Technician Maintenance & Work Order Log</h5>
-          <form id="logForm" onsubmit="submitEntry(event)">
-            <div class="row">
-              <div class="col-md-4 mb-3">
-                <label class="form-label fw-bold">Date</label>
-                <input type="date" id="logDate" class="form-control" required>
+      <!-- TAB 1: JOB LOG ENTRY -->
+      <div class="tab-pane fade show active" id="pills-job" role="tabpanel">
+        <div class="card p-3 shadow-sm">
+          <h6 class="text-info fw-bold mb-3 border-bottom border-secondary pb-2">
+            <i class="bi bi-plus-circle me-1"></i>New Work Order / Job Entry
+          </h6>
+          <form id="jobForm" onsubmit="handleJobSubmit(event)">
+            
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small mb-1">Date</label>
+                <input type="date" id="logDate" class="form-control form-control-sm" required>
               </div>
-              <div class="col-md-4 mb-3">
-                <label class="form-label fw-bold">Shift</label>
-                <select id="shift" class="form-select">
+              <div class="col-6">
+                <label class="form-label small mb-1">Shift</label>
+                <select id="shift" class="form-select form-select-sm">
                   <option value="Morning">Morning</option>
                   <option value="Evening">Evening</option>
                   <option value="Night">Night</option>
                 </select>
               </div>
-              <div class="col-md-4 mb-3">
-                <label class="form-label fw-bold">Building</label>
-                <input type="text" id="building" class="form-control" readonly>
+            </div>
+
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small mb-1">Work Order (WO) #</label>
+                <input type="text" id="wo" class="form-control form-control-sm" placeholder="WO Number">
+              </div>
+              <div class="col-6">
+                <label class="form-label small mb-1">Location / Unit *</label>
+                <input type="text" id="location" class="form-control form-control-sm" placeholder="e.g. Apt 102 / Common" required>
               </div>
             </div>
 
-            <div class="row">
-              <div class="col-md-4 mb-3">
-                <label class="form-label fw-bold">Work Order (WO) #</label>
-                <input type="text" id="wo" class="form-control" placeholder="e.g. 54321">
+            <div class="mb-2">
+              <label class="form-label small mb-1">Complaint / Work Request *</label>
+              <textarea id="complaint" class="form-control form-control-sm" rows="2" placeholder="Details of complaint..." required></textarea>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label small mb-1">Action Taken</label>
+              <textarea id="action" class="form-control form-control-sm" rows="2" placeholder="Work performed..."></textarea>
+            </div>
+
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small mb-1">Category</label>
+                <select id="category" class="form-select form-select-sm"></select>
               </div>
-              <div class="col-md-4 mb-3">
-                <label class="form-label fw-bold">Location / Unit</label>
-                <input type="text" id="location" class="form-control" required placeholder="e.g. Apt 205">
-              </div>
-              <div class="col-md-4 mb-3">
-                <label class="form-label fw-bold">Category</label>
-                <select id="category" class="form-select"></select>
+              <div class="col-6">
+                <label class="form-label small mb-1">Priority</label>
+                <select id="priority" class="form-select form-select-sm"></select>
               </div>
             </div>
 
-            <div class="mb-3">
-              <label class="form-label fw-bold">Complaint / Description</label>
-              <textarea id="complaint" class="form-control" rows="2" required placeholder="Describe the issue..."></textarea>
-            </div>
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label fw-bold">Action Taken</label>
-                <textarea id="action" class="form-control" rows="2" placeholder="Work done..."></textarea>
+            <!-- Detailed Time Tracking Fields -->
+            <div class="row g-2 mb-2">
+              <div class="col-4">
+                <label class="form-label small mb-1">Received Time</label>
+                <input type="time" id="received" class="form-control form-control-sm">
               </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label fw-bold">Materials Used</label>
-                <input type="text" id="materials" class="form-control" placeholder="Spare parts, pipes, etc.">
+              <div class="col-4">
+                <label class="form-label small mb-1">Start Time</label>
+                <input type="time" id="start" class="form-control form-control-sm">
               </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-4 mb-3">
-                <label class="form-label fw-bold">Priority</label>
-                <select id="priority" class="form-select"></select>
-              </div>
-              <div class="col-md-4 mb-3">
-                <label class="form-label fw-bold">Status</label>
-                <select id="status" class="form-select"></select>
-              </div>
-              <div class="col-md-4 mb-3">
-                <label class="form-label fw-bold">Pending Reason (if any)</label>
-                <input type="text" id="pending" class="form-control" placeholder="Optional">
+              <div class="col-4">
+                <label class="form-label small mb-1">Finish Time</label>
+                <input type="time" id="finish" class="form-control form-control-sm">
               </div>
             </div>
 
-            <button type="submit" class="btn btn-success w-100 py-2 fw-bold mt-2">Submit Job Log</button>
+            <div class="mb-2">
+              <label class="form-label small mb-1">Materials Used</label>
+              <input type="text" id="materials" class="form-control form-control-sm" placeholder="Spare parts / items used">
+            </div>
+
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label small mb-1">Status</label>
+                <select id="status" class="form-select form-select-sm" onchange="togglePendingReason()"></select>
+              </div>
+              <div class="col-6" id="pendingWrapper">
+                <label class="form-label small mb-1">Pending Reason / Remarks</label>
+                <input type="text" id="pending" class="form-control form-control-sm" placeholder="Reason if pending">
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-accent w-100 py-2 fs-6">
+              <i class="bi bi-send me-1"></i>Submit Job Log
+            </button>
           </form>
         </div>
       </div>
 
-      <!-- Tab 2: Utility Readings -->
-      <div class="tab-pane fade" id="readingsContent" role="tabpanel">
-        <div class="card shadow-sm p-4 bg-white rounded">
-          <h5 class="mb-3 text-primary border-bottom pb-2">Utility Meter Readings</h5>
-          <form id="readingForm" onsubmit="submitReading(event)">
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label fw-bold">Date</label>
-                <input type="date" id="readingDate" class="form-control" required>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label fw-bold">Select Meter</label>
-                <select id="meterSelect" class="form-select" onchange="updateMeterInfo()" required>
-                  <option value="">-- Choose Meter --</option>
-                </select>
-              </div>
+      <!-- TAB 2: UTILITY READINGS -->
+      <div class="tab-pane fade" id="pills-utility" role="tabpanel">
+        <div class="card p-3 shadow-sm">
+          <h6 class="text-info fw-bold mb-3 border-bottom border-secondary pb-2">
+            <i class="bi bi-speedometer2 me-1"></i>Utility Meter Reading Log
+          </h6>
+          <form id="utilityForm" onsubmit="handleUtilitySubmit(event)">
+            <div class="mb-2">
+              <label class="form-label small mb-1">Reading Date</label>
+              <input type="date" id="readingDate" class="form-control form-control-sm" required>
             </div>
-            <div class="alert alert-secondary py-2" id="meterInfoBox">
-              <small>Meter Type, Area, and Account details will show here.</small>
-            </div>
+
             <div class="mb-3">
-              <label class="form-label fw-bold">Current Reading Value</label>
-              <input type="number" step="any" id="meterReadingVal" class="form-control" required placeholder="Enter meter digits">
+              <label class="form-label small mb-1">Select Meter *</label>
+              <select id="meterSelect" class="form-select form-select-sm" onchange="displayMeterInfo()" required>
+                <option value="">-- Select Meter --</option>
+              </select>
             </div>
-            <button type="submit" class="btn btn-primary w-100 py-2 fw-bold">Submit Utility Reading</button>
+
+            <div id="meterInfoCard" class="card bg-dark p-2 mb-3 d-none border-secondary">
+              <div class="d-flex justify-content-between small">
+                <span class="text-muted">Type: <strong id="infoType" class="text-info"></strong></span>
+                <span class="text-muted">Area: <strong id="infoArea" class="text-light"></strong></span>
+              </div>
+              <div class="d-flex justify-content-between small mt-1">
+                <span class="text-muted">Meter #: <strong id="infoMeter" class="text-light"></strong></span>
+                <span class="text-muted">Account #: <strong id="infoAccount" class="text-light"></strong></span>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small mb-1">Current Reading Value *</label>
+              <input type="number" step="any" id="meterValue" class="form-control form-control-lg" placeholder="Enter meter digits" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-2 fs-6 fw-bold">
+              <i class="bi bi-check-circle me-1"></i>Submit Utility Reading
+            </button>
           </form>
         </div>
       </div>
 
-      <!-- Tab 3: Overtime -->
-      <div class="tab-pane fade" id="overtimeContent" role="tabpanel">
-        <div class="card shadow-sm p-4 bg-white rounded">
-          <h5 class="mb-3 text-primary border-bottom pb-2">Overtime Entry</h5>
-          <form id="otForm" onsubmit="submitOvertime(event)">
-            <div class="row">
-              <div class="col-md-4 mb-3">
-                <label class="form-label fw-bold">Overtime Date</label>
-                <input type="date" id="otDate" class="form-control" required>
+      <!-- TAB 3: OVERTIME LOG -->
+      <div class="tab-pane fade" id="pills-ot" role="tabpanel">
+        <div class="card p-3 shadow-sm">
+          <h6 class="text-info fw-bold mb-3 border-bottom border-secondary pb-2">
+            <i class="bi bi-clock-history me-1"></i>Overtime Hours Entry
+          </h6>
+          <form id="otForm" onsubmit="handleOtSubmit(event)">
+            <div class="mb-2">
+              <label class="form-label small mb-1">Overtime Date</label>
+              <input type="date" id="otDate" class="form-control form-control-sm" required>
+            </div>
+
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small mb-1">From Time *</label>
+                <input type="time" id="otFrom" class="form-control form-control-sm" required>
               </div>
-              <div class="col-md-4 mb-3">
-                <label class="form-label fw-bold">From Time</label>
-                <input type="time" id="otFrom" class="form-control" required>
-              </div>
-              <div class="col-md-4 mb-3">
-                <label class="form-label fw-bold">To Time</label>
-                <input type="time" id="otTo" class="form-control" required>
+              <div class="col-6">
+                <label class="form-label small mb-1">To Time *</label>
+                <input type="time" id="otTo" class="form-control form-control-sm" required>
               </div>
             </div>
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label class="form-label fw-bold">Type / Reason</label>
-                <input type="text" id="otType" class="form-control" required placeholder="e.g. Emergency Breakdown">
+
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small mb-1">Work Type / Reason</label>
+                <input type="text" id="otType" class="form-control form-control-sm" placeholder="e.g. Emergency Repairs" required>
               </div>
-              <div class="col-md-6 mb-3">
-                <label class="form-label fw-bold">Location</label>
-                <input type="text" id="otLocation" class="form-control" required placeholder="Area / Building Location">
+              <div class="col-6">
+                <label class="form-label small mb-1">Location / Area</label>
+                <input type="text" id="otLocation" class="form-control form-control-sm" placeholder="Location details" required>
               </div>
             </div>
+
             <div class="mb-3">
-              <label class="form-label fw-bold">Work Description</label>
-              <textarea id="otWork" class="form-control" rows="2" required placeholder="Details of overtime work..."></textarea>
+              <label class="form-label small mb-1">Work Accomplished *</label>
+              <textarea id="otWork" class="form-control form-control-sm" rows="2" placeholder="Description of overtime work..." required></textarea>
             </div>
-            <button type="submit" class="btn btn-warning w-100 py-2 fw-bold text-dark">Submit Overtime Log</button>
+
+            <button type="submit" class="btn btn-warning w-100 py-2 fs-6 fw-bold text-dark">
+              <i class="bi bi-clock me-1"></i>Submit Overtime Log
+            </button>
           </form>
         </div>
       </div>
 
-    </div>
-  </div>
-
-  <!-- Login Modal -->
-  <div class="modal fade" id="loginModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content shadow">
-        <div class="modal-header bg-dark text-white">
-          <h5 class="modal-title">Technician Sign In</h5>
-        </div>
-        <div class="modal-body">
-          <div id="loginAlert" class="alert alert-danger d-none"></div>
-          <div class="mb-3">
-            <label for="techSelect" class="form-label fw-bold">Select Your Name</label>
-            <select id="techSelect" class="form-select">
-              <option value="">-- Choose Name --</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label for="pinInput" class="form-label fw-bold">Employee ID / PIN</label>
-            <input type="password" id="pinInput" class="form-control" placeholder="Enter your 4-digit PIN">
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-primary w-100 py-2 fw-bold" onclick="verifyLogin()">Sign In</button>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -221,71 +344,74 @@
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    let loginModal;
+    let loginModalInstance;
 
     document.addEventListener("DOMContentLoaded", () => {
-      loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
-      initializeFormDefaults();
-      checkAuth();
+      loginModalInstance = new bootstrap.Modal(document.getElementById('loginModal'));
+      setupDefaults();
+      checkSession();
     });
 
-    function initializeFormDefaults() {
+    function setupDefaults() {
       const today = new Date().toISOString().slice(0, 10);
       document.getElementById('logDate').value = today;
       document.getElementById('readingDate').value = today;
       document.getElementById('otDate').value = today;
-      document.getElementById('building').value = CONFIG.BUILDING || "GST1";
 
-      // Populate technician dropdown
+      // Populate Technician list
       const techSelect = document.getElementById('techSelect');
-      techSelect.innerHTML = '<option value="">-- Choose Name --</option>';
-      (CONFIG.TECHNICIANS || []).forEach(name => {
-        const opt = document.createElement('option');
-        opt.value = name;
-        opt.textContent = name;
-        techSelect.appendChild(opt);
+      techSelect.innerHTML = '<option value="">-- Select Your Name --</option>';
+      (CONFIG.TECHNICIANS || []).forEach(t => {
+        techSelect.innerHTML += `<option value="${t}">${t}</option>`;
       });
 
-      // Populate Categories, Priorities, Statuses
-      const catSelect = document.getElementById('category');
-      (CONFIG.CATEGORIES || []).forEach(c => catSelect.innerHTML += `<option value="${c}">${c}</option>`);
+      // Categories, Priorities, Statuses
+      const cat = document.getElementById('category');
+      (CONFIG.CATEGORIES || []).forEach(c => cat.innerHTML += `<option value="${c}">${c}</option>`);
 
-      const priSelect = document.getElementById('priority');
-      (CONFIG.PRIORITIES || []).forEach(p => priSelect.innerHTML += `<option value="${p}">${p}</option>`);
+      const pri = document.getElementById('priority');
+      (CONFIG.PRIORITIES || []).forEach(p => pri.innerHTML += `<option value="${p}">${p}</option>`);
 
-      const statSelect = document.getElementById('status');
-      (CONFIG.STATUSES || []).forEach(s => statSelect.innerHTML += `<option value="${s}">${s}</option>`);
+      const st = document.getElementById('status');
+      (CONFIG.STATUSES || []).forEach(s => st.innerHTML += `<option value="${s}">${s}</option>`);
 
-      // Populate Meters dropdown
+      // Meters
       const meterSelect = document.getElementById('meterSelect');
       (CONFIG.METERS || []).forEach((m, idx) => {
-        meterSelect.innerHTML += `<option value="${idx}">${m.type} - ${m.area} (Meter: ${m.meter})</option>`;
+        meterSelect.innerHTML += `<option value="${idx}">${m.type} - ${m.area} (${m.meter})</option>`;
       });
     }
 
-    function updateMeterInfo() {
+    function displayMeterInfo() {
       const idx = document.getElementById('meterSelect').value;
-      const box = document.getElementById('meterInfoBox');
-      if (idx === "") {
-        box.innerHTML = '<small>Meter Type, Area, and Account details will show here.</small>';
-        return;
-      }
+      const card = document.getElementById('meterInfoCard');
+      if (idx === "") { card.classList.add('d-none'); return; }
+
       const m = CONFIG.METERS[idx];
-      box.innerHTML = `<strong>Account No:</strong> ${m.account} | <strong>Meter No:</strong> ${m.meter}`;
+      document.getElementById('infoType').textContent = m.type;
+      document.getElementById('infoArea').textContent = m.area;
+      document.getElementById('infoMeter').textContent = m.meter;
+      document.getElementById('infoAccount').textContent = m.account;
+      card.classList.remove('d-none');
     }
 
-    function checkAuth() {
-      const activeUser = localStorage.getItem("tech_name");
-      if (activeUser) {
-        document.getElementById('userDisplay').textContent = "Signed in as: " + activeUser;
-        document.getElementById('switchUserBtn').style.display = "inline-block";
-        document.getElementById('appContent').style.display = "block";
-        loginModal.hide();
+    function togglePendingReason() {
+      const st = document.getElementById('status').value;
+      const input = document.getElementById('pending');
+      input.required = (st === "Pending" || st === "On Hold");
+    }
+
+    function checkSession() {
+      const user = localStorage.getItem("tech_name");
+      if (user) {
+        document.getElementById('activeTechDisplay').textContent = user;
+        document.getElementById('logoutBtn').classList.remove('d-none');
+        document.getElementById('appContent').style.display = 'block';
+        loginModalInstance.hide();
       } else {
-        document.getElementById('userDisplay').textContent = "Not signed in";
-        document.getElementById('switchUserBtn').style.display = "none";
-        document.getElementById('appContent').style.display = "none";
-        loginModal.show();
+        document.getElementById('logoutBtn').classList.add('d-none');
+        document.getElementById('appContent').style.display = 'none';
+        loginModalInstance.show();
       }
     }
 
@@ -295,154 +421,4 @@
       const alertBox = document.getElementById('loginAlert');
 
       if (!name || !pin) {
-        alertBox.textContent = "Please select your name and enter your PIN.";
-        alertBox.classList.remove('d-none');
-        return;
-      }
-
-      alertBox.classList.add('d-none');
-
-      try {
-        const url = `${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&action=login&name=${encodeURIComponent(name)}&pin=${encodeURIComponent(pin)}`;
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (data.ok && data.valid) {
-          localStorage.setItem("tech_name", name);
-          localStorage.setItem("tech_pin", pin);
-          document.getElementById('pinInput').value = "";
-          checkAuth();
-        } else {
-          alertBox.textContent = "Invalid PIN or Employee ID. Please try again.";
-          alertBox.classList.remove('d-none');
-        }
-      } catch (err) {
-        alertBox.textContent = "Cannot reach server. Check network connection.";
-        alertBox.classList.remove('d-none');
-      }
-    }
-
-    function logout() {
-      localStorage.removeItem("tech_name");
-      localStorage.removeItem("tech_pin");
-      checkAuth();
-    }
-
-    async function submitEntry(e) {
-      e.preventDefault();
-      const tech = localStorage.getItem("tech_name");
-      const pin = localStorage.getItem("tech_pin");
-
-      const entry = {
-        id: "LOG-" + Date.now(),
-        submittedAt: new Date().toISOString(),
-        building: CONFIG.BUILDING || "GST1",
-        supervisor: CONFIG.SUPERVISOR || "Ishan Madhushanka",
-        logDate: document.getElementById('logDate').value,
-        shift: document.getElementById('shift').value,
-        wo: document.getElementById('wo').value,
-        location: document.getElementById('location').value,
-        complaint: document.getElementById('complaint').value,
-        technician: tech,
-        action: document.getElementById('action').value,
-        category: document.getElementById('category').value,
-        priority: document.getElementById('priority').value,
-        status: document.getElementById('status').value,
-        pending: document.getElementById('pending').value,
-        materials: document.getElementById('materials').value
-      };
-
-      try {
-        const res = await fetch(CONFIG.SCRIPT_URL, {
-          method: "POST",
-          body: JSON.stringify({ key: CONFIG.KEY, pin: pin, entries: [entry] })
-        });
-        const data = await res.json();
-        if (data.ok) {
-          alert("Job log submitted successfully!");
-          document.getElementById('logForm').reset();
-          document.getElementById('logDate').value = new Date().toISOString().slice(0, 10);
-        } else {
-          alert("Failed to submit log: " + (data.error || "Invalid PIN"));
-        }
-      } catch (err) {
-        alert("Server error while submitting entry.");
-      }
-    }
-
-    async function submitReading(e) {
-      e.preventDefault();
-      const tech = localStorage.getItem("tech_name");
-      const pin = localStorage.getItem("tech_pin");
-      const mIdx = document.getElementById('meterSelect').value;
-      if (mIdx === "") { alert("Please select a meter."); return; }
-      const m = CONFIG.METERS[mIdx];
-
-      const reading = {
-        id: "RD-" + Date.now(),
-        submittedAt: new Date().toISOString(),
-        technician: tech,
-        date: document.getElementById('readingDate').value,
-        type: m.type,
-        area: m.area,
-        meter: m.meter,
-        account: m.account,
-        reading: document.getElementById('meterReadingVal').value
-      };
-
-      try {
-        const res = await fetch(CONFIG.SCRIPT_URL, {
-          method: "POST",
-          body: JSON.stringify({ key: CONFIG.KEY, pin: pin, readings: [reading] })
-        });
-        const data = await res.json();
-        if (data.ok) {
-          alert("Utility reading submitted successfully!");
-          document.getElementById('readingForm').reset();
-          document.getElementById('readingDate').value = new Date().toISOString().slice(0, 10);
-          document.getElementById('meterInfoBox').innerHTML = '<small>Meter Type, Area, and Account details will show here.</small>';
-        } else {
-          alert("Failed: " + (data.error || "Invalid PIN"));
-        }
-      } catch (err) {
-        alert("Server error while submitting reading.");
-      }
-    }
-
-    async function submitOvertime(e) {
-      e.preventDefault();
-      const tech = localStorage.getItem("tech_name");
-      const pin = localStorage.getItem("tech_pin");
-
-      const ot = {
-        id: "OT-" + Date.now(),
-        submittedAt: new Date().toISOString(),
-        technician: tech,
-        otDate: document.getElementById('otDate').value,
-        from: document.getElementById('otFrom').value,
-        to: document.getElementById('otTo').value,
-        type: document.getElementById('otType').value,
-        location: document.getElementById('otLocation').value,
-        work: document.getElementById('otWork').value
-      };
-
-      try {
-        const res = await fetch(CONFIG.SCRIPT_URL, {
-          method: "POST",
-          body: JSON.stringify({ key: CONFIG.KEY, pin: pin, overtime: [ot] })
-        });
-        const data = await res.json();
-        if (data.ok) {
-          alert("Overtime entry submitted successfully!");
-          document.getElementById('otForm').reset();
-          document.getElementById('otDate').value = new Date().toISOString().slice(0, 10);
-        } else {
-          alert("Failed: " + (data.error || "Invalid PIN"));
-        }
-      } catch (err) {
-        alert("Server error while submitting overtime.");
-      }
-    }
-  </script>
-</body>
-</html>
+        alertBox.textContent
