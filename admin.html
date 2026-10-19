@@ -1,121 +1,458 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Technician Log – Download Excel</title>
-<style>
-:root{color-scheme:light;--ink:#0F2234;--brass:#C8963E;--line:#E1E6EB;--mut:#5E7083}
-body{font:16px/1.45 system-ui,"Segoe UI",Roboto,sans-serif;background:#F2F5F8;color:#14212E;margin:0}
-header{background:var(--ink);color:#fff;padding:18px;border-bottom:3px solid var(--brass)}header b{font-size:28px;letter-spacing:.06em}header span{display:block;color:#9DB2C6;font-size:13px;margin-top:4px}
-.w{max-width:720px;margin:auto;padding:16px}
-.c{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}
-label{display:inline-block;margin:0 12px 12px 0;color:var(--mut);font-size:13px;font-weight:600}
-input,select{font:inherit;padding:11px;border-radius:10px;border:1.5px solid var(--line);display:block;margin-top:5px;min-height:46px;background:#FAFBFC}
-button{background:var(--brass);color:var(--ink);border:0;font:inherit;font-weight:700;border-radius:12px;padding:0 22px;min-height:50px;cursor:pointer}
-.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}.tile{background:#F2F5F8;border-radius:12px;padding:12px}.tile b{font-size:26px;display:block;line-height:1.1}.tile span{font-size:12px;color:var(--mut)}
-table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:9px 6px;text-align:right;border-top:1px solid var(--line)}th{color:var(--mut);font-weight:600;font-size:12px}th:first-child,td:first-child{text-align:left}
-button.sec{background:#E6ECF2;color:var(--ink)}.bar2{height:5px;background:#E6ECF2;border-radius:3px;margin-top:5px;min-width:70px}.bar2 i{display:block;height:100%;background:var(--brass);border-radius:3px}
-@media(max-width:600px){label{display:block;margin-right:0}input,select{width:100%}button{width:100%;margin-top:8px}.tiles{grid-template-columns:1fr 1fr}.w{padding:12px}}
-.locked .c:not(#gate){display:none!important}
-#msg{color:#B83A2E}.m{color:var(--mut);font-size:14px}
-</style></head><body class="locked"><header><b id="b">GST1</b><span>Download daily logs as Excel</span></header><div class="w">
-<div class="c" id="gate" style="margin-bottom:12px"><b>Admin sign-in</b><p class="m">Enter your admin PIN (up to 6 digits).</p>
-  <input id="apin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" style="max-width:220px">
-  <div style="margin-top:10px"><button id="agoBtn">Sign in</button> <span id="amsg" style="color:#B83A2E"></span></div></div>
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ARENCO - Admin & Supervisor Dashboard</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --border-color: #334155;
+      --accent-blue: #38bdf8;
+      --accent-amber: #f59e0b;
+    }
+    body {
+      background-color: var(--bg-dark);
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      padding-bottom: 30px;
+    }
+    .navbar {
+      background-color: #1e293b !important;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+    }
+    .form-control, .form-select {
+      background-color: #0f172a;
+      border: 1px solid var(--border-color);
+      color: #f8fafc;
+      border-radius: 8px;
+    }
+    .form-control:focus, .form-select:focus {
+      background-color: #0f172a;
+      border-color: var(--accent-blue);
+      color: #f8fafc;
+      box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.25);
+    }
+    .nav-pills .nav-link {
+      color: #94a3b8;
+      font-weight: 600;
+      border-radius: 8px;
+      padding: 10px 18px;
+    }
+    .nav-pills .nav-link.active {
+      background-color: var(--accent-blue);
+      color: #0f172a;
+    }
+    .modal-content {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+    }
+    .btn-accent {
+      background-color: var(--accent-blue);
+      color: #0f172a;
+      font-weight: 700;
+    }
+    .btn-accent:hover {
+      background-color: #0284c7;
+      color: #fff;
+    }
+    .table-dark {
+      --bs-table-bg: #1e293b;
+      --bs-table-border-color: var(--border-color);
+    }
+    .stat-card {
+      border-left: 4px solid var(--accent-blue);
+    }
+  </style>
+</head>
+<body>
 
-<div class="c">
-  <label>From <input type="date" id="from"></label><label>To <input type="date" id="to"></label>
-  <label>Shift <select id="shift"><option>Day</option><option>Night</option></select></label>
-  <label>Supervisor (optional) <input id="sup" placeholder="leave empty = from logs"></label>
-  <div><button id="load">Download daily log (Excel)</button> <button id="sumBtn" class="sec">Performance dashboard</button> <button id="utBtn" style="background:#24618B;color:#fff">Download utility readings (Excel)</button> <button id="otBtn" style="background:#0F2234;color:#fff">Download overtime (Excel)</button> <span id="msg"></span></div>
-  <p class="m" id="info"></p>
-</div>
-<div class="c" id="sumCard" style="margin-top:12px;display:none"></div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="config.js"></script><script src="template.js"></script><script src="export.js"></script><script src="ot_template.js"></script><script src="export_ot.js"></script><script src="export_util.js"></script>
-<script>
-const $=id=>document.getElementById(id);
-let AP=sessionStorage.getItem("techlog.apin")||"";
-const _f=window.fetch.bind(window);
-window.fetch=(u,o)=>_f(typeof u==="string"&&CONFIG.SCRIPT_URL&&u.indexOf(CONFIG.SCRIPT_URL)===0?u+"&apin="+encodeURIComponent(AP):u,o);
-async function unlock(pin){
-  AP=pin;
-  try{const j=await fetch(CONFIG.SCRIPT_URL+"?action=adminlogin&key="+encodeURIComponent(CONFIG.KEY)).then(r=>r.json());
-    if(j.ok&&j.valid){sessionStorage.setItem("techlog.apin",pin);document.body.classList.remove("locked");$("gate").style.display="none";return true}}catch(e){}
-  AP="";sessionStorage.removeItem("techlog.apin");return false;
-}
-$("agoBtn").onclick=async()=>{$("amsg").textContent="";if(!(await unlock($("apin").value.trim())))$("amsg").textContent="Wrong PIN, or cannot reach the server."};
-$("apin").addEventListener("keydown",e=>{if(e.key==="Enter")$("agoBtn").click()});
-if(AP)unlock(AP);$("b").textContent=CONFIG.BUILDING;
-const t=new Date();$("from").value=$("to").value=t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0");
-const buf=()=>{const b=atob(TEMPLATE_B64),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer};
-$("load").onclick=async()=>{
-  $("msg").textContent="";$("info").textContent="Loading…";
-  try{
-    const u=CONFIG.SCRIPT_URL+"?key="+encodeURIComponent(CONFIG.KEY)+"&from="+$("from").value+"&to="+$("to").value;
-    const j=await (await fetch(u)).json();if(!j.ok)throw new Error(j.error);
-    if(!j.rows.length){$("info").textContent="No logs found for these dates.";return}
-    const by={};j.rows.forEach(r=>{(by[r.logDate]=by[r.logDate]||[]).push(r)});
-    const days=Object.keys(by).sort().map(d=>({date:d,rows:by[d]}));
-    const out=await buildWorkbook(ExcelJS,JSZip,buf(),days,{building:CONFIG.BUILDING,shift:$("shift").value,supervisor:$("sup").value.trim()});
-    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
-    const f=$("from").value,to=$("to").value;
-    a.download=`${CONFIG.BUILDING} Daily Log - ${f===to?f:f+" to "+to} - ${$("shift").value}.xlsx`;a.click();
-    $("info").textContent=`Downloaded ${j.rows.length} jobs across ${days.length} day(s), one sheet per day.`;
-  }catch(e){$("info").textContent="";$("msg").textContent="Could not load: "+e.message}
-};
+  <!-- Top Navbar Header -->
+  <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-sm">
+    <div class="container-fluid px-3">
+      <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+        <i class="bi bi-shield-check text-warning fs-4"></i>
+        <div>
+          <div class="fw-bold fs-6 lh-1">ARENCO Real Estate</div>
+          <small class="text-muted" style="font-size:0.75rem;">Admin & Management Portal</small>
+        </div>
+      </a>
+      <div class="d-flex align-items-center gap-2">
+        <a href="index.html" class="btn btn-sm btn-outline-info me-1">
+          <i class="bi bi-box-arrow-in-left me-1"></i>Technician View
+        </a>
+        <button id="adminLogoutBtn" class="btn btn-sm btn-outline-light d-none" onclick="adminLogout()">
+          <i class="bi bi-box-arrow-right me-1"></i>Sign Out
+        </button>
+      </div>
+    </div>
+  </nav>
 
-$("otBtn").onclick=async()=>{
-  $("msg").textContent="";$("info").textContent="Loading overtime…";
-  try{
-    const u=CONFIG.SCRIPT_URL+"?action=overtime&key="+encodeURIComponent(CONFIG.KEY)+"&from="+$("from").value+"&to="+$("to").value;
-    const j=await (await fetch(u)).json();if(!j.ok)throw new Error(j.error);
-    if(!j.rows.length){$("info").textContent="No overtime found for these dates.";return}
-    const b=atob(OT_TEMPLATE_B64),bytes=new Uint8Array(b.length);for(let i=0;i<b.length;i++)bytes[i]=b.charCodeAt(i);
-    const out=await otBuild(ExcelJS,bytes.buffer,j.rows,CONFIG.STAFF||[]);
-    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
-    const f=$("from").value,to=$("to").value;a.download=`${CONFIG.BUILDING} Overtime - ${f===to?f:f+" to "+to}.xlsx`;a.click();
-    const n=new Set(j.rows.map(r=>r.technician)).size;
-    $("info").textContent=`Downloaded ${j.rows.length} overtime entries for ${n} technician(s), one sheet each.`;
-  }catch(e){$("info").textContent="";$("msg").textContent="Could not load: "+e.message}
-};
+  <!-- Admin PIN Login Modal -->
+  <div class="modal fade" id="adminLoginModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h5 class="modal-title fw-bold text-warning"><i class="bi bi-shield-lock-fill me-2"></i>Admin Authentication</h5>
+        </div>
+        <div class="modal-body py-4">
+          <div id="adminLoginAlert" class="alert alert-danger d-none py-2 small"></div>
+          <div class="mb-3">
+            <label class="form-label text-slate-300 small fw-semibold">Role / Account</label>
+            <select id="adminRoleSelect" class="form-select form-select-lg" disabled>
+              <option value="Admin" selected>System Administrator / Supervisor</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-slate-300 small fw-semibold">Admin Security PIN</label>
+            <input type="password" id="adminPinInput" class="form-control form-control-lg" placeholder="Enter Admin PIN" maxlength="10">
+          </div>
+        </div>
+        <div class="modal-footer border-top-0 pt-0">
+          <button type="button" class="btn btn-warning text-dark w-100 py-2 fs-6 fw-bold" onclick="verifyAdminLogin()">
+            <i class="bi bi-unlock me-1"></i>Access Admin Portal
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-$("sumBtn").onclick=async()=>{
-  $("msg").textContent="";$("info").textContent="Loading dashboard…";
-  try{
-    const q="&key="+encodeURIComponent(CONFIG.KEY)+"&from="+$("from").value+"&to="+$("to").value;
-    const [a,b]=await Promise.all([CONFIG.SCRIPT_URL+"?x=1"+q,CONFIG.SCRIPT_URL+"?action=overtime"+q].map(u=>fetch(u).then(r=>r.json())));
-    if(!a.ok||!b.ok)throw new Error(a.error||b.error);
-    const m=x=>{const p=String(x).split(":");return p[0]*60+ +p[1]};
-    const dur=(s,f)=>(!s||!f)?null:((m(f)-m(s)+1440)%1440)/60;
-    const per={},T=n=>per[n]=per[n]||{jobs:0,done:0,hrs:0,timed:0,skip:0,ot:0};
-    a.rows.forEach(r=>{const t=T(r.technician);t.jobs++;if(r.status==="Completed")t.done++;
-      const d=dur(r.start,r.finish);if(d==null||d===0||d>12)t.skip++;else{t.hrs+=d;t.timed++}});
-    b.rows.forEach(r=>{const d=dur(r.from,r.to);if(d!=null)T(r.technician).ot+=d});
-    const names=Object.keys(per).sort((x,y)=>(per[y].hrs+per[y].ot)-(per[x].hrs+per[x].ot));
-    const S=k=>names.reduce((s,n)=>s+per[n][k],0),max=Math.max(1,...names.map(n=>per[n].hrs+per[n].ot));
-    $("sumCard").style.display="";
-    $("sumCard").innerHTML=`<b>Technician performance</b> <span class="m">${$("from").value} to ${$("to").value}</span>
-    <div class="tiles"><div class="tile"><b>${S("jobs")}</b><span>jobs logged</span></div><div class="tile"><b>${S("jobs")?Math.round(100*S("done")/S("jobs")):0}%</b><span>completed</span></div><div class="tile"><b>${S("hrs").toFixed(1)}</b><span>job hours</span></div><div class="tile"><b>${S("ot").toFixed(1)}</b><span>overtime hours</span></div></div>
-    <div style="overflow-x:auto"><table><tr><th>Technician</th><th>Jobs</th><th>Done</th><th>Job hrs</th><th>Avg / job</th><th>OT hrs</th><th>Total hrs</th></tr>${names.map(n=>{const t=per[n];return `<tr><td>${esc(n)}<div class="bar2"><i style="width:${Math.round(100*(t.hrs+t.ot)/max)}%"></i></div></td><td>${t.jobs}</td><td>${t.jobs?Math.round(100*t.done/t.jobs):0}%</td><td>${t.hrs.toFixed(1)}</td><td>${t.timed?(t.hrs/t.timed).toFixed(1):"–"}</td><td>${t.ot.toFixed(1)}</td><td><b>${(t.hrs+t.ot).toFixed(1)}</b></td></tr>`}).join("")}</table></div>
-    <p class="m">Hours come from the start and finish times technicians enter. ${S("skip")?S("skip")+" job(s) with missing or doubtful times (0 or over 12 hours) are left out of the hours.":"All jobs have usable times."}</p>`;
-    $("info").textContent="";
-  }catch(e){$("info").textContent="";$("msg").textContent="Could not load: "+e.message}
-};
+  <!-- Admin Main Portal Content Container -->
+  <div id="adminContent" class="container mt-3" style="display: none;">
+    
+    <!-- Filter Controls Card -->
+    <div class="card p-3 shadow-sm mb-3">
+      <div class="row g-2 align-items-center">
+        <div class="col-md-4 col-6">
+          <label class="form-label small mb-1">From Date</label>
+          <input type="date" id="filterFrom" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-4 col-6">
+          <label class="form-label small mb-1">To Date</label>
+          <input type="date" id="filterTo" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-4 col-12 d-flex gap-2 mt-md-4">
+          <button class="btn btn-accent btn-sm w-100" onclick="loadDashboardData()">
+            <i class="bi bi-arrow-clockwise me-1"></i>Refresh Data
+          </button>
+        </div>
+      </div>
+    </div>
 
-$("utBtn").onclick=async()=>{
-  $("msg").textContent="";$("info").textContent="Loading readings…";
-  try{
-    const k="&key="+encodeURIComponent(CONFIG.KEY),f=$("from").value,t=$("to").value;
-    const L=await fetch(CONFIG.SCRIPT_URL+"?action=lists"+k).then(r=>r.json());
-    const meters=(L.ok&&L.lists.meters&&L.lists.meters.length)?L.lists.meters:CONFIG.METERS;
-    const j=await fetch(CONFIG.SCRIPT_URL+"?action=readings"+k+"&from="+addDays(f,-45)+"&to="+t).then(r=>r.json());if(!j.ok)throw new Error(j.error);
-    const out=await utilBuild(ExcelJS,j.rows,meters,f,t,CONFIG.BUILDING);
-    if(!out){$("info").textContent="No meter readings found for these dates.";return}
-    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
-    a.download=`${CONFIG.BUILDING} Utility Readings - ${f===t?f:f+" to "+t}.xlsx`;a.click();
-    $("info").textContent="Downloaded the utility readings report with consumption.";
-  }catch(e){$("info").textContent="";$("msg").textContent="Could not load: "+e.message}
-};
-</script></body></html>
+    <!-- Quick Stats Cards -->
+    <div class="row g-2 mb-3">
+      <div class="col-4">
+        <div class="card p-2 text-center stat-card">
+          <small class="text-muted d-block">Total Logs</small>
+          <span id="statLogsCount" class="fw-bold fs-4 text-info">0</span>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="card p-2 text-center stat-card" style="border-left-color: #f59e0b;">
+          <small class="text-muted d-block">Pending</small>
+          <span id="statPendingCount" class="fw-bold fs-4 text-warning">0</span>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="card p-2 text-center stat-card" style="border-left-color: #10b981;">
+          <small class="text-muted d-block">Readings</small>
+          <span id="statReadingsCount" class="fw-bold fs-4 text-success">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Navigation Tabs -->
+    <ul class="nav nav-pills nav-fill mb-3 gap-1 bg-slate-900 p-1 rounded-3" id="adminTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="pills-admin-logs-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-logs" type="button" role="tab">
+          <i class="bi bi-journal-text me-1"></i>Job Logs
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-admin-readings-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-readings" type="button" role="tab">
+          <i class="bi bi-speedometer me-1"></i>Utilities
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-admin-ot-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-ot" type="button" role="tab">
+          <i class="bi bi-clock-history me-1"></i>Overtime
+        </button>
+      </li>
+    </ul>
+
+    <!-- Tab Panels -->
+    <div class="tab-content" id="adminTabsContent">
+      
+      <!-- TAB 1: JOB LOGS TABLE -->
+      <div class="tab-pane fade show active" id="pills-admin-logs" role="tabpanel">
+        <div class="card p-3 shadow-sm">
+          <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
+            <h6 class="text-info fw-bold m-0"><i class="bi bi-list-task me-1"></i>Maintenance Work Orders</h6>
+            <span id="logsStatusBadge" class="badge bg-secondary">Loading...</span>
+          </div>
+          <div class="table-responsive" style="max-height: 500px;">
+            <table class="table table-dark table-hover table-striped small">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Shift</th>
+                  <th>WO #</th>
+                  <th>Location</th>
+                  <th>Technician</th>
+                  <th>Complaint</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="logsTableBody">
+                <tr><td colspan="8" class="text-center text-muted py-3">No log records loaded yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: UTILITY READINGS TABLE -->
+      <div class="tab-pane fade" id="pills-admin-readings" role="tabpanel">
+        <div class="card p-3 shadow-sm">
+          <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
+            <h6 class="text-info fw-bold m-0"><i class="bi bi-lightning-charge me-1"></i>Recorded Meter Readings</h6>
+            <span id="readingsStatusBadge" class="badge bg-secondary">Loading...</span>
+          </div>
+          <div class="table-responsive" style="max-height: 500px;">
+            <table class="table table-dark table-hover table-striped small">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Area</th>
+                  <th>Meter #</th>
+                  <th>Reading</th>
+                  <th>Technician</th>
+                </tr>
+              </thead>
+              <tbody id="readingsTableBody">
+                <tr><td colspan="6" class="text-center text-muted py-3">No reading records loaded yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: OVERTIME LOGS TABLE -->
+      <div class="tab-pane fade" id="pills-admin-ot" role="tabpanel">
+        <div class="card p-3 shadow-sm">
+          <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
+            <h6 class="text-info fw-bold m-0"><i class="bi bi-clock me-1"></i>Overtime Submissions</h6>
+            <span id="otStatusBadge" class="badge bg-secondary">Loading...</span>
+          </div>
+          <div class="table-responsive" style="max-height: 500px;">
+            <table class="table table-dark table-hover table-striped small">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Technician</th>
+                  <th>Hours</th>
+                  <th>Type / Reason</th>
+                  <th>Location</th>
+                  <th>Work Description</th>
+                </tr>
+              </thead>
+              <tbody id="otTableBody">
+                <tr><td colspan="6" class="text-center text-muted py-3">No overtime records loaded yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    let adminModalInstance;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      adminModalInstance = new bootstrap.Modal(document.getElementById('adminLoginModal'));
+      
+      const today = new Date().toISOString().slice(0, 10);
+      const firstDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
+      document.getElementById('filterFrom').value = firstDay;
+      document.getElementById('filterTo').value = today;
+
+      checkAdminSession();
+    });
+
+    function checkAdminSession() {
+      const pin = localStorage.getItem("admin_pin");
+      if (pin) {
+        document.getElementById('adminLogoutBtn').classList.remove('d-none');
+        document.getElementById('adminContent').style.display = 'block';
+        adminModalInstance.hide();
+        loadDashboardData();
+      } else {
+        document.getElementById('adminLogoutBtn').classList.add('d-none');
+        document.getElementById('adminContent').style.display = 'none';
+        adminModalInstance.show();
+      }
+    }
+
+    async function verifyAdminLogin() {
+      const pin = document.getElementById('adminPinInput').value;
+      const alertBox = document.getElementById('adminLoginAlert');
+
+      if (!pin) {
+        alertBox.textContent = "Please enter the Admin Security PIN.";
+        alertBox.classList.remove('d-none');
+        return;
+      }
+      alertBox.classList.add('d-none');
+
+      try {
+        const url = `${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&action=adminlogin&apin=${encodeURIComponent(pin)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.ok && data.valid) {
+          localStorage.setItem("admin_pin", pin);
+          document.getElementById('adminPinInput').value = "";
+          checkAdminSession();
+        } else {
+          alertBox.textContent = "Invalid Admin PIN. Please try again.";
+          alertBox.classList.remove('d-none');
+        }
+      } catch (err) {
+        alertBox.textContent = "Server connection error.";
+        alertBox.classList.remove('d-none');
+      }
+    }
+
+    function adminLogout() {
+      localStorage.removeItem("admin_pin");
+      checkAdminSession();
+    }
+
+    async function loadDashboardData() {
+      const apin = localStorage.getItem("admin_pin");
+      const from = document.getElementById('filterFrom').value;
+      const to = document.getElementById('filterTo').value;
+
+      if (!apin) return;
+
+      // Fetch Job Logs
+      try {
+        const url = `${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&apin=${encodeURIComponent(apin)}&from=${from}&to=${to}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.ok && data.rows) {
+          renderLogsTable(data.rows);
+          document.getElementById('statLogsCount').textContent = data.rows.length;
+          document.getElementById('statPendingCount').textContent = data.rows.filter(r => r.status === 'Pending' || r.status === 'On Hold').length;
+        }
+      } catch (e) {
+        console.error("Error fetching logs", e);
+      }
+
+      // Fetch Utility Readings
+      try {
+        const url = `${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&action=readings&apin=${encodeURIComponent(apin)}&from=${from}&to=${to}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.ok && data.rows) {
+          renderReadingsTable(data.rows);
+          document.getElementById('statReadingsCount').textContent = data.rows.length;
+        }
+      } catch (e) {
+        console.error("Error fetching readings", e);
+      }
+
+      // Fetch Overtime
+      try {
+        const url = `${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&action=overtime&apin=${encodeURIComponent(apin)}&from=${from}&to=${to}`;
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (data.ok && data.rows) {
+          renderOtTable(data.rows);
+        }
+      } catch (e) {
+        console.error("Error fetching overtime", e);
+      }
+    }
+
+    function renderLogsTable(rows) {
+      const tbody = document.getElementById('logsTableBody');
+      document.getElementById('logsStatusBadge').textContent = `${rows.length} Total`;
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-3">No job logs found for date range.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map(r => `
+        <tr>
+          <td>${r.logDate || ''}</td>
+          <td><span class="badge bg-secondary">${r.shift || ''}</span></td>
+          <td>${r.wo || '-'}</td>
+          <td><strong>${r.location || ''}</strong></td>
+          <td>${r.technician || ''}</td>
+          <td>${r.complaint || ''}</td>
+          <td><span class="badge ${r.status === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${r.status || 'Pending'}</span></td>
+          <td><small class="text-muted">${r.action || '-'}</small></td>
+        </tr>
+      `).join('');
+    }
+
+    function renderReadingsTable(rows) {
+      const tbody = document.getElementById('readingsTableBody');
+      document.getElementById('readingsStatusBadge').textContent = `${rows.length} Total`;
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No readings found for date range.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map(r => `
+        <tr>
+          <td>${r.date || ''}</td>
+          <td><span class="badge ${r.type === 'Electricity' ? 'bg-warning text-dark' : 'bg-info text-dark'}">${r.type || ''}</span></td>
+          <td>${r.area || ''}</td>
+          <td>${r.meter || ''}</td>
+          <td class="fw-bold text-info">${r.reading || ''}</td>
+          <td>${r.technician || ''}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderOtTable(rows) {
+      const tbody = document.getElementById('otTableBody');
+      document.getElementById('otStatusBadge').textContent = `${rows.length} Total`;
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No overtime submissions found for date range.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = rows.map(r => `
+        <tr>
+          <td>${r.otDate || ''}</td>
+          <td><strong>${r.technician || ''}</strong></td>
+          <td><span class="badge bg-primary">${r.from || ''} - ${r.to || ''}</span></td>
+          <td>${r.type || ''}</td>
+          <td>${r.location || ''}</td>
+          <td>${r.work || ''}</td>
+        </tr>
+      `).join('');
+    }
+  </script>
+</body>
+</html>
