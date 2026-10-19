@@ -84,8 +84,8 @@
       <a class="navbar-brand d-flex align-items-center gap-2" href="#">
         <i class="bi bi-shield-check text-warning fs-4"></i>
         <div>
-          <div class="fw-bold fs-6 lh-1">ARENCO Real Estate</div>
-          <small class="text-muted" style="font-size:0.75rem;">Admin & Management Portal</small>
+          <div class="fw-bold fs-6 lh-1">ARENCO Real Estate Co LLC</div>
+          <small class="text-muted" style="font-size:0.75rem;">GST Facility Management & Operations</small>
         </div>
       </a>
       <div class="d-flex align-items-center gap-2">
@@ -136,26 +136,26 @@
       <div class="row g-2 align-items-center">
         <div class="col-md-3 col-6">
           <label class="form-label small mb-1">From Date</label>
-          <input type="date" id="filterFrom" class="form-control form-control-sm">
+          <input type="date" id="filterFrom" class="form-control form-control-sm" onchange="loadDashboardData()">
         </div>
         <div class="col-md-3 col-6">
           <label class="form-label small mb-1">To Date</label>
-          <input type="date" id="filterTo" class="form-control form-control-sm">
+          <input type="date" id="filterTo" class="form-control form-control-sm" onchange="loadDashboardData()">
         </div>
         <div class="col-md-3 col-6 d-flex gap-2 mt-md-4">
           <button class="btn btn-accent btn-sm w-100" onclick="loadDashboardData()">
-            <i class="bi bi-arrow-clockwise me-1"></i>Filter / Refresh
+            <i class="bi bi-arrow-clockwise me-1"></i>Refresh Range
           </button>
         </div>
         <div class="col-md-3 col-6 d-flex gap-2 mt-md-4">
           <div class="dropdown w-100">
             <button class="btn btn-outline-success btn-sm dropdown-toggle w-100 fw-semibold" type="button" data-bs-toggle="dropdown">
-              <i class="bi bi-download me-1"></i>Export CSV
+              <i class="bi bi-file-earmark-excel me-1"></i>Export Template Report
             </button>
             <ul class="dropdown-menu dropdown-menu-dark w-100">
-              <li><a class="dropdown-item small" href="#" onclick="exportLogsCSV()"><i class="bi bi-file-earmark-excel me-2 text-success"></i>Job Logs CSV</a></li>
-              <li><a class="dropdown-item small" href="#" onclick="exportReadingsCSV()"><i class="bi bi-file-earmark-excel me-2 text-info"></i>Utility Readings CSV</a></li>
-              <li><a class="dropdown-item small" href="#" onclick="exportOtCSV()"><i class="bi bi-file-earmark-excel me-2 text-warning"></i>Overtime Logs CSV</a></li>
+              <li><a class="dropdown-item small" href="#" onclick="exportTemplateReport('jobs')"><i class="bi bi-journal-text me-2 text-success"></i>Daily Work Order Log (.xlsx)</a></li>
+              <li><a class="dropdown-item small" href="#" onclick="exportTemplateReport('utilities')"><i class="bi bi-lightning-charge me-2 text-info"></i>Utility Meter Log (.xlsx)</a></li>
+              <li><a class="dropdown-item small" href="#" onclick="exportTemplateReport('overtime')"><i class="bi bi-clock-history me-2 text-warning"></i>Overtime Timesheet (.xlsx)</a></li>
             </ul>
           </div>
         </div>
@@ -166,7 +166,7 @@
     <div class="row g-2 mb-3">
       <div class="col-3">
         <div class="card p-2 text-center stat-card">
-          <small class="text-muted d-block">Total Logs</small>
+          <small class="text-muted d-block">Total Jobs</small>
           <span id="statLogsCount" class="fw-bold fs-4 text-info">0</span>
         </div>
       </div>
@@ -222,22 +222,23 @@
         <div class="card p-3 shadow-sm">
           <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
             <h6 class="text-info fw-bold m-0"><i class="bi bi-person-check me-1"></i>Technician Activity & Output Breakdown</h6>
-            <span id="perfStatusBadge" class="badge bg-secondary">Summary</span>
+            <span id="perfRangeLabel" class="badge bg-secondary">Selected Period</span>
           </div>
           <div class="table-responsive" style="max-height: 500px;">
             <table class="table table-dark table-hover table-striped small align-middle">
               <thead>
                 <tr>
-                  <th>Technician</th>
+                  <th>Technician Name</th>
                   <th class="text-center">Total Jobs</th>
                   <th class="text-center">Completed</th>
                   <th class="text-center">Pending</th>
-                  <th class="text-center">Meter Readings</th>
-                  <th class="text-center">Overtime Entries</th>
+                  <th class="text-center">Utility Logs</th>
+                  <th class="text-center">OT Entries</th>
+                  <th class="text-center">Completion Rate</th>
                 </tr>
               </thead>
               <tbody id="perfTableBody">
-                <tr><td colspan="6" class="text-center text-muted py-3">Loading performance breakdown...</td></tr>
+                <tr><td colspan="7" class="text-center text-muted py-3">Loading performance data...</td></tr>
               </tbody>
             </table>
           </div>
@@ -330,7 +331,8 @@
     </div>
   </div>
 
-  <!-- Scripts -->
+  <!-- Excel Template Processing Library -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx-populate@1.21.0/browser/xlsx-populate.min.js"></script>
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
@@ -404,7 +406,9 @@
 
       if (!apin) return;
 
-      // Fetch Job Logs
+      document.getElementById('perfRangeLabel').textContent = `${from} to ${to}`;
+
+      // 1. Fetch Job Logs
       try {
         const url = `${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&apin=${encodeURIComponent(apin)}&from=${from}&to=${to}`;
         const res = await fetch(url);
@@ -422,7 +426,7 @@
         console.error("Error fetching logs", e);
       }
 
-      // Fetch Utility Readings
+      // 2. Fetch Utility Readings
       try {
         const url = `${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&action=readings&apin=${encodeURIComponent(apin)}&from=${from}&to=${to}`;
         const res = await fetch(url);
@@ -437,7 +441,7 @@
         console.error("Error fetching readings", e);
       }
 
-      // Fetch Overtime
+      // 3. Fetch Overtime
       try {
         const url = `${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&action=overtime&apin=${encodeURIComponent(apin)}&from=${from}&to=${to}`;
         const res = await fetch(url);
@@ -484,12 +488,13 @@
 
       const techList = Object.keys(techStats);
       if (!techList.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No technician activity found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">No technician activity found for selected date range.</td></tr>';
         return;
       }
 
       tbody.innerHTML = techList.map(t => {
         const s = techStats[t];
+        const rate = s.jobs > 0 ? Math.round((s.completed / s.jobs) * 100) : 0;
         return `
           <tr>
             <td><strong>${t}</strong></td>
@@ -498,6 +503,11 @@
             <td class="text-center"><span class="badge bg-warning text-dark">${s.pending}</span></td>
             <td class="text-center"><span class="badge bg-info text-dark">${s.readings}</span></td>
             <td class="text-center"><span class="badge bg-primary">${s.ot}</span></td>
+            <td class="text-center">
+              <div class="progress" style="height: 16px; min-width: 80px;">
+                <div class="progress-bar ${rate >= 80 ? 'bg-success' : rate >= 50 ? 'bg-warning' : 'bg-danger'}" role="progressbar" style="width: ${rate}%;" aria-valuenow="${rate}" aria-valuemin="0" aria-valuemax="100">${rate}%</div>
+              </div>
+            </td>
           </tr>
         `;
       }).join('');
@@ -562,49 +572,106 @@
       `).join('');
     }
 
-    // CSV Download Helpers
-    function downloadCSV(filename, csvContent) {
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    // Exact Template Export Engine using XlsxPopulate
+    async function exportTemplateReport(type) {
+      const fromDate = document.getElementById('filterFrom').value;
+      const toDate = document.getElementById('filterTo').value;
+
+      try {
+        if (type === 'jobs') {
+          if (!fetchedLogs.length) { alert("No job logs found in selected date range."); return; }
+          const resp = await fetch('Log Template.xlsx');
+          const buffer = await resp.arrayBuffer();
+          const workbook = await XlsxPopulate.fromDataAsync(buffer);
+          const sheet = workbook.sheet('Daily Technician Log');
+
+          sheet.cell('D3').value(fromDate === toDate ? fromDate : `${fromDate} to ${toDate}`);
+          sheet.cell('F3').value(CONFIG.SUPERVISOR || "Ishan Madhushanka");
+
+          fetchedLogs.forEach((r, idx) => {
+            const row = 8 + idx;
+            sheet.cell(`B${row}`).value(r.wo || '');
+            sheet.cell(`C${row}`).value(r.location || '');
+            sheet.cell(`D${row}`).value(r.complaint || '');
+            sheet.cell(`E${row}`).value(r.technician || '');
+            sheet.cell(`F${row}`).value(r.action || '');
+            sheet.cell(`G${row}`).value(r.category || '');
+            sheet.cell(`H${row}`).value(r.priority || '');
+            sheet.cell(`I${row}`).value(r.received || '');
+            sheet.cell(`J${row}`).value(r.start || '');
+            sheet.cell(`K${row}`).value(r.finish || '');
+            sheet.cell(`M${row}`).value(r.materials || '');
+            sheet.cell(`N${row}`).value(r.status || '');
+            sheet.cell(`O${row}`).value(r.pending || '');
+          });
+
+          const outBuffer = await workbook.outputAsync();
+          downloadBlob(new Blob([outBuffer]), `Technician_Daily_Log_${fromDate}_to_${toDate}.xlsx`);
+        }
+
+        else if (type === 'utilities') {
+          if (!fetchedReadings.length) { alert("No utility readings found in selected date range."); return; }
+          const resp = await fetch('Utility_Report Template.xlsx');
+          const buffer = await resp.arrayBuffer();
+          const workbook = await XlsxPopulate.fromDataAsync(buffer);
+
+          const summarySheet = workbook.sheet('Summary');
+          summarySheet.cell('A2').value(`Consumption summary per meter  |  ${fromDate} to ${toDate}`);
+
+          const dailySheet = workbook.sheet('Daily Readings');
+          dailySheet.cell('A2').value(`Daily readings and consumption  |  ${fromDate} to ${toDate}`);
+
+          fetchedReadings.forEach((r, idx) => {
+            const row = 5 + idx;
+            dailySheet.cell(`A${row}`).value(r.date || '');
+            dailySheet.cell(`B${row}`).value(r.type || '');
+            dailySheet.cell(`C${row}`).value(r.area || '');
+            dailySheet.cell(`D${row}`).value(r.meter || '');
+            dailySheet.cell(`E${row}`).value(r.account || '');
+            dailySheet.cell(`F${row}`).value(parseFloat(r.reading) || r.reading);
+            dailySheet.cell(`K${row}`).value(r.technician || '');
+          });
+
+          const outBuffer = await workbook.outputAsync();
+          downloadBlob(new Blob([outBuffer]), `Utility_Readings_Report_${fromDate}_to_${toDate}.xlsx`);
+        }
+
+        else if (type === 'overtime') {
+          if (!fetchedOt.length) { alert("No overtime records found in selected date range."); return; }
+          const resp = await fetch('Overtime Template.xlsx');
+          const buffer = await resp.arrayBuffer();
+          const workbook = await XlsxPopulate.fromDataAsync(buffer);
+          const sheet = workbook.sheet('Individual OT Sheet');
+
+          sheet.cell('H12').value(`Month : ${fromDate} to ${toDate}`);
+
+          fetchedOt.forEach((r, idx) => {
+            const dayNum = parseInt((r.otDate || '').split('-')[2], 10);
+            if (!isNaN(dayNum) && dayNum >= 1 && dayNum <= 31) {
+              const row = 16 + dayNum;
+              sheet.cell(`B${row}`).value(r.from || '');
+              sheet.cell(`C${row}`).value(r.to || '');
+              sheet.cell(`E${row}`).value(r.work || '');
+              sheet.cell(`H${row}`).value(`${r.technician} - ${r.location}`);
+            }
+          });
+
+          const outBuffer = await workbook.outputAsync();
+          downloadBlob(new Blob([outBuffer]), `Overtime_Report_${fromDate}_to_${toDate}.xlsx`);
+        }
+      } catch (err) {
+        console.error("Error populating Excel template:", err);
+        alert("Failed to populate template. Ensure template XLSX files exist in your site root directory.");
+      }
+    }
+
+    function downloadBlob(blob, filename) {
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-    }
-
-    function exportLogsCSV() {
-      if (!fetchedLogs.length) { alert("No log data to export."); return; }
-      const headers = ["Date", "Shift", "WO", "Location", "Technician", "Complaint", "Action", "Category", "Priority", "Status", "Pending Reason"];
-      const rows = fetchedLogs.map(r => [
-        `"${r.logDate || ''}"`, `"${r.shift || ''}"`, `"${r.wo || ''}"`, `"${r.location || ''}"`,
-        `"${r.technician || ''}"`, `"${(r.complaint || '').replace(/"/g, '""')}"`, `"${(r.action || '').replace(/"/g, '""')}"`,
-        `"${r.category || ''}"`, `"${r.priority || ''}"`, `"${r.status || ''}"`, `"${r.pending || ''}"`
-      ]);
-      const csv = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-      downloadCSV(`Job_Logs_${document.getElementById('filterFrom').value}_to_${document.getElementById('filterTo').value}.csv`, csv);
-    }
-
-    function exportReadingsCSV() {
-      if (!fetchedReadings.length) { alert("No utility reading data to export."); return; }
-      const headers = ["Date", "Technician", "Type", "Area", "Meter No", "Account No", "Reading Value"];
-      const rows = fetchedReadings.map(r => [
-        `"${r.date || ''}"`, `"${r.technician || ''}"`, `"${r.type || ''}"`, `"${r.area || ''}"`,
-        `"${r.meter || ''}"`, `"${r.account || ''}"`, `"${r.reading || ''}"`
-      ]);
-      const csv = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-      downloadCSV(`Utility_Readings_${document.getElementById('filterFrom').value}_to_${document.getElementById('filterTo').value}.csv`, csv);
-    }
-
-    function exportOtCSV() {
-      if (!fetchedOt.length) { alert("No overtime data to export."); return; }
-      const headers = ["Date", "Technician", "From Time", "To Time", "Type", "Location", "Work Description"];
-      const rows = fetchedOt.map(r => [
-        `"${r.otDate || ''}"`, `"${r.technician || ''}"`, `"${r.from || ''}"`, `"${r.to || ''}"`,
-        `"${r.type || ''}"`, `"${r.location || ''}"`, `"${(r.work || '').replace(/"/g, '""')}"`
-      ]);
-      const csv = [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-      downloadCSV(`Overtime_Logs_${document.getElementById('filterFrom').value}_to_${document.getElementById('filterTo').value}.csv`, csv);
     }
   </script>
 </body>
