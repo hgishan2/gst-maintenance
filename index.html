@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en"><head>
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("techlog.theme")||"dark"}catch(e){document.documentElement.dataset.theme="dark"}</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#16324F">
+<link rel="manifest" href="manifest.json"><link rel="icon" href="icon.svg">
+<title>Technician Log</title>
+<style>
+:root{color-scheme:light;--ink:#0F2234;--steel:#24618B;--brass:#C8963E;--brass-d:#9A6F22;--bg:#F2F5F8;--panel:#fff;--line:#E1E6EB;--txt:#14212E;--mut:#5E7083;--ok:#1F8A5B;--warn:#C77D0A;--bad:#B83A2E}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}html,body{margin:0}
+body{font:16px/1.45 system-ui,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);padding-bottom:104px;font-variant-numeric:tabular-nums}
+header{background:var(--ink);color:#fff;padding:calc(env(safe-area-inset-top,0px) + 14px) 18px 16px;border-bottom:3px solid var(--brass)}
+.top{display:flex;justify-content:space-between;align-items:flex-start}
+.plate{font-size:34px;font-weight:800;letter-spacing:.06em;line-height:1}
+.sub{font-size:13px;color:#9DB2C6;margin-top:6px}
+.pill{font-size:12px;font-weight:600;padding:4px 11px;border-radius:99px;background:#ffffff1f;color:#dbe6f0;margin-left:4px}
+.pill.on{background:#1F8A5B;color:#fff}.pill.off{background:var(--brass);color:var(--ink)}
+.stats{display:flex;gap:26px;margin-top:16px}
+.stats b{display:block;font-size:24px;font-weight:700;line-height:1.1}.stats span{font-size:12px;color:#9DB2C6}
+main{padding:14px;max-width:640px;margin:auto}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;margin-bottom:14px;overflow:hidden}
+.panel>h2{font-size:15px;font-weight:700;margin:0;padding:14px 16px 4px}
+.panel .in{padding:4px 16px 16px}
+label{display:block;font-size:13px;font-weight:600;color:var(--mut);margin:12px 0 5px}
+input,select,textarea{width:100%;font:inherit;padding:12px;border:1.5px solid var(--line);border-radius:10px;background:#FAFBFC;color:var(--txt);min-height:48px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--steel);background:#fff;box-shadow:0 0 0 3px #24618B22}
+input[readonly]{background:#EAF0F5;font-weight:700;letter-spacing:.04em;color:var(--ink)}
+textarea{min-height:84px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:0 18px;min-height:52px;background:var(--ink);color:#fff;cursor:pointer}
+button:active{transform:scale(.98)}button:focus-visible{outline:3px solid var(--steel);outline-offset:2px}
+button.sec{background:#E6ECF2;color:var(--ink)}button.danger{background:#FBE9E6;color:var(--bad)}button.gold{background:var(--brass);color:var(--ink)}button:disabled{opacity:.55}
+.bar{position:fixed;left:0;right:0;bottom:0;background:#ffffffee;backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:10px 14px calc(env(safe-area-inset-bottom,0px) + 10px);display:flex;gap:10px;z-index:6}
+.bar button{flex:1}.bar .sec{flex:0 0 34%}
+.item{display:block;padding:14px 16px 14px 20px;border-top:1px solid var(--line);position:relative;cursor:pointer}
+.item:first-child{border-top:0}
+.item::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--line)}
+.item[data-st="Completed"]::before{background:var(--ok)}.item[data-st="Pending"]::before,.item[data-st="On Hold"]::before{background:var(--warn)}.item[data-st="In Progress"]::before{background:var(--steel)}
+.item .t{display:flex;justify-content:space-between;gap:10px;font-weight:700}
+.item .d{color:var(--txt);margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.item .s{font-size:13px;color:var(--mut);margin-top:6px;display:flex;justify-content:space-between;gap:8px}
+.chip{font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;background:#E6ECF2;color:var(--ink);white-space:nowrap}
+.item[data-st="Completed"] .chip{background:#DDF3E8;color:#14633F}.item[data-st="Pending"] .chip,.item[data-st="On Hold"] .chip{background:#FCEBCB;color:#8A5300}.item[data-st="In Progress"] .chip{background:#DCEAF5;color:#17496B}
+.item .s span:last-child{white-space:nowrap}.synced{color:var(--ok);font-weight:600}.unsynced{color:var(--warn);font-weight:600}
+#form{position:fixed;inset:0;background:var(--bg);overflow:auto;z-index:10;display:none;padding-bottom:110px}
+#form.show{display:block;animation:up .22s ease-out}@keyframes up{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+#form header{position:sticky;top:0;z-index:2;display:flex;justify-content:space-between;align-items:center;padding-bottom:12px}
+#form header h1{font-size:19px;margin:0}#form header button{min-height:40px;padding:0 14px}
+.err{border-color:var(--bad)!important;background:#FFF6F5!important}
+#toast{position:fixed;left:14px;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 86px);background:var(--ink);color:#fff;padding:13px 16px;border-radius:12px;z-index:20;display:none;font-weight:600;border-left:4px solid var(--brass)}
+.empty{text-align:center;color:var(--mut);padding:34px 20px}.empty b{display:block;color:var(--txt);font-size:17px;margin-bottom:4px}
+.note{font-size:13px;color:var(--mut);margin-top:8px}
+@media (prefers-reduced-motion:reduce){#form.show{animation:none}button:active{transform:none}}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.ch{min-height:42px;padding:0 14px;border-radius:99px;background:#E6ECF2;color:var(--ink);font-weight:600;font-size:15px}
+.ch.on{background:var(--ink);color:#fff}.ch.sm{min-height:34px;font-size:13px;padding:0 12px;background:transparent;border:1.5px solid var(--line)}.lbl{font-size:12px;color:var(--mut);align-self:center}
+.ch.on[data-v="Completed"]{background:var(--ok)}.ch.on[data-v="Pending"],.ch.on[data-v="On Hold"],.ch.on[data-v="High"]{background:var(--warn)}.ch.on[data-v="In Progress"]{background:var(--steel)}.ch.on[data-v="Emergency"]{background:var(--bad)}
+.nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:#fffffff2;backdrop-filter:blur(10px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px);z-index:6}
+.nav button{flex:1;background:none;color:var(--mut);min-height:62px;border-radius:0;font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-top:3px solid transparent}
+.nav button i{font-style:normal;font-size:20px}.nav button.on{color:var(--ink);border-top-color:var(--brass)}
+.fab{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 78px);z-index:7;background:var(--brass);color:var(--ink);box-shadow:0 6px 18px #0F223455;border-radius:99px;padding:0 22px;min-height:52px}
+.sync{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;border-radius:12px;margin-bottom:14px;font-weight:600;font-size:14px}
+.sync.ok{background:#DDF3E8;color:#14633F}.sync.warn{background:#FCEBCB;color:#8A5300}.sync button{flex:none;min-height:40px;padding:0 14px;background:var(--ink);color:#fff;font-size:14px}
+body{padding-bottom:150px}
+html[data-theme="dark"]{color-scheme:dark;--bg:#0B1620;--panel:#132230;--line:#243A4D;--txt:#E8EFF6;--mut:#8EA4B8}
+html[data-theme="dark"] input,html[data-theme="dark"] select,html[data-theme="dark"] textarea,html[data-theme="dark"] input:focus,html[data-theme="dark"] select:focus,html[data-theme="dark"] textarea:focus{background:#0E1B27;color:var(--txt)}
+html[data-theme="dark"] input[readonly]{background:#1A2E3F;color:#fff}
+html[data-theme="dark"] button.sec,html[data-theme="dark"] .chip,html[data-theme="dark"] .ch{background:#1E3447;color:#E8EFF6}
+html[data-theme="dark"] .ch.sm{background:transparent}
+html[data-theme="dark"] .ch.on{background:var(--steel);color:#fff}
+html[data-theme="dark"] .nav,html[data-theme="dark"] .bar{background:#0E1B27f2}
+html[data-theme="dark"] .nav button.on{color:#fff}
+html[data-theme="dark"] button.danger{background:#3A1C19}
+html[data-theme="dark"] .err{background:#2A1514!important}
+html[data-theme="dark"] .empty b{color:var(--txt)}
+html[data-theme="dark"] .item[data-st="Completed"] .chip{background:#123B2A;color:#7FE0B0}
+html[data-theme="dark"] .item[data-st="Pending"] .chip,html[data-theme="dark"] .item[data-st="On Hold"] .chip{background:#47340F;color:#F5C56B}
+html[data-theme="dark"] .item[data-st="In Progress"] .chip{background:#143A55;color:#8CC4EE}
+html[data-theme="dark"] .sync.ok{background:#123B2A;color:#7FE0B0}
+html[data-theme="dark"] .sync.warn{background:#47340F;color:#F5C56B}
+html[data-theme="dark"] .mini{min-height:38px!important;padding:0 14px;font-size:14px;margin-right:8px}
+html[data-theme="dark"] #who{margin-top:4px}
+html[data-theme="dark"] #who a{text-decoration:underline;cursor:pointer}
+html[data-theme="dark"] .lerr{color:var(--bad);font-weight:600}
+html[data-theme="dark"] .ch.on[data-v="Completed"]{background:var(--ok)}html[data-theme="dark"] .ch.on[data-v="Pending"],html[data-theme="dark"] .ch.on[data-v="On Hold"],html[data-theme="dark"] .ch.on[data-v="High"]{background:var(--warn)}html[data-theme="dark"] .ch.on[data-v="In Progress"]{background:var(--steel)}html[data-theme="dark"] .ch.on[data-v="Emergency"]{background:var(--bad)}
+
+</style></head><body>
+<header>
+  <div class="top"><div><div class="plate" id="plate">GST1</div><div class="sub" id="subT">Daily maintenance log</div><div class="sub" id="who"></div></div>
+  <div><span class="pill" id="net">…</span><span class="pill" id="pend"></span><button class="pill" id="themeBtn" style="border:0;min-height:0;cursor:pointer">☀️</button></div></div>
+  <div class="stats"><div><b id="sJobs">0</b><span id="lJobs">jobs today</span></div><div><b id="sDone">0</b><span id="lDone">completed</span></div><div><b id="sSync">0</b><span>waiting to sync</span></div></div>
+</header>
+<main>
+  <div class="sync ok" id="syncBar"><span id="syncMsg"></span><button id="syncBtn">⟳ Sync now</button></div>
+  <div class="panel" id="openList" style="display:none"></div>
+  <div class="panel" id="detPanel"><h2>Log details</h2><div class="in">
+    <input id="d_building" readonly hidden>
+    <div class="row"><div><label>Log date</label><input id="d_logDate" type="date"></div><div><label>Supervisor</label><input id="d_supervisor" autocomplete="off"></div></div>
+    <label>My name (technician)</label><select id="d_technician"></select>
+  </div></div>
+  <div class="panel" id="utPanel" style="display:none"></div>
+  <div class="panel" id="list"></div>
+</main>
+<nav class="nav"><button id="tabLog" class="on"><i>📋</i>Daily log</button><button id="tabOt"><i>⏱️</i>Overtime</button><button id="tabUt"><i>💧</i>Utilities</button></nav>
+<button class="fab" id="addBtn">＋ New job</button>
+<div id="toast"></div>
+
+<div id="form"><header><h1 id="fTitle">New job</h1><button class="sec" id="fClose">Close</button></header>
+<main>
+  <div class="panel"><h2>The job</h2><div class="in">
+    <label>Location / Apt No. *</label><input id="f_location" autocomplete="off">
+    <label>Complaint / Job description *</label><textarea id="f_complaint" spellcheck="true" autocapitalize="sentences" autocorrect="on"></textarea>
+    <div class="row"><div><label>Category</label><select id="f_category"></select></div><div><label>Priority</label><select id="f_priority"></select></div></div>
+  </div></div>
+  <div class="panel"><h2>Work done</h2><div class="in">
+    <label>Technician *</label><select id="f_technician"></select>
+    <label>Action taken</label><textarea id="f_action" spellcheck="true" autocapitalize="sentences" autocorrect="on"></textarea>
+    <label>Materials used / Qty</label><input id="f_materials" autocomplete="off">
+  </div></div>
+  <div class="panel"><h2>Timing</h2><div class="in">
+    <div class="row3"><div><label>Received</label><input id="f_received" type="time"></div><div><label>Start</label><input id="f_start" type="time"></div><div><label>Finish</label><input id="f_finish" type="time"></div></div>
+    <div class="note" id="taken"></div>
+  </div></div>
+  <div class="panel"><h2>Status</h2><div class="in">
+    <label>Job status *</label><select id="f_status"></select>
+    <div id="pendWrap"><label>Pending reason / Follow-up</label><textarea id="f_pending" spellcheck="true" autocapitalize="sentences" autocorrect="on"></textarea></div>
+    <label>Remarks</label><textarea id="f_remarks" spellcheck="true" autocapitalize="sentences" autocorrect="on"></textarea>
+  </div></div>
+</main>
+<div class="bar"><button class="danger" id="fDel" style="flex:0 0 auto">Delete</button><button class="gold" id="fSave">Save job</button></div>
+</div>
+
+<div id="otForm" style="position:fixed;inset:0;background:var(--bg);overflow:auto;z-index:11;display:none;padding-bottom:110px"><header style="display:flex;justify-content:space-between;align-items:center"><h1 id="oTitle" style="font-size:19px;margin:0">New overtime</h1><button class="sec" id="oClose" style="min-height:40px;padding:0 14px">Close</button></header>
+<main><div class="panel"><h2>Overtime details</h2><div class="in">
+<label>Technician *</label><select id="o_technician"></select>
+<label>Date *</label><input id="o_otDate" type="date">
+<div class="row"><div><label>From *</label><input id="o_from" type="time"></div><div><label>To *</label><input id="o_to" type="time"></div></div>
+<div class="note" id="oTaken"></div>
+<label>Overtime type *</label><select id="o_type"></select>
+<label>Apartment / Area *</label><input id="o_location" autocomplete="off">
+<label>Complaint attended / Work done *</label><textarea id="o_work" spellcheck="true" autocapitalize="sentences" autocorrect="on"></textarea>
+</div></div></main>
+<div class="bar"><button class="danger" id="oDel" style="flex:0 0 auto">Delete</button><button class="gold" id="oSave">Save overtime</button></div></div>
+
+<div id="utForm" style="position:fixed;inset:0;background:var(--bg);overflow:auto;z-index:11;display:none;padding-bottom:110px"><header style="display:flex;justify-content:space-between;align-items:center"><h1 id="uTitle" style="font-size:19px;margin:0">New reading</h1><button class="sec" id="uClose" style="min-height:40px;padding:0 14px">Close</button></header>
+<main><div class="panel"><h2>Meter reading</h2><div class="in">
+<label>Technician *</label><select id="u_technician"></select>
+<label>Date *</label><input id="u_date" type="date">
+<label>Type *</label><select id="u_type"><option>Electricity</option><option>Water</option></select>
+<label>Meter *</label><select id="u_meter"></select>
+<div class="note" id="uInfo"></div>
+<label>Reading *</label><input id="u_reading" type="text" inputmode="decimal" autocomplete="off" placeholder="e.g. 12345.6">
+</div></div></main>
+<div class="bar"><button class="danger" id="uDel" style="flex:0 0 auto">Delete</button><button class="gold" id="uSave">Save reading</button></div></div>
+<div id="login" style="position:fixed;inset:0;background:var(--bg);z-index:30;display:none;overflow:auto"><header><div class="plate" style="font-size:26px">GST1</div><div class="sub">Sign in to continue</div></header>
+<main><div class="panel"><h2>Who are you?</h2><div class="in"><label>Name</label><select id="l_name"></select><label>PIN</label><input id="l_pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off">
+<div class="note lerr" id="l_msg"></div><div style="margin-top:14px"><button class="gold" id="l_go" style="width:100%">Sign in</button></div></div></div></main></div>
+<script src="config.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const K_O="techlog.ot.v1";const K_E="techlog.entries.v1",K_D="techlog.defaults.v1";
+const load=(k,f)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):f}catch(e){return f}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){toast("Storage full or blocked!")}};
+const today=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,9);
+let ot=load(K_O,[]),mode="log",otEd=null;let entries=load(K_E,[]), def=Object.assign({building:"",supervisor:"",shift:"",technician:""},load(K_D,{}));
+def.logDate=today();def.building=CONFIG.BUILDING;def.supervisor=def.supervisor||CONFIG.SUPERVISOR||"Ishan Madhushanka"; let editing=null, busy=false;
+
+const fillSel=(id,arr,blank)=>{$(id).innerHTML=(blank?'<option value="">—</option>':'')+arr.map(x=>`<option>${esc(x)}</option>`).join("")};
+fillSel("f_category",CONFIG.CATEGORIES,true);fillSel("f_priority",CONFIG.PRIORITIES,true);fillSel("f_status",CONFIG.STATUSES,false);
+const K_L="techlog.lists.v1",K_ME="techlog.me.v1";let curTechs=[],needPin=false,me=load(K_ME,null),carry=null;const K_U="techlog.util.v1";let ut=load(K_U,[]),utEd=null,meters=CONFIG.METERS||[],lastMap={};
+const DEFAULT_TECHS=["Nagendra Vishwakarma", "Ajeesh Mohankumar", "Kaushar Ali", "Mehedi Hassan", "Ram Jatan", "Mohammad Jahangeer", "Ali Hassan", "Imtiyaz Kamruddin", "Madhab Charan"];
+function ensureOpt(sel,v){if(v&&![...sel.options].some(o=>o.value===v))sel.insertAdjacentHTML("beforeend",`<option>${esc(v)}</option>`)}
+function applyLists(l){
+  const T=(l.technicians&&l.technicians.length)?l.technicians:(CONFIG.TECHNICIANS&&CONFIG.TECHNICIANS.length?CONFIG.TECHNICIANS:DEFAULT_TECHS);
+  curTechs=T;needPin=!!l.pinRequired;meters=(l.meters&&l.meters.length)?l.meters:(CONFIG.METERS||[]);lastMap=l.last||{};
+  ["d_technician","f_technician","o_technician","u_technician"].forEach(id=>{
+    const el=$(id),cur=el.value||(id==="d_technician"?def.technician:"")||"";
+    fillSel(id,T,true);ensureOpt(el,cur);el.value=cur;
+  });
+  lockMe();showLogin();
+}
+async function refreshLists(){
+  if(!CONFIG.SCRIPT_URL||!navigator.onLine)return;
+  try{const j=await(await fetch(CONFIG.SCRIPT_URL+"?action=lists&key="+encodeURIComponent(CONFIG.KEY))).json();
+    if(j.ok){save(K_L,j.lists);applyLists(j.lists)}}catch(e){}
+}
+applyLists(load(K_L,{}));
+["building","logDate","supervisor","technician"].forEach(k=>{
+  $("d_"+k).value=def[k]||"";
+  $("d_"+k).addEventListener("input",()=>{def[k]=$("d_"+k).value;save(K_D,def);render()});
+});
+
+const tm=t=>{if(!t)return"";const[h,m]=t.split(":").map(Number);return((h%12)||12)+":"+String(m).padStart(2,"0")+" "+(h<12?"AM":"PM")};
+const mins=t=>{const[h,m]=t.split(":").map(Number);return h*60+m};
+function taken(s,f){if(!s||!f)return"";return(((mins(f)-mins(s))+1440)%1440/60).toFixed(2)}
+
+function render(){
+  const pend=entries.filter(e=>!e.synced).length+ot.filter(e=>!e.synced).length+ut.filter(e=>!e.synced).length;
+  $("pend").textContent=pend?pend+" to sync":"all synced";
+  $("net").textContent=navigator.onLine?"online":"offline";$("net").className="pill "+(navigator.onLine?"on":"off");
+  updSync(pend);$("openList").style.display="none";$("utPanel").style.display="none";if(mode==="ut")return renderUt(pend);if(mode==="ot")return renderOt(pend);renderOpen();
+  $("lJobs").textContent="jobs today";$("lDone").textContent="completed";
+  const list=entries.filter(e=>e.logDate===def.logDate).sort((a,b)=>a.created-b.created);
+  $("sJobs").textContent=list.length;$("sDone").textContent=list.filter(e=>e.status==="Completed").length;$("sSync").textContent=pend;
+  $("list").innerHTML=list.length?list.map(e=>`<div class="item" data-st="${esc(e.status)}" data-id="${e.id}">
+    <div class="t"><span>${esc(e.location)}</span><span class="chip">${esc(e.status)}</span></div>
+    <div class="d">${esc(e.complaint)}</div>
+    <div class="s"><span>${esc(e.category||"")}${e.priority?" · "+esc(e.priority):""}${e.start?" · "+tm(e.start):""}${e.finish?" – "+tm(e.finish):""}</span>
+      <span class="${e.synced?"synced":"unsynced"}">${e.synced?"✓ Synced":"Not synced"}</span></div></div>`).join("")
+    :`<div class="empty"><b>No jobs logged for this date</b>Tap “New job” to add the first one.</div>`;
+}
+$("list").addEventListener("click",ev=>{const c=ev.target.closest(".item");if(c)({ot:openOt,ut:openUt}[mode]||openForm)(c.dataset.id)});
+
+
+// ---- spelling auto-correct (common maintenance words; add your own in config.js CORRECTIONS) ----
+const FIX=Object.assign({
+ leakge:"leakage",leackage:"leakage",leekage:"leakage",blokage:"blockage",blocage:"blockage",blockge:"blockage",
+ replcaed:"replaced",replced:"replaced",repalced:"replaced",replacment:"replacement",repaird:"repaired",repiared:"repaired",reapired:"repaired",
+ chnaged:"changed",chaged:"changed",chagned:"changed",cheked:"checked",chcked:"checked",chekced:"checked",cleand:"cleaned",claened:"cleaned",fixd:"fixed",
+ faluty:"faulty",falty:"faulty",wroking:"working",wokring:"working",compalint:"complaint",complaing:"complaint",complient:"complaint",
+ electrcal:"electrical",electical:"electrical",eletrical:"electrical",pluming:"plumbing",plumbng:"plumbing",bulp:"bulb",swich:"switch",swtich:"switch",
+ socekt:"socket",soket:"socket",sokcet:"socket",braker:"breaker",breakar:"breaker",wirring:"wiring",wirng:"wiring",
+ tempreture:"temperature",temprature:"temperature",thermostate:"thermostat",compresser:"compressor",compresor:"compressor",
+ refrigerent:"refrigerant",refrigirant:"refrigerant",refrigrant:"refrigerant",gass:"gas",filtter:"filter",fliter:"filter",
+ vavle:"valve",valv:"valve",fawcet:"faucet",faucat:"faucet",drainge:"drainage",drainag:"drainage",cieling:"ceiling",celing:"ceiling",
+ handel:"handle",alram:"alarm",alaram:"alarm",sprinkeler:"sprinkler",sprikler:"sprinkler",extinguiser:"extinguisher",extingusher:"extinguisher",
+ maintanence:"maintenance",maintenence:"maintenance",maintainance:"maintenance",maintnance:"maintenance",
+ inspcetion:"inspection",inspecton:"inspection",instaled:"installed",intalled:"installed",installd:"installed",instalation:"installation",installtion:"installation",
+ tightend:"tightened",tigthened:"tightened",compleated:"completed",complted:"completed",completd:"completed",pendng:"pending",
+ availble:"available",avaiable:"available",becuase:"because",becasue:"because",becouse:"because",
+ tomorow:"tomorrow",tommorow:"tomorrow",tommorrow:"tomorrow",recieved:"received",receved:"received",agian:"again",teh:"the",adn:"and",wiht:"with",
+ problm:"problem",probelm:"problem",problen:"problem",requird:"required",reqired:"required",materail:"material",materal:"material",
+ presure:"pressure",pressue:"pressure",voltge:"voltage",cabel:"cable",calbe:"cable",moter:"motor",pupm:"pump",seapage:"seepage",seepege:"seepage",dampnes:"dampness"
+},CONFIG.CORRECTIONS||{});
+const TXT=["complaint","action","pending","remarks"];
+function fixWord(w){
+  const l=w.toLowerCase(); if(!Object.prototype.hasOwnProperty.call(FIX,l))return w;
+  const r=FIX[l];
+  if(w.length>1&&w===w.toUpperCase())return r.toUpperCase();
+  if(w[0]!==w[0].toLowerCase())return r[0].toUpperCase()+r.slice(1);
+  return r;
+}
+const fixText=t=>t.replace(/[A-Za-z']+/g,fixWord);
+TXT.forEach(k=>{
+  const el=$("f_"+k);
+  el.addEventListener("input",ev=>{            // fix the word just finished (after space / punctuation)
+    if(!ev.data||!/^[\s.,;:!?)]$/.test(ev.data))return;
+    const pos=el.selectionStart, m=el.value.slice(0,pos-1).match(/[A-Za-z']+$/); if(!m)return;
+    const fixed=fixWord(m[0]); if(fixed===m[0])return;
+    const start=pos-1-m[0].length;
+    el.setRangeText(fixed,start,start+m[0].length,"preserve");
+    const np=pos+fixed.length-m[0].length; el.setSelectionRange(np,np);
+  });
+  el.addEventListener("blur",()=>{const n=fixText(el.value);if(n!==el.value)el.value=n});
+});
+
+const F=["location","complaint","technician","action","category","priority","received","start","finish","materials","status","pending","remarks"];
+function openForm(id,parentId){
+  carry=parentId||null;
+  editing=id?entries.find(e=>e.id===id):null;
+  const par=carry&&entries.find(x=>x.id===carry);
+  const e=editing||(par?{technician:par.technician||def.technician,location:par.location,complaint:par.complaint,category:par.category,priority:par.priority,status:par.status==="Pending"?"In Progress":par.status}:{technician:def.technician,status:CONFIG.STATUSES[0]});
+  ensureOpt($("f_technician"),e.technician);
+  F.forEach(k=>{$("f_"+k).value=e[k]||"";$("f_"+k).classList.remove("err")});
+  const ro=!!(editing&&editing.synced);
+  F.forEach(k=>$("f_"+k).disabled=ro);
+  $("fSave").style.display=ro?"none":"";$("fDel").style.display=editing&&!ro?"":"none";
+  $("fTitle").textContent=ro?"Job (synced – read only)":editing?"Edit job":carry?"Update open job":"New job";
+  upd();paintAll();$("form").classList.add("show");$("form").scrollTop=0;
+}
+function upd(){const t=taken($("f_start").value,$("f_finish").value);$("taken").textContent=t?"Time taken: "+t+" hrs":"";$("taken").style.color=(t&&(mins($("f_finish").value)<mins($("f_start").value)||t>10))?"var(--bad)":"";$("pendWrap").style.display=$("f_status").value==="Completed"?"none":""}
+["start","finish","status"].forEach(k=>$("f_"+k).addEventListener("input",upd));
+$("fClose").onclick=()=>$("form").classList.remove("show");
+$("addBtn").onclick=()=>({ot:openOt,ut:openUt}[mode]||openForm)(null);
+$("fSave").onclick=()=>{
+  let bad=false;["location","complaint","technician","status"].forEach(k=>{const b=!$("f_"+k).value.trim();$("f_"+k).classList.toggle("err",b);bad=bad||b});
+  if(bad){toast("Fill the required fields (*)");return}
+  const tk=taken($("f_start").value,$("f_finish").value);
+  if(tk&&(mins($("f_finish").value)<mins($("f_start").value)||tk>10)&&!confirm("Time taken works out to "+tk+" hours.\nPlease check Start and Finish (AM/PM). Save anyway?"))return;
+  const o={};F.forEach(k=>o[k]=$("f_"+k).value.trim());
+  TXT.forEach(k=>o[k]=fixText(o[k]));
+  if(o.status==="Completed")o.pending="";
+  if(editing)Object.assign(editing,o);
+  else entries.push(Object.assign({id:uid(),created:Date.now(),synced:false,parent:carry||"",building:CONFIG.BUILDING,logDate:def.logDate,supervisor:def.supervisor.trim(),shift:""},o));
+  if(o.technician){def.technician=o.technician;$("d_technician").value=o.technician;save(K_D,def)}
+  if(editing)editing.synced=false;
+  save(K_E,entries);$("form").classList.remove("show");render();toast("Saved on this phone");
+};
+$("fDel").onclick=()=>{if(editing&&confirm("Delete this job?")){entries=entries.filter(e=>e!==editing);save(K_E,entries);$("form").classList.remove("show");render()}};
+
+let tt;function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(tt);tt=setTimeout(()=>t.style.display="none",3000)}
+
+async function sync(silent){
+  const todo=entries.filter(e=>!e.synced),todoOt=ot.filter(e=>!e.synced),todoU=ut.filter(e=>!e.synced);
+  if(busy)return;
+  if(!CONFIG.SCRIPT_URL){if(!silent)toast("Sync is not set up yet (SCRIPT_URL in config.js)");return}
+  if(!todo.length&&!todoOt.length&&!todoU.length){if(!silent)toast("Everything is already synced");return}
+  if(!navigator.onLine){if(!silent)toast("No internet. Try again when online.");return}
+  busy=true;$("syncBtn").disabled=true;$("syncBtn").textContent="Syncing…";
+  try{
+    const r=await fetch(CONFIG.SCRIPT_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({key:CONFIG.KEY,entries:todo,overtime:todoOt,readings:todoU,pin:me?me.pin:""})});
+    const j=await r.json();
+    if(!j.ok)throw new Error(j.error||"server error");
+    const ok=new Set(j.saved);entries.forEach(e=>{if(ok.has(e.id))e.synced=true});save(K_E,entries);
+    const okO=new Set(j.savedOt||[]);ot.forEach(e=>{if(okO.has(e.id))e.synced=true});save(K_O,ot);
+    const okU=new Set(j.savedU||[]);ut.forEach(e=>{if(okU.has(e.id))e.synced=true});save(K_U,ut);
+    const rej=(j.rejected||[]).length;
+    if(rej){signOutNow();toast("PIN not accepted – "+rej+" item(s) not synced. Please sign in again.")}else toast("Synced "+(j.saved.length+(j.savedOt||[]).length+(j.savedU||[]).length)+" item(s) ✓");
+  }catch(err){toast("Sync failed: "+err.message+". Data is safe on your phone.")}
+  busy=false;$("syncBtn").disabled=false;$("syncBtn").textContent="⟳ Sync now";render();
+}
+$("syncBtn").onclick=()=>sync(false);
+addEventListener("online",()=>{render();sync(true);refreshLists()});addEventListener("offline",render);
+if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js").catch(()=>{});
+
+// ---- overtime ----
+const OT_TYPES=[["N","Normal overtime (N)"],["WO","Weekly off (WO)"],["PH","Public holiday (PH)"],["NS","Night shift (N. Shift)"]];
+$("o_type").innerHTML=OT_TYPES.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join("");
+function setMode(m){mode=m;[["tabLog","log"],["tabOt","ot"],["tabUt","ut"]].forEach(([id,k])=>$(id).classList.toggle("on",m===k));
+  $("detPanel").style.display=m==="log"?"":"none";
+  $("subT").textContent={log:"Daily maintenance log",ot:"Overtime log",ut:"Utility readings"}[m];
+  $("addBtn").textContent={log:"＋ New job",ot:"＋ New overtime",ut:"＋ New reading"}[m];render()}
+$("tabLog").onclick=()=>setMode("log");$("tabOt").onclick=()=>setMode("ot");$("tabUt").onclick=()=>setMode("ut");
+function renderOt(pend){
+  const mo=today().slice(0,7),mine=ot.filter(e=>e.otDate.slice(0,7)===mo).sort((a,b)=>(b.otDate+b.from).localeCompare(a.otDate+a.from));
+  const hrs=mine.reduce((s,e)=>s+Number(taken(e.from,e.to)||0),0);
+  $("lJobs").textContent="OT entries this month";$("lDone").textContent="OT hours this month";
+  $("sJobs").textContent=mine.length;$("sDone").textContent=hrs.toFixed(1);$("sSync").textContent=pend;
+  $("list").innerHTML=mine.length?mine.map(e=>`<div class="item" data-st="Completed" data-id="${e.id}">
+    <div class="t"><span>${esc(e.location)}</span><span class="chip">${esc(e.type==="NS"?"N. Shift":e.type)} · ${taken(e.from,e.to)} h</span></div>
+    <div class="d">${esc(e.work)}</div>
+    <div class="s"><span>${esc(e.otDate)} · ${tm(e.from)} – ${tm(e.to)} · ${esc(e.technician)}</span>
+      <span class="${e.synced?"synced":"unsynced"}">${e.synced?"✓ Synced":"Not synced"}</span></div></div>`).join("")
+    :`<div class="empty"><b>No overtime this month</b>Tap “New overtime” to add one.</div>`;
+}
+const OF=["technician","otDate","from","to","type","location","work"];
+function otUpd(){const t=taken($("o_from").value,$("o_to").value);$("oTaken").textContent=t?"Overtime: "+t+" hrs":"";$("oTaken").style.color=(t&&(t>12||+t===0))?"var(--bad)":""}
+["from","to"].forEach(k=>$("o_"+k).addEventListener("input",otUpd));
+function openOt(id){
+  otEd=id?ot.find(e=>e.id===id):null;const e=otEd||{otDate:today(),technician:def.technician,type:"N"},ro=!!(otEd&&otEd.synced);
+  ensureOpt($("o_technician"),e.technician);
+  OF.forEach(k=>{$("o_"+k).value=e[k]||"";$("o_"+k).classList.remove("err");$("o_"+k).disabled=ro});
+  $("oSave").style.display=ro?"none":"";$("oDel").style.display=otEd&&!ro?"":"none";
+  $("oTitle").textContent=ro?"Overtime (synced – read only)":otEd?"Edit overtime":"New overtime";
+  otUpd();paintAll();$("otForm").style.display="block";$("otForm").scrollTop=0;
+}
+$("oClose").onclick=()=>$("otForm").style.display="none";
+$("oSave").onclick=()=>{
+  let bad=false;OF.forEach(k=>{const b=!$("o_"+k).value.trim();$("o_"+k).classList.toggle("err",b);bad=bad||b});
+  if(bad){toast("Fill all the fields (*)");return}
+  const t=taken($("o_from").value,$("o_to").value);
+  if((+t===0||t>12)&&!confirm("Overtime works out to "+t+" hours.\nPlease check From and To (AM/PM). Save anyway?"))return;
+  const o={};OF.forEach(k=>o[k]=$("o_"+k).value.trim());o.work=fixText(o.work);
+  if(otEd){Object.assign(otEd,o);otEd.synced=false}else ot.push(Object.assign({id:uid(),created:Date.now(),synced:false},o));
+  def.technician=o.technician;$("d_technician").value=o.technician;save(K_D,def);
+  save(K_O,ot);$("otForm").style.display="none";render();toast("Overtime saved on this phone");
+};
+$("oDel").onclick=()=>{if(otEd&&confirm("Delete this overtime entry?")){ot=ot.filter(e=>e!==otEd);save(K_O,ot);$("otForm").style.display="none";render()}};
+
+// ---- UI helpers: tap chips, quick dates, recent places, sync banner ----
+const ICON={"AC / HVAC":"❄️","Plumbing":"🚰","Electrical":"⚡","Civil / Painting":"🎨","Fire & Life Safety":"🔥","Carpentry":"🪚","General Maintenance":"🔧","PPM":"📋","Other":"➕"};
+const CH={f_category:ICON,f_priority:null,f_status:null,o_type:null,u_type:null};
+function chipify(id,ic){
+  const s=$(id);s.style.display="none";let d=$(id+"_c");
+  if(!d){d=document.createElement("div");d.id=id+"_c";d.className="chips";s.after(d)}
+  d.innerHTML=[...s.options].filter(o=>o.value).map(o=>`<button type="button" class="ch${o.value===s.value?" on":""}" data-v="${esc(o.value)}">${ic&&ic[o.value]?ic[o.value]+" ":""}${esc(o.text)}</button>`).join("");
+  d.onclick=e=>{const b=e.target.closest(".ch");if(!b)return;const req=id==="f_status"||id==="o_type"||id==="u_type"||id==="u_meter";
+    s.value=(!req&&s.value===b.dataset.v)?"":b.dataset.v;s.dispatchEvent(new Event("input"));chipify(id,ic)};
+}
+const iso=o=>{const d=new Date();d.setDate(d.getDate()+o);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
+function dateChips(id){
+  const i=$(id);let d=$(id+"_c");
+  if(!d){d=document.createElement("div");d.id=id+"_c";d.className="chips";(i.closest(".row")||i).after(d);i.addEventListener("input",()=>dateChips(id))}
+  d.innerHTML=[["Today",0],["Yesterday",-1]].map(([t,o])=>`<button type="button" class="ch${i.value===iso(o)?" on":""}" data-o="${o}">${t}</button>`).join("");
+  d.onclick=e=>{const b=e.target.closest(".ch");if(b){i.value=iso(+b.dataset.o);i.dispatchEvent(new Event("input"))}};
+}
+function recents(id){
+  const i=$(id);let d=$(id+"_r");
+  if(!d){d=document.createElement("div");d.id=id+"_r";d.className="chips";i.after(d)}
+  const seen=[];[...entries,...ot].sort((a,b)=>b.created-a.created).forEach(e=>{const l=(e.location||"").trim();if(l&&seen.indexOf(l)<0)seen.push(l)});
+  d.innerHTML=seen.length?'<span class="lbl">Recent</span>'+seen.slice(0,6).map(l=>`<button type="button" class="ch sm" data-v="${esc(l)}">${esc(l)}</button>`).join(""):"";
+  d.onclick=e=>{const b=e.target.closest(".ch");if(b){i.value=b.dataset.v;i.dispatchEvent(new Event("input"))}};
+}
+function paintAll(){Object.keys(CH).forEach(id=>chipify(id,CH[id]));dateChips("d_logDate");dateChips("o_otDate");dateChips("u_date");recents("f_location");recents("o_location");lockMe()}
+function updSync(p){
+  $("syncBar").className="sync "+(p?"warn":"ok");
+  $("syncMsg").textContent=p?(navigator.onLine?p+" waiting to sync":p+" saved on this phone · syncs when online"):"✓ Everything is synced";
+  $("syncBtn").style.display=p&&navigator.onLine?"":"none";
+}
+paintAll();
+
+// ---- open jobs carried over, and PIN sign-in ----
+function renderOpen(){
+  const lim=iso(-30),kids=new Set(entries.map(e=>e.parent).filter(Boolean));
+  const o=entries.filter(e=>e.status!=="Completed"&&!e.hidden&&e.logDate<def.logDate&&e.logDate>=lim&&!kids.has(e.id)&&(!me||e.technician===me.name)).sort((a,b)=>a.logDate.localeCompare(b.logDate));
+  const p=$("openList");p.style.display=o.length?"":"none";
+  p.innerHTML=o.length?`<h2>Open jobs from earlier days (${o.length})</h2>`+o.map(e=>`<div class="item" data-st="${esc(e.status)}"><div class="t"><span>${esc(e.location)}</span><span class="chip">${esc(e.status)} · ${esc(e.logDate.slice(5))}</span></div><div class="d">${esc(e.complaint)}</div><div class="s"><span><button class="sec mini" data-act="carry" data-id="${e.id}">Update today</button><button class="sec mini" data-act="dismiss" data-id="${e.id}">Dismiss</button></span></div></div>`).join(""):"";
+}
+$("openList").addEventListener("click",ev=>{const b=ev.target.closest("button[data-act]");if(!b)return;
+  if(b.dataset.act==="carry")openForm(null,b.dataset.id);
+  else if(confirm("Remove this from the open jobs list?")){const e=entries.find(x=>x.id===b.dataset.id);e.hidden=true;save(K_E,entries);render()}});
+function lockMe(){
+  const w=$("who");
+  if(!me){w.innerHTML="";return}
+  ["d_technician","f_technician","o_technician","u_technician"].forEach(id=>{const el=$(id);ensureOpt(el,me.name);el.value=me.name;el.disabled=true});
+  def.technician=me.name;w.innerHTML=`Signed in: <b>${esc(me.name)}</b> · <a id="signOut">switch</a>`;
+}
+function showLogin(){
+  if(needPin&&!me){fillSel("l_name",curTechs,true);$("l_msg").textContent="";$("login").style.display="block"}else $("login").style.display="none";
+}
+function signOutNow(){me=null;save(K_ME,null);["d_technician","f_technician","o_technician","u_technician"].forEach(id=>$(id).disabled=false);$("who").innerHTML="";showLogin();render()}
+$("who").addEventListener("click",ev=>{if(ev.target.id==="signOut"&&confirm("Sign out from this phone?"))signOutNow()});
+$("l_go").onclick=async()=>{
+  const name=$("l_name").value,pin=$("l_pin").value.trim();
+  if(!name||!pin){$("l_msg").textContent="Choose your name and enter your PIN";return}
+  if(navigator.onLine&&CONFIG.SCRIPT_URL){
+    try{const j=await(await fetch(CONFIG.SCRIPT_URL+"?action=login&key="+encodeURIComponent(CONFIG.KEY)+"&name="+encodeURIComponent(name)+"&pin="+encodeURIComponent(pin))).json();
+      if(j.ok&&!j.valid){$("l_msg").textContent="Wrong PIN. Please try again.";return}}catch(e){}
+  }
+  me={name,pin};save(K_ME,me);$("l_pin").value="";lockMe();showLogin();render();
+};
+
+// ---- utility readings ----
+function lastFor(m,skip){
+  let b=lastMap[m]?{date:lastMap[m].date,reading:+lastMap[m].reading,c:0}:null;
+  ut.filter(e=>e.meter===m&&e.id!==skip).forEach(e=>{if(!b||e.date>b.date||(e.date===b.date&&e.created>=(b.c||0)))b={date:e.date,reading:+e.reading,c:e.created}});
+  return b;
+}
+function renderUt(pend){
+  const t=today(),td={};ut.filter(e=>e.date===t).forEach(e=>td[e.meter]=e);
+  const done=meters.filter(m=>td[m.meter]).length;
+  $("lJobs").textContent="readings today";$("lDone").textContent="meters still to read";
+  $("sJobs").textContent=Object.keys(td).length;$("sDone").textContent=Math.max(0,meters.length-done);$("sSync").textContent=pend;
+  $("utPanel").style.display="";
+  $("utPanel").innerHTML=`<h2>Today's readings (${done} of ${meters.length})</h2>`+meters.map(m=>{const e=td[m.meter];
+    return `<div class="item" data-st="${e?"Completed":"Pending"}" data-meter="${esc(m.meter)}"><div class="t"><span>${m.type==="Water"?"💧":"⚡"} ${esc(m.area)}</span><span class="chip">${e?esc(e.reading):"Add reading"}</span></div>
+    <div class="s"><span>${esc(m.type)} · ${esc(m.meter)}</span><span class="${e&&e.synced?"synced":"unsynced"}">${e?(e.synced?"✓ Synced":"Not synced"):""}</span></div></div>`}).join("");
+  const rec=ut.slice().sort((a,b)=>b.created-a.created).slice(0,15);
+  $("list").innerHTML=rec.length?"<h2>Recent readings</h2>"+rec.map(e=>`<div class="item" data-st="Completed" data-id="${e.id}"><div class="t"><span>${e.type==="Water"?"💧":"⚡"} ${esc(e.area)}</span><span class="chip">${esc(e.reading)}</span></div>
+    <div class="s"><span>${esc(e.date)} · ${esc(e.meter)} · ${esc(e.technician)}</span><span class="${e.synced?"synced":"unsynced"}">${e.synced?"✓ Synced":"Not synced"}</span></div></div>`).join(""):`<div class="empty"><b>No readings yet</b>Tap a meter above to add its reading.</div>`;
+}
+$("utPanel").addEventListener("click",ev=>{const c=ev.target.closest(".item");if(c)openUt(null,c.dataset.meter)});
+function showInfo(){
+  const m=meters.find(x=>x.meter===$("u_meter").value);if(!m){$("uInfo").textContent="";return}
+  const l=lastFor(m.meter,utEd&&utEd.id);
+  $("uInfo").textContent=`Meter ${m.meter} · Account ${m.account} · `+(l?`Last reading ${l.reading} on ${l.date}`:"No earlier reading");
+}
+function fillMeters(sel){
+  const s=$("u_meter"),list=meters.filter(m=>m.type===$("u_type").value);
+  s.innerHTML='<option value="">—</option>'+list.map(m=>`<option value="${esc(m.meter)}">${esc(m.area)}</option>`).join("");
+  s.value=list.some(m=>m.meter===sel)?sel:"";chipify("u_meter");showInfo();
+}
+$("u_type").addEventListener("input",()=>fillMeters(""));$("u_meter").addEventListener("input",showInfo);
+function openUt(id,meterNo){
+  utEd=id?ut.find(e=>e.id===id):null;const ro=!!(utEd&&utEd.synced),pre=meterNo&&meters.find(m=>m.meter===meterNo);
+  const e=utEd||{date:today(),technician:def.technician,type:pre?pre.type:"Electricity",meter:pre?pre.meter:"",reading:""};
+  ensureOpt($("u_technician"),e.technician);
+  $("u_technician").value=e.technician||"";$("u_date").value=e.date;$("u_type").value=e.type;fillMeters(e.meter);$("u_reading").value=e.reading||"";
+  ["u_technician","u_date","u_reading"].forEach(k=>$(k).disabled=ro);
+  $("uSave").style.display=ro?"none":"";$("uDel").style.display=utEd&&!ro?"":"none";
+  $("uTitle").textContent=ro?"Reading (synced – read only)":utEd?"Edit reading":"New reading";
+  paintAll();chipify("u_type");$("u_reading").classList.remove("err");$("utForm").style.display="block";$("utForm").scrollTop=0;
+}
+$("uClose").onclick=()=>$("utForm").style.display="none";
+$("uSave").onclick=()=>{
+  const o={technician:$("u_technician").value,date:$("u_date").value,type:$("u_type").value,meter:$("u_meter").value,reading:$("u_reading").value.trim().replace(/,/g,"")};
+  const m=meters.find(x=>x.meter===o.meter);
+  if(!o.technician||!o.date||!m||o.reading===""||isNaN(+o.reading)||+o.reading<0){$("u_reading").classList.add("err");toast("Choose the meter and enter a valid reading");return}
+  const l=lastFor(o.meter,utEd&&utEd.id);
+  if(l&&l.date<=o.date&&+o.reading<l.reading&&!confirm("This reading ("+o.reading+") is LOWER than the last one ("+l.reading+" on "+l.date+").\nMeter reset or typing mistake? Save anyway?"))return;
+  o.area=m.area;o.account=m.account;
+  if(utEd){Object.assign(utEd,o);utEd.synced=false}else ut.push(Object.assign({id:uid(),created:Date.now(),synced:false},o));
+  def.technician=o.technician;save(K_D,def);save(K_U,ut);$("utForm").style.display="none";render();toast("Reading saved on this phone");
+};
+$("uDel").onclick=()=>{if(utEd&&confirm("Delete this reading?")){ut=ut.filter(e=>e!==utEd);save(K_U,ut);$("utForm").style.display="none";render()}};
+// ---- theme ----
+function applyTheme(t){document.documentElement.dataset.theme=t;$("themeBtn").textContent=t==="dark"?"☀️":"🌙";try{localStorage.setItem("techlog.theme",t)}catch(e){}}
+$("themeBtn").onclick=()=>applyTheme(document.documentElement.dataset.theme==="dark"?"light":"dark");
+$("themeBtn").textContent=document.documentElement.dataset.theme==="dark"?"☀️":"🌙";
+$("plate").textContent=CONFIG.BUILDING;
+render();refreshLists();
+</script></body></html>

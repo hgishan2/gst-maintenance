@@ -1,0 +1,121 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Technician Log – Download Excel</title>
+<style>
+:root{color-scheme:light;--ink:#0F2234;--brass:#C8963E;--line:#E1E6EB;--mut:#5E7083}
+body{font:16px/1.45 system-ui,"Segoe UI",Roboto,sans-serif;background:#F2F5F8;color:#14212E;margin:0}
+header{background:var(--ink);color:#fff;padding:18px;border-bottom:3px solid var(--brass)}header b{font-size:28px;letter-spacing:.06em}header span{display:block;color:#9DB2C6;font-size:13px;margin-top:4px}
+.w{max-width:720px;margin:auto;padding:16px}
+.c{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px}
+label{display:inline-block;margin:0 12px 12px 0;color:var(--mut);font-size:13px;font-weight:600}
+input,select{font:inherit;padding:11px;border-radius:10px;border:1.5px solid var(--line);display:block;margin-top:5px;min-height:46px;background:#FAFBFC}
+button{background:var(--brass);color:var(--ink);border:0;font:inherit;font-weight:700;border-radius:12px;padding:0 22px;min-height:50px;cursor:pointer}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:12px 0}.tile{background:#F2F5F8;border-radius:12px;padding:12px}.tile b{font-size:26px;display:block;line-height:1.1}.tile span{font-size:12px;color:var(--mut)}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:9px 6px;text-align:right;border-top:1px solid var(--line)}th{color:var(--mut);font-weight:600;font-size:12px}th:first-child,td:first-child{text-align:left}
+button.sec{background:#E6ECF2;color:var(--ink)}.bar2{height:5px;background:#E6ECF2;border-radius:3px;margin-top:5px;min-width:70px}.bar2 i{display:block;height:100%;background:var(--brass);border-radius:3px}
+@media(max-width:600px){label{display:block;margin-right:0}input,select{width:100%}button{width:100%;margin-top:8px}.tiles{grid-template-columns:1fr 1fr}.w{padding:12px}}
+.locked .c:not(#gate){display:none!important}
+#msg{color:#B83A2E}.m{color:var(--mut);font-size:14px}
+</style></head><body class="locked"><header><b id="b">GST1</b><span>Download daily logs as Excel</span></header><div class="w">
+<div class="c" id="gate" style="margin-bottom:12px"><b>Admin sign-in</b><p class="m">Enter your admin PIN (up to 6 digits).</p>
+  <input id="apin" type="password" inputmode="numeric" maxlength="6" autocomplete="off" style="max-width:220px">
+  <div style="margin-top:10px"><button id="agoBtn">Sign in</button> <span id="amsg" style="color:#B83A2E"></span></div></div>
+
+<div class="c">
+  <label>From <input type="date" id="from"></label><label>To <input type="date" id="to"></label>
+  <label>Shift <select id="shift"><option>Day</option><option>Night</option></select></label>
+  <label>Supervisor (optional) <input id="sup" placeholder="leave empty = from logs"></label>
+  <div><button id="load">Download daily log (Excel)</button> <button id="sumBtn" class="sec">Performance dashboard</button> <button id="utBtn" style="background:#24618B;color:#fff">Download utility readings (Excel)</button> <button id="otBtn" style="background:#0F2234;color:#fff">Download overtime (Excel)</button> <span id="msg"></span></div>
+  <p class="m" id="info"></p>
+</div>
+<div class="c" id="sumCard" style="margin-top:12px;display:none"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="config.js"></script><script src="template.js"></script><script src="export.js"></script><script src="ot_template.js"></script><script src="export_ot.js"></script><script src="export_util.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+let AP=sessionStorage.getItem("techlog.apin")||"";
+const _f=window.fetch.bind(window);
+window.fetch=(u,o)=>_f(typeof u==="string"&&CONFIG.SCRIPT_URL&&u.indexOf(CONFIG.SCRIPT_URL)===0?u+"&apin="+encodeURIComponent(AP):u,o);
+async function unlock(pin){
+  AP=pin;
+  try{const j=await fetch(CONFIG.SCRIPT_URL+"?action=adminlogin&key="+encodeURIComponent(CONFIG.KEY)).then(r=>r.json());
+    if(j.ok&&j.valid){sessionStorage.setItem("techlog.apin",pin);document.body.classList.remove("locked");$("gate").style.display="none";return true}}catch(e){}
+  AP="";sessionStorage.removeItem("techlog.apin");return false;
+}
+$("agoBtn").onclick=async()=>{$("amsg").textContent="";if(!(await unlock($("apin").value.trim())))$("amsg").textContent="Wrong PIN, or cannot reach the server."};
+$("apin").addEventListener("keydown",e=>{if(e.key==="Enter")$("agoBtn").click()});
+if(AP)unlock(AP);$("b").textContent=CONFIG.BUILDING;
+const t=new Date();$("from").value=$("to").value=t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0");
+const buf=()=>{const b=atob(TEMPLATE_B64),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u.buffer};
+$("load").onclick=async()=>{
+  $("msg").textContent="";$("info").textContent="Loading…";
+  try{
+    const u=CONFIG.SCRIPT_URL+"?key="+encodeURIComponent(CONFIG.KEY)+"&from="+$("from").value+"&to="+$("to").value;
+    const j=await (await fetch(u)).json();if(!j.ok)throw new Error(j.error);
+    if(!j.rows.length){$("info").textContent="No logs found for these dates.";return}
+    const by={};j.rows.forEach(r=>{(by[r.logDate]=by[r.logDate]||[]).push(r)});
+    const days=Object.keys(by).sort().map(d=>({date:d,rows:by[d]}));
+    const out=await buildWorkbook(ExcelJS,JSZip,buf(),days,{building:CONFIG.BUILDING,shift:$("shift").value,supervisor:$("sup").value.trim()});
+    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+    const f=$("from").value,to=$("to").value;
+    a.download=`${CONFIG.BUILDING} Daily Log - ${f===to?f:f+" to "+to} - ${$("shift").value}.xlsx`;a.click();
+    $("info").textContent=`Downloaded ${j.rows.length} jobs across ${days.length} day(s), one sheet per day.`;
+  }catch(e){$("info").textContent="";$("msg").textContent="Could not load: "+e.message}
+};
+
+$("otBtn").onclick=async()=>{
+  $("msg").textContent="";$("info").textContent="Loading overtime…";
+  try{
+    const u=CONFIG.SCRIPT_URL+"?action=overtime&key="+encodeURIComponent(CONFIG.KEY)+"&from="+$("from").value+"&to="+$("to").value;
+    const j=await (await fetch(u)).json();if(!j.ok)throw new Error(j.error);
+    if(!j.rows.length){$("info").textContent="No overtime found for these dates.";return}
+    const b=atob(OT_TEMPLATE_B64),bytes=new Uint8Array(b.length);for(let i=0;i<b.length;i++)bytes[i]=b.charCodeAt(i);
+    const out=await otBuild(ExcelJS,bytes.buffer,j.rows,CONFIG.STAFF||[]);
+    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+    const f=$("from").value,to=$("to").value;a.download=`${CONFIG.BUILDING} Overtime - ${f===to?f:f+" to "+to}.xlsx`;a.click();
+    const n=new Set(j.rows.map(r=>r.technician)).size;
+    $("info").textContent=`Downloaded ${j.rows.length} overtime entries for ${n} technician(s), one sheet each.`;
+  }catch(e){$("info").textContent="";$("msg").textContent="Could not load: "+e.message}
+};
+
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+$("sumBtn").onclick=async()=>{
+  $("msg").textContent="";$("info").textContent="Loading dashboard…";
+  try{
+    const q="&key="+encodeURIComponent(CONFIG.KEY)+"&from="+$("from").value+"&to="+$("to").value;
+    const [a,b]=await Promise.all([CONFIG.SCRIPT_URL+"?x=1"+q,CONFIG.SCRIPT_URL+"?action=overtime"+q].map(u=>fetch(u).then(r=>r.json())));
+    if(!a.ok||!b.ok)throw new Error(a.error||b.error);
+    const m=x=>{const p=String(x).split(":");return p[0]*60+ +p[1]};
+    const dur=(s,f)=>(!s||!f)?null:((m(f)-m(s)+1440)%1440)/60;
+    const per={},T=n=>per[n]=per[n]||{jobs:0,done:0,hrs:0,timed:0,skip:0,ot:0};
+    a.rows.forEach(r=>{const t=T(r.technician);t.jobs++;if(r.status==="Completed")t.done++;
+      const d=dur(r.start,r.finish);if(d==null||d===0||d>12)t.skip++;else{t.hrs+=d;t.timed++}});
+    b.rows.forEach(r=>{const d=dur(r.from,r.to);if(d!=null)T(r.technician).ot+=d});
+    const names=Object.keys(per).sort((x,y)=>(per[y].hrs+per[y].ot)-(per[x].hrs+per[x].ot));
+    const S=k=>names.reduce((s,n)=>s+per[n][k],0),max=Math.max(1,...names.map(n=>per[n].hrs+per[n].ot));
+    $("sumCard").style.display="";
+    $("sumCard").innerHTML=`<b>Technician performance</b> <span class="m">${$("from").value} to ${$("to").value}</span>
+    <div class="tiles"><div class="tile"><b>${S("jobs")}</b><span>jobs logged</span></div><div class="tile"><b>${S("jobs")?Math.round(100*S("done")/S("jobs")):0}%</b><span>completed</span></div><div class="tile"><b>${S("hrs").toFixed(1)}</b><span>job hours</span></div><div class="tile"><b>${S("ot").toFixed(1)}</b><span>overtime hours</span></div></div>
+    <div style="overflow-x:auto"><table><tr><th>Technician</th><th>Jobs</th><th>Done</th><th>Job hrs</th><th>Avg / job</th><th>OT hrs</th><th>Total hrs</th></tr>${names.map(n=>{const t=per[n];return `<tr><td>${esc(n)}<div class="bar2"><i style="width:${Math.round(100*(t.hrs+t.ot)/max)}%"></i></div></td><td>${t.jobs}</td><td>${t.jobs?Math.round(100*t.done/t.jobs):0}%</td><td>${t.hrs.toFixed(1)}</td><td>${t.timed?(t.hrs/t.timed).toFixed(1):"–"}</td><td>${t.ot.toFixed(1)}</td><td><b>${(t.hrs+t.ot).toFixed(1)}</b></td></tr>`}).join("")}</table></div>
+    <p class="m">Hours come from the start and finish times technicians enter. ${S("skip")?S("skip")+" job(s) with missing or doubtful times (0 or over 12 hours) are left out of the hours.":"All jobs have usable times."}</p>`;
+    $("info").textContent="";
+  }catch(e){$("info").textContent="";$("msg").textContent="Could not load: "+e.message}
+};
+
+$("utBtn").onclick=async()=>{
+  $("msg").textContent="";$("info").textContent="Loading readings…";
+  try{
+    const k="&key="+encodeURIComponent(CONFIG.KEY),f=$("from").value,t=$("to").value;
+    const L=await fetch(CONFIG.SCRIPT_URL+"?action=lists"+k).then(r=>r.json());
+    const meters=(L.ok&&L.lists.meters&&L.lists.meters.length)?L.lists.meters:CONFIG.METERS;
+    const j=await fetch(CONFIG.SCRIPT_URL+"?action=readings"+k+"&from="+addDays(f,-45)+"&to="+t).then(r=>r.json());if(!j.ok)throw new Error(j.error);
+    const out=await utilBuild(ExcelJS,j.rows,meters,f,t,CONFIG.BUILDING);
+    if(!out){$("info").textContent="No meter readings found for these dates.";return}
+    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([out],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}));
+    a.download=`${CONFIG.BUILDING} Utility Readings - ${f===t?f:f+" to "+t}.xlsx`;a.click();
+    $("info").textContent="Downloaded the utility readings report with consumption.";
+  }catch(e){$("info").textContent="";$("msg").textContent="Could not load: "+e.message}
+};
+</script></body></html>
