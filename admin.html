@@ -873,11 +873,17 @@
 
           if (!combinedOt.length) { alert("No overtime records found."); return; }
 
-          const filteredOt = combinedOt.filter(r => {
+          // Strict Deduplication Engine
+          const uniqueMap = new Map();
+          combinedOt.forEach(r => {
             const cDate = String(r.otDate || r.date || '').split('T')[0];
-            return cDate >= fromDate && cDate <= toDate;
+            if (cDate >= fromDate && cDate <= toDate) {
+              const key = `${cDate}_${r.technician || 'Unknown'}_${r.from || ''}_${r.to || ''}`;
+              uniqueMap.set(key, { ...r, cleanDate: cDate });
+            }
           });
 
+          const filteredOt = Array.from(uniqueMap.values());
           if (!filteredOt.length) {
             alert(`No overtime records found strictly between ${fromDate} and ${toDate}.`);
             return;
@@ -918,8 +924,7 @@
 
             const dayGrouped = {};
             techEntries.forEach(entry => {
-              const cDate = String(entry.otDate || entry.date || '').split('T')[0];
-              const dayNum = parseInt(cDate.split('-')[2], 10);
+              const dayNum = parseInt(entry.cleanDate.split('-')[2], 10);
               if (!isNaN(dayNum) && dayNum >= 1 && dayNum <= 31) {
                 if (!dayGrouped[dayNum]) dayGrouped[dayNum] = [];
                 dayGrouped[dayNum].push(entry);
@@ -931,42 +936,32 @@
               const entriesForDay = dayGrouped[day] || [];
 
               if (entriesForDay.length > 0) {
-                const first = entriesForDay[0];
+                // Combine entries for the same day cleanly without row duplication bugs
+                let totalHrsN = 0, totalHrsWO = 0, totalHrsPH = 0, totalHrsShift = 0;
+                let remarks = [];
+
+                entriesForDay.forEach(e => {
+                  const hrs = Number(calculateHours(e.from, e.to)) || 0;
+                  const cat = e.otCategoryType || e.type || 'N';
+                  if (cat === 'N') totalHrsN += hrs;
+                  else if (cat === 'WO') totalHrsWO += hrs;
+                  else if (cat === 'PH') totalHrsPH += hrs;
+                  else if (cat === 'N. Shift') totalHrsShift += hrs;
+                  else totalHrsN += hrs;
+
+                  remarks.push(`${e.location || ''} - ${e.work || ''}`);
+                });
+
                 techSheet.cell(`A${baseRow}`).value(day);
-                techSheet.cell(`B${baseRow}`).value(first.from || '');
-                techSheet.cell(`C${baseRow}`).value(first.to || '');
+                techSheet.cell(`B${baseRow}`).value(entriesForDay[0].from || '');
+                techSheet.cell(`C${baseRow}`).value(entriesForDay[entriesForDay.length - 1].to || '');
 
-                const hrs = calculateHours(first.from, first.to);
-                const cat = first.otCategoryType || first.type || 'N';
+                if (totalHrsN > 0) techSheet.cell(`D${baseRow}`).value(totalHrsN);
+                if (totalHrsWO > 0) techSheet.cell(`E${baseRow}`).value(totalHrsWO);
+                if (totalHrsPH > 0) techSheet.cell(`F${baseRow}`).value(totalHrsPH);
+                if (totalHrsShift > 0) techSheet.cell(`G${baseRow}`).value(totalHrsShift);
 
-                if (cat === 'N') techSheet.cell(`D${baseRow}`).value(hrs);
-                else if (cat === 'WO') techSheet.cell(`E${baseRow}`).value(hrs);
-                else if (cat === 'PH') techSheet.cell(`F${baseRow}`).value(hrs);
-                else if (cat === 'N. Shift') techSheet.cell(`G${baseRow}`).value(hrs);
-                else techSheet.cell(`D${baseRow}`).value(hrs);
-
-                techSheet.cell(`H${baseRow}`).value(`${first.location || ''} - ${first.work || ''}`);
-
-                for (let k = 1; k < entriesForDay.length; k++) {
-                  const extra = entriesForDay[k];
-                  const insertRowIdx = baseRow + k;
-                  
-                  techSheet.row(insertRowIdx).addPageBreak();
-                  techSheet.cell(`A${insertRowIdx}`).value(day);
-                  techSheet.cell(`B${insertRowIdx}`).value(extra.from || '');
-                  techSheet.cell(`C${insertRowIdx}`).value(extra.to || '');
-
-                  const extraHrs = calculateHours(extra.from, extra.to);
-                  const extraCat = extra.otCategoryType || extra.type || 'N';
-
-                  if (extraCat === 'N') techSheet.cell(`D${insertRowIdx}`).value(extraHrs);
-                  else if (extraCat === 'WO') techSheet.cell(`E${insertRowIdx}`).value(extraHrs);
-                  else if (extraCat === 'PH') techSheet.cell(`F${insertRowIdx}`).value(extraHrs);
-                  else if (extraCat === 'N. Shift') techSheet.cell(`G${insertRowIdx}`).value(extraHrs);
-                  else techSheet.cell(`D${insertRowIdx}`).value(extraHrs);
-
-                  techSheet.cell(`H${insertRowIdx}`).value(`${extra.location || ''} - ${extra.work || ''}`);
-                }
+                techSheet.cell(`H${baseRow}`).value(remarks.join(' | '));
               }
             }
           });
