@@ -497,12 +497,15 @@
         const data = await res.json();
 
         if (data.ok && data.rows) {
-          fetchedLogs = data.rows;
-          renderLogsTable(data.rows);
-          document.getElementById('statLogsCount').textContent = data.rows.length;
-          const completed = data.rows.filter(r => r.status === 'Completed').length;
+          fetchedLogs = data.rows.map(r => ({
+            ...r,
+            technician: normalizeTechName(r.technician)
+          }));
+          renderLogsTable(fetchedLogs);
+          document.getElementById('statLogsCount').textContent = fetchedLogs.length;
+          const completed = fetchedLogs.filter(r => r.status === 'Completed').length;
           document.getElementById('statCompletedCount').textContent = completed;
-          document.getElementById('statPendingCount').textContent = data.rows.length - completed;
+          document.getElementById('statPendingCount').textContent = fetchedLogs.length - completed;
         }
       } catch (e) { console.error("Error fetching logs", e); }
 
@@ -511,9 +514,12 @@
         const res = await fetch(url);
         const data = await res.json();
         if (data.ok && data.rows) {
-          fetchedReadings = data.rows;
-          renderReadingsTable(data.rows);
-          document.getElementById('statReadingsCount').textContent = data.rows.length;
+          fetchedReadings = data.rows.map(r => ({
+            ...r,
+            technician: normalizeTechName(r.technician)
+          }));
+          renderReadingsTable(fetchedReadings);
+          document.getElementById('statReadingsCount').textContent = fetchedReadings.length;
         }
       } catch (e) { console.error("Error fetching readings", e); }
 
@@ -522,8 +528,11 @@
         const res = await fetch(url);
         const data = await res.json();
         if (data.ok && data.rows) {
-          fetchedOt = data.rows;
-          renderOtTable(data.rows);
+          fetchedOt = data.rows.map(r => ({
+            ...r,
+            technician: normalizeTechName(r.technician)
+          }));
+          renderOtTable(fetchedOt);
         }
       } catch (e) { console.error("Error fetching overtime", e); }
 
@@ -531,9 +540,20 @@
       renderAdminSchedules();
     }
 
+    // --- Strict Technician Name Normalization ---
+    function normalizeTechName(name) {
+      if (!name) return "Unknown";
+      const clean = name.replace(/\s+/g, ' ').trim().toUpperCase();
+      const match = (CONFIG.TECHNICIANS || []).find(t => t.toUpperCase() === clean || t.toUpperCase().includes(clean) || clean.includes(t.toUpperCase()));
+      return match || clean;
+    }
+
     // --- Admin Schedules Management ---
     function getAdminSchedules() {
-      return JSON.parse(localStorage.getItem("tech_schedules") || "[]");
+      return JSON.parse(localStorage.getItem("tech_schedules") || "[]").map(s => ({
+        ...s,
+        technician: normalizeTechName(s.technician)
+      }));
     }
 
     function saveAdminSchedules(schedules) {
@@ -544,7 +564,7 @@
       e.preventDefault();
       const sched = {
         id: "SCH-" + Date.now(),
-        technician: document.getElementById('adminSchedTech').value,
+        technician: normalizeTechName(document.getElementById('adminSchedTech').value),
         date: document.getElementById('adminSchedDate').value,
         location: document.getElementById('adminSchedLocation').value,
         category: document.getElementById('adminSchedCategory').value,
@@ -623,7 +643,7 @@
       });
 
       fetchedLogs.forEach(r => {
-        const t = r.technician;
+        const t = normalizeTechName(r.technician);
         if (!techStats[t]) techStats[t] = { jobs: 0, completed: 0, pending: 0, readings: 0, ot: 0 };
         techStats[t].jobs++;
         if (r.status === 'Completed') techStats[t].completed++;
@@ -631,13 +651,13 @@
       });
 
       fetchedReadings.forEach(r => {
-        const t = r.technician;
+        const t = normalizeTechName(r.technician);
         if (!techStats[t]) techStats[t] = { jobs: 0, completed: 0, pending: 0, readings: 0, ot: 0 };
         techStats[t].readings++;
       });
 
       fetchedOt.forEach(r => {
-        const t = r.technician;
+        const t = normalizeTechName(r.technician);
         if (!techStats[t]) techStats[t] = { jobs: 0, completed: 0, pending: 0, readings: 0, ot: 0 };
         techStats[t].ot++;
       });
@@ -682,7 +702,7 @@
           <td><span class="badge bg-secondary">${r.shift || ''}</span></td>
           <td>${r.wo || '-'}</td>
           <td><strong>${r.location || ''}</strong></td>
-          <td>${r.technician || ''}</td>
+          <td>${normalizeTechName(r.technician)}</td>
           <td>${r.complaint || ''}</td>
           <td><span class="badge ${r.status === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${r.status || 'Pending'}</span></td>
           <td><small class="text-muted">${r.action || '-'}</small></td>
@@ -692,7 +712,10 @@
 
     function renderReadingsTable(rows) {
       const tbody = document.getElementById('readingsTableBody');
-      const localReadings = JSON.parse(localStorage.getItem("utility_readings_local") || "[]");
+      const localReadings = JSON.parse(localStorage.getItem("utility_readings_local") || "[]").map(r => ({
+        ...r,
+        technician: normalizeTechName(r.technician)
+      }));
       const combined = [...rows, ...localReadings];
       const uniqueMap = new Map();
 
@@ -716,20 +739,23 @@
           <td>${r.area || ''}</td>
           <td>${r.meter || ''}</td>
           <td class="fw-bold text-info">${r.reading || ''}</td>
-          <td>${r.technician || ''}</td>
+          <td>${normalizeTechName(r.technician)}</td>
         </tr>
       `).join('');
     }
 
     function renderOtTable(rows) {
       const tbody = document.getElementById('otTableBody');
-      const localOt = JSON.parse(localStorage.getItem("ot_local") || "[]");
+      const localOt = JSON.parse(localStorage.getItem("ot_local") || "[]").map(r => ({
+        ...r,
+        technician: normalizeTechName(r.technician)
+      }));
       const combined = [...rows, ...localOt];
       const uniqueMap = new Map();
 
       combined.forEach(r => {
         const cDate = String(r.otDate || r.date || '').split('T')[0];
-        const key = `${cDate}_${r.technician}_${r.from}_${r.to}`;
+        const key = `${cDate}_${normalizeTechName(r.technician)}_${r.from}_${r.to}`;
         uniqueMap.set(key, { ...r, cleanDate: cDate });
       });
 
@@ -743,7 +769,7 @@
       tbody.innerHTML = displayList.map(r => `
         <tr>
           <td>${r.cleanDate || ''}</td>
-          <td><strong>${r.technician || ''}</strong></td>
+          <td><strong>${normalizeTechName(r.technician)}</strong></td>
           <td><span class="badge bg-primary">${r.from || ''} - ${r.to || ''}</span></td>
           <td>${r.type || ''}</td>
           <td>${r.location || ''}</td>
@@ -754,11 +780,8 @@
 
     // Helper lookup to resolve technician employee ID and designation
     function getTechProfile(techName) {
-      if (!techName) return { empCode: "", designation: "Technician" };
-      
-      const cleanKey = techName.replace(/\s+/g, ' ').trim().toUpperCase();
-      
-      const profiles = {
+      const normName = normalizeTechName(techName);
+      const profiles = CONFIG.TECHNICIAN_PROFILES || {
         "MEHEDI HASAN LIYAKAT ALI": { empCode: "3765", designation: "Mason/Painter" },
         "MOHAMMAD KAUSHAR ALI": { empCode: "711312", designation: "Plumber" },
         "AJEESH MOHANKUMAR GEETHA": { empCode: "712371", designation: "Painter" },
@@ -769,11 +792,7 @@
         "IMTIYAZ KAMRUDDIN": { empCode: "713520", designation: "AC Technician" }
       };
 
-      if (profiles[cleanKey]) return profiles[cleanKey];
-
-      const matchedKey = Object.keys(profiles).find(k => k.includes(cleanKey) || cleanKey.includes(k));
-      if (matchedKey) return profiles[matchedKey];
-
+      if (profiles[normName]) return profiles[normName];
       return { empCode: "N/A", designation: "Technician" };
     }
 
@@ -801,7 +820,7 @@
             sheet.cell(`B${row}`).value('');
             sheet.cell(`C${row}`).value(r.location || '');
             sheet.cell(`D${row}`).value(r.complaint || '');
-            sheet.cell(`E${row}`).value(r.technician || '');
+            sheet.cell(`E${row}`).value(normalizeTechName(r.technician));
             sheet.cell(`F${row}`).value(r.action || '');
             sheet.cell(`G${row}`).value(r.category || '');
             sheet.cell(`H${row}`).value(r.priority || '');
@@ -818,7 +837,10 @@
         }
 
         else if (type === 'utilities') {
-          const localReadings = JSON.parse(localStorage.getItem("utility_readings_local") || "[]");
+          const localReadings = JSON.parse(localStorage.getItem("utility_readings_local") || "[]").map(r => ({
+            ...r,
+            technician: normalizeTechName(r.technician)
+          }));
           const combinedReadings = [...fetchedReadings, ...localReadings];
 
           if (!combinedReadings.length) { alert("No utility readings found."); return; }
@@ -859,7 +881,7 @@
               dailySheet.cell(`D${row}`).value(r.meter || '');
               dailySheet.cell(`E${row}`).value(r.account || '');
               dailySheet.cell(`F${row}`).value(Number(r.reading) || r.reading || 0);
-              dailySheet.cell(`K${row}`).value(r.technician || '');
+              dailySheet.cell(`K${row}`).value(normalizeTechName(r.technician));
             });
           }
 
@@ -868,18 +890,22 @@
         }
 
         else if (type === 'overtime') {
-          const localOt = JSON.parse(localStorage.getItem("ot_local") || "[]");
+          const localOt = JSON.parse(localStorage.getItem("ot_local") || "[]").map(r => ({
+            ...r,
+            technician: normalizeTechName(r.technician)
+          }));
           const combinedOt = [...fetchedOt, ...localOt];
 
           if (!combinedOt.length) { alert("No overtime records found."); return; }
 
-          // Strict Deduplication Engine
+          // Strict Deduplication & Normalization Engine
           const uniqueMap = new Map();
           combinedOt.forEach(r => {
             const cDate = String(r.otDate || r.date || '').split('T')[0];
             if (cDate >= fromDate && cDate <= toDate) {
-              const key = `${cDate}_${r.technician || 'Unknown'}_${r.from || ''}_${r.to || ''}`;
-              uniqueMap.set(key, { ...r, cleanDate: cDate });
+              const normTech = normalizeTechName(r.technician);
+              const key = `${cDate}_${normTech}_${r.from || ''}_${r.to || ''}`;
+              uniqueMap.set(key, { ...r, technician: normTech, cleanDate: cDate });
             }
           });
 
@@ -891,7 +917,7 @@
 
           const techGrouped = {};
           filteredOt.forEach(r => {
-            const t = r.technician || "Unknown";
+            const t = r.technician;
             if (!techGrouped[t]) techGrouped[t] = [];
             techGrouped[t].push(r);
           });
@@ -936,7 +962,6 @@
               const entriesForDay = dayGrouped[day] || [];
 
               if (entriesForDay.length > 0) {
-                // Combine entries for the same day cleanly without row duplication bugs
                 let totalHrsN = 0, totalHrsWO = 0, totalHrsPH = 0, totalHrsShift = 0;
                 let remarks = [];
 
