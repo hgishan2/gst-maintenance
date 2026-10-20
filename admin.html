@@ -864,44 +864,80 @@
 
           if (!combinedReadings.length) { alert("No utility readings found."); return; }
 
-          const uniqueMap = new Map();
-          combinedReadings.forEach(r => {
-            const cleanDate = String(r.date || '').split('T')[0];
-            if (cleanDate >= fromDate && cleanDate <= toDate) {
-              const key = `${cleanDate}_${r.meter}`;
-              uniqueMap.set(key, { ...r, cleanDate });
-            }
-          });
-
-          const finalReadings = Array.from(uniqueMap.values());
-          if (!finalReadings.length) {
-            alert(`No utility readings found strictly between ${fromDate} and ${toDate}.`);
-            return;
-          }
+          // Sort all readings chronologically
+          combinedReadings.sort((a, b) => new Date(a.date || a.cleanDate) - new Date(b.date || b.cleanDate));
 
           const resp = await fetch('Utility_Report Template.xlsx');
           const buffer = await resp.arrayBuffer();
           const workbook = await XlsxPopulate.fromDataAsync(buffer);
 
-          const summarySheet = workbook.sheet('Summary');
-          if (summarySheet) {
-            summarySheet.cell('A2').value(`Consumption summary per meter  |  ${fromDate} to ${toDate}`);
-          }
-
+          // 1. POPULATE DAILY READINGS SHEET
           const dailySheet = workbook.sheet('Daily Readings');
           if (dailySheet) {
             dailySheet.cell('A2').value(`Daily readings and consumption  |  ${fromDate} to ${toDate}`);
 
-            finalReadings.forEach((r, idx) => {
-              const row = 5 + idx;
-              dailySheet.cell(`A${row}`).value(r.cleanDate || '');
-              dailySheet.cell(`B${row}`).value(r.type || '');
-              dailySheet.cell(`C${row}`).value(r.area || '');
-              dailySheet.cell(`D${row}`).value(r.meter || '');
-              dailySheet.cell(`E${row}`).value(r.account || '');
-              dailySheet.cell(`F${row}`).value(Number(r.reading) || r.reading || 0);
-              dailySheet.cell(`K${row}`).value(normalizeTechName(r.technician));
+            let rowIdx = 5;
+            combinedReadings.forEach((r) => {
+              const cleanDate = String(r.date || r.cleanDate || '').split('T')[0];
+              if (cleanDate >= fromDate && cleanDate <= toDate) {
+                dailySheet.cell(`A${rowIdx}`).value(cleanDate);
+                dailySheet.cell(`B${rowIdx}`).value(r.type || '');
+                dailySheet.cell(`C${rowIdx}`).value(r.area || '');
+                dailySheet.cell(`D${rowIdx}`).value(r.meter || '');
+                dailySheet.cell(`E${rowIdx}`).value(r.account || '');
+                dailySheet.cell(`F${rowIdx}`).value(Number(r.reading) || r.reading || 0);
+                dailySheet.cell(`K${rowIdx}`).value(normalizeTechName(r.technician));
+                rowIdx++;
+              }
             });
+          }
+
+          // 2. POPULATE SUMMARY SHEET
+          const summarySheet = workbook.sheet('Summary');
+          if (summarySheet) {
+            summarySheet.cell('A2').value(`Consumption summary per meter  |  ${fromDate} to ${toDate}`);
+            
+            const meterMap = {};
+            combinedReadings.forEach(r => {
+              const m = r.meter;
+              if (!m) return;
+              if (!meterMap[m]) {
+                meterMap[m] = { type: r.type, area: r.area, account: r.account, readings: [] };
+              }
+              meterMap[m].readings.push({ date: String(r.date || r.cleanDate).split('T')[0], val: Number(r.reading) || 0 });
+            });
+
+            let sRow = 4;
+            Object.keys(meterMap).forEach(mKey => {
+              const data = meterMap[mKey];
+              const periodReadings = data.readings.filter(x => x.date >= fromDate && x.date <= toDate);
+              if (periodReadings.length > 0) {
+                const opening = periodReadings[0].val;
+                const closing = periodReadings[periodReadings.length - 1].val;
+                const consumption = closing >= opening ? closing - opening : 0;
+
+                summarySheet.cell(`A${sRow}`).value(data.type || '');
+                summarySheet.cell(`B${sRow}`).value(data.area || '');
+                summarySheet.cell(`C${sRow}`).value(mKey);
+                summarySheet.cell(`D${sRow}`).value(data.account || '');
+                summarySheet.cell(`E${sRow}`).value(opening);
+                summarySheet.cell(`F${sRow}`).value(closing);
+                summarySheet.cell(`G${sRow}`).value(consumption);
+                summarySheet.cell(`H${sRow}`).value(periodReadings.length);
+                sRow++;
+              }
+            });
+          }
+
+          // 3. POPULATE ELECTRICITY & WATER BREAKOUT SHEETS
+          const elecSheet = workbook.sheet('Electricity');
+          if (elecSheet) {
+            elecSheet.cell('A1').value(`Electricity readings and daily consumption  |  ${fromDate} to ${toDate}`);
+          }
+
+          const waterSheet = workbook.sheet('Water');
+          if (waterSheet) {
+            waterSheet.cell('A1').value(`Water readings and daily consumption  |  ${fromDate} to ${toDate}`);
           }
 
           const outBuffer = await workbook.outputAsync();
