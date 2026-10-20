@@ -136,7 +136,7 @@
       <!-- Reminder Box: Upcoming Schedules -->
       <div class="card p-3 mb-3 border-info shadow-sm bg-gradient">
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <h6 class="text-info fw-bold m-0"><i class="bi bi-calendar-event me-2"></i>Upcoming Schedules Reminder</h6>
+          <h6 class="text-info fw-bold m-0"><i class="bi bi-calendar-event me-2"></i>My Upcoming Schedules</h6>
           <span id="scheduleCountBadge" class="badge bg-info text-dark">0 Pending</span>
         </div>
         <div id="upcomingSchedulesList" class="small text-light">
@@ -171,7 +171,7 @@
           <div class="card p-3 text-center cursor-pointer nav-card h-100" onclick="switchView('schedules')">
             <i class="bi bi-calendar-check text-primary fs-1 mb-2"></i>
             <h6 class="fw-bold mb-1">Schedules</h6>
-            <small class="text-muted">Future work & appointments</small>
+            <small class="text-muted">Future work & tasks</small>
           </div>
         </div>
       </div>
@@ -361,9 +361,9 @@
         </div>
       </div>
 
-      <!-- MODULE 4: SCHEDULES (FUTURE WORK) -->
+      <!-- MODULE 4: SCHEDULES (FUTURE WORK WITH ACTIONS) -->
       <div id="module-schedules" class="form-module" style="display: none;">
-        <div class="card p-3 shadow-sm">
+        <div class="card p-3 shadow-sm mb-3">
           <h6 class="text-info fw-bold mb-3 border-bottom border-secondary pb-2">
             <i class="bi bi-calendar-plus me-1"></i>Schedule Future Maintenance / Task
           </h6>
@@ -386,13 +386,23 @@
 
             <div class="mb-3">
               <label class="form-label small mb-1">Task Description / Notes *</label>
-              <textarea id="schedDesc" class="form-control form-control-sm" rows="3" placeholder="Details of upcoming scheduled work..." required></textarea>
+              <textarea id="schedDesc" class="form-control form-control-sm" rows="2" placeholder="Details of upcoming scheduled work..." required></textarea>
             </div>
 
             <button type="submit" class="btn btn-primary w-100 py-2 fs-6 fw-bold">
               <i class="bi bi-calendar-check me-1"></i>Save Schedule Reminder
             </button>
           </form>
+        </div>
+
+        <!-- My Active Schedules Management List -->
+        <div class="card p-3 shadow-sm">
+          <h6 class="text-warning fw-bold mb-3 border-bottom border-secondary pb-2">
+            <i class="bi bi-list-check me-1"></i>Manage My Schedules
+          </h6>
+          <div id="manageSchedulesList">
+            <p class="text-muted small">No schedules found.</p>
+          </div>
         </div>
       </div>
 
@@ -443,13 +453,6 @@
       const pri = document.getElementById('priority');
       (CONFIG.PRIORITIES || []).forEach(p => pri.innerHTML += `<option value="${p}">${p}</option>`);
 
-      const st = document.getElementById('status');
-      (CONFIG.STATUSES || []).forEach(s => {
-        if(s !== "Completed" && s !== "Pending" && s !== "On Hold") {
-          // If custom status from config
-        }
-      });
-
       const meterSelect = document.getElementById('meterSelect');
       (CONFIG.METERS || []).forEach((m, idx) => {
         meterSelect.innerHTML += `<option value="${idx}">${m.type} - ${m.area} (${m.meter})</option>`;
@@ -496,6 +499,10 @@
       
       document.querySelectorAll('.form-module').forEach(el => el.style.display = 'none');
       document.getElementById(`module-${moduleName}`).style.display = 'block';
+      
+      if (moduleName === 'schedules') {
+        renderManageSchedulesList();
+      }
     }
 
     function checkSession() {
@@ -579,25 +586,31 @@
       checkSession();
     }
 
-    // --- Schedules Reminder Handling ---
+    // --- Schedules Management & Filtering ---
     function getSchedules() {
       return JSON.parse(localStorage.getItem("tech_schedules") || "[]");
     }
 
+    function saveSchedules(schedules) {
+      localStorage.setItem("tech_schedules", JSON.stringify(schedules));
+    }
+
     function handleScheduleSubmit(e) {
       e.preventDefault();
+      const currentUser = localStorage.getItem("tech_name");
       const sched = {
         id: "SCH-" + Date.now(),
         date: document.getElementById('schedDate').value,
         location: document.getElementById('schedLocation').value,
         category: document.getElementById('schedCategory').value,
         desc: document.getElementById('schedDesc').value,
-        technician: localStorage.getItem("tech_name")
+        technician: currentUser,
+        status: "Pending"
       };
 
       const schedules = getSchedules();
       schedules.push(sched);
-      localStorage.setItem("tech_schedules", JSON.stringify(schedules));
+      saveSchedules(schedules);
 
       alert("Schedule saved successfully!");
       document.getElementById('scheduleForm').reset();
@@ -606,17 +619,19 @@
     }
 
     function loadSchedulesReminder() {
+      const currentUser = localStorage.getItem("tech_name");
       const schedules = getSchedules();
       const today = new Date().toISOString().slice(0, 10);
       
-      // Filter schedules from today onwards
-      const upcoming = schedules.filter(s => s.date >= today).sort((a,b) => a.date.localeCompare(b.date));
+      // Filter strictly for THIS technician and pending status from today onwards
+      const upcoming = schedules.filter(s => s.technician === currentUser && s.status === "Pending" && s.date >= today)
+                                .sort((a,b) => a.date.localeCompare(b.date));
       
       document.getElementById('scheduleCountBadge').textContent = `${upcoming.length} Pending`;
       const listContainer = document.getElementById('upcomingSchedulesList');
 
       if (upcoming.length === 0) {
-        listContainer.innerHTML = '<p class="text-muted mb-0">No upcoming schedules found.</p>';
+        listContainer.innerHTML = '<p class="text-muted mb-0">No upcoming schedules found for you.</p>';
         return;
       }
 
@@ -629,6 +644,60 @@
           <small class="text-muted text-truncate d-block">${s.desc}</small>
         </div>
       `).join('');
+    }
+
+    function renderManageSchedulesList() {
+      const currentUser = localStorage.getItem("tech_name");
+      const schedules = getSchedules();
+      const userSchedules = schedules.filter(s => s.technician === currentUser);
+      const container = document.getElementById('manageSchedulesList');
+
+      if (userSchedules.length === 0) {
+        container.innerHTML = '<p class="text-muted small">No schedules created yet.</p>';
+        return;
+      }
+
+      container.innerHTML = userSchedules.map(s => `
+        <div class="card bg-dark p-2 mb-2 border-secondary small">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-info"><i class="bi bi-calendar-event me-1"></i>${s.date} (${s.location})</span>
+            <span class="badge ${s.status === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${s.status}</span>
+          </div>
+          <div class="text-light my-1">${s.desc}</div>
+          <div class="d-flex gap-2 mt-2">
+            ${s.status === 'Pending' ? `<button class="btn btn-sm btn-outline-success py-0 px-2" onclick="updateScheduleStatus('${s.id}', 'Completed')"><i class="bi bi-check2 me-1"></i>Mark Done</button>` : ''}
+            <button class="btn btn-sm btn-outline-warning py-0 px-2" onclick="rescheduleTask('${s.id}')"><i class="bi bi-calendar-arrow-right me-1"></i>Reschedule</button>
+            <button class="btn btn-sm btn-outline-danger py-0 px-2 ms-auto" onclick="deleteSchedule('${s.id}')"><i class="bi bi-trash"></i></button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateScheduleStatus(id, newStatus) {
+      let schedules = getSchedules();
+      schedules = schedules.map(s => s.id === id ? { ...s, status: newStatus } : s);
+      saveSchedules(schedules);
+      renderManageSchedulesList();
+      loadSchedulesReminder();
+    }
+
+    function rescheduleTask(id) {
+      const newDate = prompt("Enter new schedule date (YYYY-MM-DD):", new Date().toISOString().slice(0, 10));
+      if (!newDate) return;
+      let schedules = getSchedules();
+      schedules = schedules.map(s => s.id === id ? { ...s, date: newDate, status: 'Pending' } : s);
+      saveSchedules(schedules);
+      renderManageSchedulesList();
+      loadSchedulesReminder();
+      alert("Schedule updated successfully!");
+    }
+
+    function deleteSchedule(id) {
+      if (!confirm("Are you sure you want to delete this schedule?")) return;
+      let schedules = getSchedules().filter(s => s.id !== id);
+      saveSchedules(schedules);
+      renderManageSchedulesList();
+      loadSchedulesReminder();
     }
 
     // --- Offline Queue & Sync Engine ---
