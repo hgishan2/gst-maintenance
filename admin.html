@@ -47,7 +47,8 @@
       color: #94a3b8;
       font-weight: 600;
       border-radius: 8px;
-      padding: 10px 18px;
+      padding: 10px 14px;
+      font-size: 0.9rem;
     }
     .nav-pills .nav-link.active {
       background-color: var(--accent-blue);
@@ -150,7 +151,7 @@
         <div class="col-md-3 col-6 d-flex gap-2 mt-md-4">
           <div class="dropdown w-100">
             <button class="btn btn-outline-success btn-sm dropdown-toggle w-100 fw-semibold" type="button" data-bs-toggle="dropdown">
-              <i class="bi bi-file-earmark-excel me-1"></i>Export Template Report
+              <i class="bi bi-file-earmark-excel me-1"></i>Export Reports
             </button>
             <ul class="dropdown-menu dropdown-menu-dark w-100">
               <li><a class="dropdown-item small" href="#" onclick="exportTemplateReport('jobs')"><i class="bi bi-journal-text me-2 text-success"></i>Daily Work Order Log (.xlsx)</a></li>
@@ -210,6 +211,11 @@
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="pills-admin-ot-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-ot" type="button" role="tab">
           <i class="bi bi-clock-history me-1"></i>Overtime
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-admin-schedules-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-schedules" type="button" role="tab" onclick="renderAdminSchedules()">
+          <i class="bi bi-calendar-check me-1"></i>Schedules
         </button>
       </li>
     </ul>
@@ -328,6 +334,70 @@
         </div>
       </div>
 
+      <!-- TAB 4: ADMIN SCHEDULES MANAGEMENT -->
+      <div class="tab-pane fade" id="pills-admin-schedules" role="tabpanel">
+        <div class="card p-3 shadow-sm mb-3">
+          <h6 class="text-warning fw-bold mb-3 border-bottom border-secondary pb-2">
+            <i class="bi bi-calendar-plus me-1"></i>Create Schedule for Technician
+          </h6>
+          <form id="adminScheduleForm" onsubmit="handleAdminScheduleSubmit(event)">
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small mb-1">Assign to Technician *</label>
+                <select id="adminSchedTech" class="form-select form-select-sm" required>
+                  <option value="">-- Select Technician --</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label small mb-1">Scheduled Date *</label>
+                <input type="date" id="adminSchedDate" class="form-control form-control-sm" required>
+              </div>
+            </div>
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small mb-1">Location / Unit *</label>
+                <input type="text" id="adminSchedLocation" class="form-control form-control-sm" placeholder="e.g. Apt 405" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label small mb-1">Category</label>
+                <select id="adminSchedCategory" class="form-select form-select-sm"></select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small mb-1">Task Description *</label>
+              <textarea id="adminSchedDesc" class="form-control form-control-sm" rows="2" placeholder="Task details..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-warning text-dark w-100 py-2 fs-6 fw-bold">
+              <i class="bi bi-calendar-check me-1"></i>Assign Schedule
+            </button>
+          </form>
+        </div>
+
+        <div class="card p-3 shadow-sm">
+          <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
+            <h6 class="text-info fw-bold m-0"><i class="bi bi-list-check me-1"></i>All Technician Schedules</h6>
+            <span id="adminSchedCountBadge" class="badge bg-secondary">0 Total</span>
+          </div>
+          <div class="table-responsive" style="max-height: 450px;">
+            <table class="table table-dark table-hover table-striped small align-middle">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Technician</th>
+                  <th>Location</th>
+                  <th>Description</th>
+                  <th>Status</th>
+                  <th class="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminSchedTableBody">
+                <tr><td colspan="6" class="text-center text-muted py-3">No schedules found.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -346,6 +416,14 @@
       const firstDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
       document.getElementById('filterFrom').value = firstDay;
       document.getElementById('filterTo').value = today;
+      document.getElementById('adminSchedDate').value = today;
+
+      // Populate Admin Tech and Category dropdowns
+      const adminTechSel = document.getElementById('adminSchedTech');
+      (CONFIG.TECHNICIANS || []).forEach(t => adminTechSel.innerHTML += `<option value="${t}">${t}</option>`);
+
+      const adminCatSel = document.getElementById('adminSchedCategory');
+      (CONFIG.CATEGORIES || []).forEach(c => adminCatSel.innerHTML += `<option value="${c}">${c}</option>`);
 
       checkAdminSession();
     });
@@ -414,7 +492,6 @@
 
       document.getElementById('perfRangeLabel').textContent = `${from} to ${to}`;
 
-      // 1. Fetch Job Logs
       try {
         const url = `${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&apin=${encodeURIComponent(apin)}&from=${from}&to=${to}`;
         const res = await fetch(url);
@@ -428,40 +505,114 @@
           document.getElementById('statCompletedCount').textContent = completed;
           document.getElementById('statPendingCount').textContent = data.rows.length - completed;
         }
-      } catch (e) {
-        console.error("Error fetching logs", e);
-      }
+      } catch (e) { console.error("Error fetching logs", e); }
 
-      // 2. Fetch Utility Readings
       try {
         const url = `${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&action=readings&apin=${encodeURIComponent(apin)}&from=${from}&to=${to}`;
         const res = await fetch(url);
         const data = await res.json();
-
         if (data.ok && data.rows) {
           fetchedReadings = data.rows;
           renderReadingsTable(data.rows);
           document.getElementById('statReadingsCount').textContent = data.rows.length;
         }
-      } catch (e) {
-        console.error("Error fetching readings", e);
-      }
+      } catch (e) { console.error("Error fetching readings", e); }
 
-      // 3. Fetch Overtime
       try {
         const url = `${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&action=overtime&apin=${encodeURIComponent(apin)}&from=${from}&to=${to}`;
         const res = await fetch(url);
         const data = await res.json();
-
         if (data.ok && data.rows) {
           fetchedOt = data.rows;
           renderOtTable(data.rows);
         }
-      } catch (e) {
-        console.error("Error fetching overtime", e);
-      }
+      } catch (e) { console.error("Error fetching overtime", e); }
 
       renderPerformanceTable();
+      renderAdminSchedules();
+    }
+
+    // --- Admin Schedules Management ---
+    function getAdminSchedules() {
+      return JSON.parse(localStorage.getItem("tech_schedules") || "[]");
+    }
+
+    function saveAdminSchedules(schedules) {
+      localStorage.setItem("tech_schedules", JSON.stringify(schedules));
+    }
+
+    function handleAdminScheduleSubmit(e) {
+      e.preventDefault();
+      const sched = {
+        id: "SCH-" + Date.now(),
+        technician: document.getElementById('adminSchedTech').value,
+        date: document.getElementById('adminSchedDate').value,
+        location: document.getElementById('adminSchedLocation').value,
+        category: document.getElementById('adminSchedCategory').value,
+        desc: document.getElementById('adminSchedDesc').value,
+        status: "Pending"
+      };
+
+      const schedules = getAdminSchedules();
+      schedules.push(sched);
+      saveAdminSchedules(schedules);
+
+      alert("Schedule assigned successfully!");
+      document.getElementById('adminScheduleForm').reset();
+      document.getElementById('adminSchedDate').value = new Date().toISOString().slice(0, 10);
+      renderAdminSchedules();
+    }
+
+    function renderAdminSchedules() {
+      const schedules = getAdminSchedules();
+      document.getElementById('adminSchedCountBadge').textContent = `${schedules.length} Total`;
+      const tbody = document.getElementById('adminSchedTableBody');
+
+      if (schedules.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No schedules found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = schedules.map(s => `
+        <tr>
+          <td>${s.date}</td>
+          <td><strong>${s.technician}</strong></td>
+          <td>${s.location}</td>
+          <td><small>${s.desc}</small></td>
+          <td><span class="badge ${s.status === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${s.status}</span></td>
+          <td class="text-center">
+            <div class="btn-group btn-group-sm">
+              ${s.status === 'Pending' ? `<button class="btn btn-outline-success py-0 px-2" title="Mark Done" onclick="adminUpdateStatus('${s.id}', 'Completed')"><i class="bi bi-check2"></i></button>` : ''}
+              <button class="btn btn-outline-warning py-0 px-2" title="Reschedule" onclick="adminReschedule('${s.id}')"><i class="bi bi-calendar-arrow-right"></i></button>
+              <button class="btn btn-outline-danger py-0 px-2" title="Delete" onclick="adminDeleteSchedule('${s.id}')"><i class="bi bi-trash"></i></button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function adminUpdateStatus(id, newStatus) {
+      let schedules = getAdminSchedules();
+      schedules = schedules.map(s => s.id === id ? { ...s, status: newStatus } : s);
+      saveAdminSchedules(schedules);
+      renderAdminSchedules();
+    }
+
+    function adminReschedule(id) {
+      const newDate = prompt("Enter new schedule date (YYYY-MM-DD):", new Date().toISOString().slice(0, 10));
+      if (!newDate) return;
+      let schedules = getAdminSchedules();
+      schedules = schedules.map(s => s.id === id ? { ...s, date: newDate, status: 'Pending' } : s);
+      saveAdminSchedules(schedules);
+      renderAdminSchedules();
+      alert("Schedule rescheduled successfully!");
+    }
+
+    function adminDeleteSchedule(id) {
+      if (!confirm("Delete this schedule?")) return;
+      let schedules = getAdminSchedules().filter(s => s.id !== id);
+      saveAdminSchedules(schedules);
+      renderAdminSchedules();
     }
 
     function renderPerformanceTable() {
