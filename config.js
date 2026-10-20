@@ -11,7 +11,8 @@ const CONFIG = {
     "RAM JATAN MAHADEV",
     "MUHAMMAD JAHANGEER",
     "ALI HASSAN",
-    "IMTIYAZ KAMRUDDIN"
+    "IMTIYAZ KAMRUDDIN",
+    "MADHAB CHARAN"
   ],
   TECHNICIAN_PROFILES: {
     "MEHEDI HASAN LIYAKAT ALI": { empCode: "3765", designation: "Mason/Painter" },
@@ -21,7 +22,8 @@ const CONFIG = {
     "RAM JATAN MAHADEV": { empCode: "713052", designation: "Carpenter" },
     "MUHAMMAD JAHANGEER": { empCode: "713150", designation: "AC Technician" },
     "ALI HASSAN": { empCode: "713502", designation: "Electrician" },
-    "IMTIYAZ KAMRUDDIN": { empCode: "713520", designation: "AC Technician" }
+    "IMTIYAZ KAMRUDDIN": { empCode: "713520", designation: "AC Technician" },
+    "MADHAB CHARAN": { empCode: "713542", designation: "Technician" }
   },
   CATEGORIES: [
     "Electrical",
