@@ -463,7 +463,7 @@
           checkAdminSession();
         } else {
           alertBox.textContent = "Invalid Admin PIN. Please try again.";
-          alertBox.classList.remove('d-none');
+          alertBox.classList.add('d-none');
         }
       } catch (err) {
         if (pin === "713361") {
@@ -550,7 +550,7 @@
       const exact = techList.find(t => t.toUpperCase() === clean);
       if (exact) return exact;
 
-      // Partial / Fuzzy match for known spelling variations & abbreviations
+      // Partial / Fuzzy match for known spelling variations
       if (clean.includes("MEHEDI")) return "MEHEDI HASAN LIYAKAT ALI";
       if (clean.includes("JAHANGEER") || clean.includes("JAHANGIR")) return "MUHAMMAD JAHANGEER";
       if (clean.includes("MADHAB")) return "MADHAB CHARAN";
@@ -808,8 +808,7 @@
         "RAM JATAN MAHADEV": { empCode: "713052", designation: "Carpenter" },
         "MUHAMMAD JAHANGEER": { empCode: "713150", designation: "AC Technician" },
         "ALI HASSAN": { empCode: "713502", designation: "Electrician" },
-        "IMTIYAZ KAMRUDDIN": { empCode: "713520", designation: "AC Technician" },
-        "MADHAB CHARAN": { empCode: "N/A", designation: "General Technician" }
+        "IMTIYAZ KAMRUDDIN": { empCode: "713520", designation: "AC Technician" }
       };
 
       if (profiles[normName]) return profiles[normName];
@@ -835,21 +834,21 @@
           sheet.cell('H3').value("Day / Night");
 
           fetchedLogs.forEach((r, idx) => {
-            const row = 4 + idx; // Starts immediately on row 4 right below headers, removing blank gaps
+            const row = 8 + idx;
             sheet.cell(`A${row}`).value(idx + 1);
-            sheet.cell(`B${row}`).value(r.wo || '');                 // WO No. (Col B)
-            sheet.cell(`C${row}`).value(r.location || '');            // Location / Apt No (Col C)
-            sheet.cell(`D${row}`).value(r.complaint || '');          // Complaint (Col D)
-            sheet.cell(`E${row}`).value(normalizeTechName(r.technician)); // Technician (Col E)
-            sheet.cell(`F${row}`).value(r.action || '');              // Action Taken (Col F)
-            sheet.cell(`G${row}`).value(r.category || '');            // Category (Col G)
-            sheet.cell(`H${row}`).value(r.priority || '');            // Priority (Col H)
-            sheet.cell(`I${row}`).value(r.received || '');           // Received Time (Col I)
-            sheet.cell(`J${row}`).value(r.start || '');               // Start Time (Col J)
-            sheet.cell(`K${row}`).value(r.finish || '');             // Finish Time (Col K)
-            sheet.cell(`M${row}`).value(r.materials || '');          // Materials Used (Col M)
-            sheet.cell(`N${row}`).value(r.status || '');             // Job Status (Col N)
-            sheet.cell(`O${row}`).value(r.pending || '');            // Pending Reason (Col O)
+            sheet.cell(`B${row}`).value('');
+            sheet.cell(`C${row}`).value(r.location || '');
+            sheet.cell(`D${row}`).value(r.complaint || '');
+            sheet.cell(`E${row}`).value(normalizeTechName(r.technician));
+            sheet.cell(`F${row}`).value(r.action || '');
+            sheet.cell(`G${row}`).value(r.category || '');
+            sheet.cell(`H${row}`).value(r.priority || '');
+            sheet.cell(`I${row}`).value(r.received || '');
+            sheet.cell(`J${row}`).value(r.start || '');
+            sheet.cell(`K${row}`).value(r.finish || '');
+            sheet.cell(`M${row}`).value(r.materials || '');
+            sheet.cell(`N${row}`).value(r.status || '');
+            sheet.cell(`O${row}`).value(r.pending || '');
           });
 
           const outBuffer = await workbook.outputAsync();
