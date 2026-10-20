@@ -306,7 +306,7 @@
             <!-- Duplicate Warning Notice -->
             <div id="utilityDupNotice" class="alert alert-warning py-2 small d-none">
               <i class="bi bi-exclamation-triangle-fill me-1"></i>
-              <strong>Existing Record Found:</strong> You already entered a reading for this meter today. Submitting will update your existing entry.
+              <strong>Duplicate Record Notice:</strong> You already entered a reading for this meter today. Submitting will update your existing entry.
             </div>
 
             <div class="mb-3">
@@ -344,10 +344,20 @@
               </div>
             </div>
 
+            <div class="mb-2">
+              <label class="form-label small mb-1">Overtime Type (Category) *</label>
+              <select id="otCategoryType" class="form-select form-select-sm" required>
+                <option value="N">N - Normal Overtime</option>
+                <option value="WO">WO - Weekly Off</option>
+                <option value="PH">PH - Public Holiday</option>
+                <option value="N. Shift">N. Shift - Night Shift</option>
+              </select>
+            </div>
+
             <!-- Overtime Duplicate Warning Notice -->
             <div id="otDupNotice" class="alert alert-warning py-2 small d-none mb-2">
               <i class="bi bi-exclamation-triangle-fill me-1"></i>
-              <strong>Existing Time Slot Found:</strong> You already logged overtime for this exact time slot today. Submitting will update your existing entry.
+              <strong>Duplicate Time Slot Notice:</strong> You already logged overtime for this exact time slot today. Submitting will update your existing entry.
             </div>
 
             <div class="row g-2 mb-2">
@@ -373,7 +383,7 @@
         </div>
       </div>
 
-      <!-- MODULE 4: SCHEDULES (FUTURE WORK WITH ACTIONS) -->
+      <!-- MODULE 4: SCHEDULES -->
       <div id="module-schedules" class="form-module" style="display: none;">
         <div class="card p-3 shadow-sm mb-3">
           <h6 class="text-info fw-bold mb-3 border-bottom border-secondary pb-2">
@@ -407,7 +417,6 @@
           </form>
         </div>
 
-        <!-- My Active Schedules Management List -->
         <div class="card p-3 shadow-sm">
           <h6 class="text-warning fw-bold mb-3 border-bottom border-secondary pb-2">
             <i class="bi bi-list-check me-1"></i>Manage My Schedules
@@ -492,7 +501,6 @@
       document.getElementById('infoAccount').textContent = m.account;
       card.classList.remove('d-none');
 
-      // Check for duplicate meter entry today
       const localReadings = JSON.parse(localStorage.getItem("utility_readings_local") || "[]");
       const found = localReadings.find(r => r.date === today && r.meter === m.meter);
 
@@ -521,6 +529,7 @@
       const found = localOt.find(r => r.otDate === date && r.from === from && r.to === to && r.technician === tech);
 
       if (found) {
+        document.getElementById('otCategoryType').value = found.otCategoryType || found.type || 'N';
         document.getElementById('otType').value = found.type || '';
         document.getElementById('otLocation').value = found.location || '';
         document.getElementById('otWork').value = found.work || '';
@@ -896,7 +905,6 @@
       const dateVal = document.getElementById('readingDate').value;
       const val = document.getElementById('meterValue').value;
 
-      // Update local storage record (enforcing 1 reading per meter per day)
       let localReadings = JSON.parse(localStorage.getItem("utility_readings_local") || "[]");
       localReadings = localReadings.filter(r => !(r.date === dateVal && r.meter === m.meter));
 
@@ -962,8 +970,8 @@
       const otDate = document.getElementById('otDate').value;
       const from = document.getElementById('otFrom').value;
       const to = document.getElementById('otTo').value;
+      const otCategoryType = document.getElementById('otCategoryType').value;
 
-      // Update local storage record (enforcing unique overtime slots per technician per day)
       let localOt = JSON.parse(localStorage.getItem("ot_local") || "[]");
       localOt = localOt.filter(r => !(r.otDate === otDate && r.from === from && r.to === to && r.technician === tech));
 
@@ -974,6 +982,7 @@
         otDate: otDate,
         from: from,
         to: to,
+        otCategoryType: otCategoryType,
         type: document.getElementById('otType').value,
         location: document.getElementById('otLocation').value,
         work: document.getElementById('otWork').value
