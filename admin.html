@@ -473,7 +473,7 @@
           return;
         }
         alertBox.textContent = "Server connection error.";
-        alertBox.classList.remove('d-none');
+        alertBox.classList.add('d-none');
       }
     }
 
@@ -835,22 +835,21 @@
           sheet.cell('H3').value("Day / Night");
 
           fetchedLogs.forEach((r, idx) => {
-            const row = 5 + idx; // Aligned starting at row 5, removing blank gaps
+            const row = 4 + idx; // Starts immediately on row 4 right below headers, removing blank gaps
             sheet.cell(`A${row}`).value(idx + 1);
-            sheet.cell(`B${row}`).value('');
-            sheet.cell(`C${row}`).value(r.wo || '');
-            sheet.cell(`D${row}`).value(r.location || '');
-            sheet.cell(`E${row}`).value(r.complaint || '');
-            sheet.cell(`F${row}`).value(normalizeTechName(r.technician));
-            sheet.cell(`G${row}`).value(r.action || '');
-            sheet.cell(`H${row}`).value(r.category || '');
-            sheet.cell(`I${row}`).value(r.priority || '');
-            sheet.cell(`J${row}`).value(r.received || '');
-            sheet.cell(`K${row}`).value(r.start || '');
-            sheet.cell(`L${row}`).value(r.finish || '');
-            sheet.cell(`N${row}`).value(r.materials || '');
-            sheet.cell(`O${row}`).value(r.status || '');
-            sheet.cell(`P${row}`).value(r.pending || '');
+            sheet.cell(`B${row}`).value(r.wo || '');                 // WO No. (Col B)
+            sheet.cell(`C${row}`).value(r.location || '');            // Location / Apt No (Col C)
+            sheet.cell(`D${row}`).value(r.complaint || '');          // Complaint (Col D)
+            sheet.cell(`E${row}`).value(normalizeTechName(r.technician)); // Technician (Col E)
+            sheet.cell(`F${row}`).value(r.action || '');              // Action Taken (Col F)
+            sheet.cell(`G${row}`).value(r.category || '');            // Category (Col G)
+            sheet.cell(`H${row}`).value(r.priority || '');            // Priority (Col H)
+            sheet.cell(`I${row}`).value(r.received || '');           // Received Time (Col I)
+            sheet.cell(`J${row}`).value(r.start || '');               // Start Time (Col J)
+            sheet.cell(`K${row}`).value(r.finish || '');             // Finish Time (Col K)
+            sheet.cell(`M${row}`).value(r.materials || '');          // Materials Used (Col M)
+            sheet.cell(`N${row}`).value(r.status || '');             // Job Status (Col N)
+            sheet.cell(`O${row}`).value(r.pending || '');            // Pending Reason (Col O)
           });
 
           const outBuffer = await workbook.outputAsync();
