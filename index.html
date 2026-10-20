@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>GST - Technician Log & Operations</title>
+  <title>GST - Technician Portal</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
@@ -41,16 +41,6 @@
       color: #f8fafc;
       box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.25);
     }
-    .nav-pills .nav-link {
-      color: #94a3b8;
-      font-weight: 600;
-      border-radius: 8px;
-      padding: 10px 18px;
-    }
-    .nav-pills .nav-link.active {
-      background-color: var(--accent-blue);
-      color: #0f172a;
-    }
     .modal-content {
       background-color: var(--card-bg);
       border: 1px solid var(--border-color);
@@ -65,8 +55,13 @@
       background-color: #0284c7;
       color: #fff;
     }
-    .cursor-pointer {
-      cursor: pointer;
+    .cursor-pointer { cursor: pointer; }
+    .nav-card {
+      transition: transform 0.2s, border-color 0.2s;
+    }
+    .nav-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--accent-blue) !important;
     }
   </style>
 </head>
@@ -75,7 +70,7 @@
   <!-- Top Navbar Header -->
   <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-sm">
     <div class="container-fluid px-3">
-      <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+      <a class="navbar-brand d-flex align-items-center gap-2 cursor-pointer" onclick="showDashboard()">
         <i class="bi bi-tools text-info fs-4"></i>
         <div>
           <div class="fw-bold fs-6 lh-1">ARENCO Real Estate</div>
@@ -93,7 +88,7 @@
     </div>
   </nav>
 
-  <!-- Unified Sign-In Modal (Technician + Admin Entry) -->
+  <!-- Login Gate Modal -->
   <div class="modal fade" id="loginModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow-lg">
@@ -127,35 +122,70 @@
     <!-- User Welcome Banner -->
     <div class="d-flex justify-content-between align-items-center mb-3 px-1">
       <div>
-        <small class="text-muted d-block">Logged in as:</small>
+        <small class="text-muted d-block">Welcome back,</small>
         <span id="activeTechDisplay" class="fw-bold text-info fs-5">Technician</span>
+      </div>
+      <button class="btn btn-sm btn-outline-secondary" onclick="showDashboard()">
+        <i class="bi bi-house-door me-1"></i>Dashboard
+      </button>
+    </div>
+
+    <!-- VIEW 1: TECHNICIAN LANDING DASHBOARD -->
+    <div id="dashboardView" class="mb-4">
+      
+      <!-- Reminder Box: Upcoming Schedules -->
+      <div class="card p-3 mb-3 border-info shadow-sm bg-gradient">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="text-info fw-bold m-0"><i class="bi bi-calendar-event me-2"></i>Upcoming Schedules Reminder</h6>
+          <span id="scheduleCountBadge" class="badge bg-info text-dark">0 Pending</span>
+        </div>
+        <div id="upcomingSchedulesList" class="small text-light">
+          <p class="text-muted mb-0">No upcoming schedules found.</p>
+        </div>
+      </div>
+
+      <!-- Quick Action Cards Grid -->
+      <div class="row g-3">
+        <div class="col-6">
+          <div class="card p-3 text-center cursor-pointer nav-card h-100" onclick="switchView('job')">
+            <i class="bi bi-journal-text text-info fs-1 mb-2"></i>
+            <h6 class="fw-bold mb-1">Job Log</h6>
+            <small class="text-muted">Record daily maintenance work</small>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="card p-3 text-center cursor-pointer nav-card h-100" onclick="switchView('utility')">
+            <i class="bi bi-speedometer2 text-success fs-1 mb-2"></i>
+            <h6 class="fw-bold mb-1">Utilities</h6>
+            <small class="text-muted">Electricity & Water meters</small>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="card p-3 text-center cursor-pointer nav-card h-100" onclick="switchView('overtime')">
+            <i class="bi bi-clock-history text-warning fs-1 mb-2"></i>
+            <h6 class="fw-bold mb-1">Overtime</h6>
+            <small class="text-muted">Log extra duty hours</small>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="card p-3 text-center cursor-pointer nav-card h-100" onclick="switchView('schedules')">
+            <i class="bi bi-calendar-check text-primary fs-1 mb-2"></i>
+            <h6 class="fw-bold mb-1">Schedules</h6>
+            <small class="text-muted">Future work & appointments</small>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Navigation Tabs -->
-    <ul class="nav nav-pills nav-fill mb-3 gap-1 bg-slate-900 p-1 rounded-3" id="mainTabs" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="pills-job-tab" data-bs-toggle="pill" data-bs-target="#pills-job" type="button" role="tab">
-          <i class="bi bi-journal-text me-1"></i>Job Log
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="pills-utility-tab" data-bs-toggle="pill" data-bs-target="#pills-utility" type="button" role="tab">
-          <i class="bi bi-speedometer me-1"></i>Utilities
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="pills-ot-tab" data-bs-toggle="pill" data-bs-target="#pills-ot" type="button" role="tab">
-          <i class="bi bi-clock-history me-1"></i>Overtime
-        </button>
-      </li>
-    </ul>
-
-    <!-- Tab Content Panels -->
-    <div class="tab-content" id="mainTabsContent">
+    <!-- VIEW 2: FORM ENTRY MODULES -->
+    <div id="formsView" style="display: none;">
       
-      <!-- TAB 1: JOB LOG ENTRY -->
-      <div class="tab-pane fade show active" id="pills-job" role="tabpanel">
+      <button class="btn btn-sm btn-outline-light mb-3" onclick="showDashboard()">
+        <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
+      </button>
+
+      <!-- MODULE 1: JOB LOG ENTRY -->
+      <div id="module-job" class="form-module" style="display: none;">
         <div class="card p-3 shadow-sm">
           <h6 class="text-info fw-bold mb-3 border-bottom border-secondary pb-2">
             <i class="bi bi-plus-circle me-1"></i>New Work Request / Job Entry
@@ -222,13 +252,17 @@
             </div>
 
             <div class="row g-2 mb-3">
-              <div class="col-6">
+              <div class="col-12">
                 <label class="form-label small mb-1">Status</label>
-                <select id="status" class="form-select form-select-sm" onchange="togglePendingReason()"></select>
+                <select id="status" class="form-select form-select-sm" onchange="togglePendingReason()">
+                  <option value="Completed">Completed</option>
+                  <option value="Pending">Pending</option>
+                  <option value="On Hold">On Hold</option>
+                </select>
               </div>
-              <div class="col-6" id="pendingWrapper">
-                <label class="form-label small mb-1">Pending Reason / Remarks</label>
-                <input type="text" id="pending" class="form-control form-control-sm" placeholder="Reason if pending">
+              <div class="col-12 mt-2 d-none" id="pendingWrapper">
+                <label class="form-label small mb-1 text-warning fw-bold">Pending Reason / Remarks *</label>
+                <input type="text" id="pending" class="form-control form-control-sm border-warning" placeholder="Enter reason why work is pending...">
               </div>
             </div>
 
@@ -239,8 +273,8 @@
         </div>
       </div>
 
-      <!-- TAB 2: UTILITY READINGS -->
-      <div class="tab-pane fade" id="pills-utility" role="tabpanel">
+      <!-- MODULE 2: UTILITY READINGS -->
+      <div id="module-utility" class="form-module" style="display: none;">
         <div class="card p-3 shadow-sm">
           <h6 class="text-info fw-bold mb-3 border-bottom border-secondary pb-2">
             <i class="bi bi-speedometer2 me-1"></i>Utility Meter Reading Log
@@ -281,8 +315,8 @@
         </div>
       </div>
 
-      <!-- TAB 3: OVERTIME LOG -->
-      <div class="tab-pane fade" id="pills-ot" role="tabpanel">
+      <!-- MODULE 3: OVERTIME LOG -->
+      <div id="module-overtime" class="form-module" style="display: none;">
         <div class="card p-3 shadow-sm">
           <h6 class="text-info fw-bold mb-3 border-bottom border-secondary pb-2">
             <i class="bi bi-clock-history me-1"></i>Overtime Hours Entry
@@ -327,6 +361,41 @@
         </div>
       </div>
 
+      <!-- MODULE 4: SCHEDULES (FUTURE WORK) -->
+      <div id="module-schedules" class="form-module" style="display: none;">
+        <div class="card p-3 shadow-sm">
+          <h6 class="text-info fw-bold mb-3 border-bottom border-secondary pb-2">
+            <i class="bi bi-calendar-plus me-1"></i>Schedule Future Maintenance / Task
+          </h6>
+          <form id="scheduleForm" onsubmit="handleScheduleSubmit(event)">
+            <div class="mb-2">
+              <label class="form-label small mb-1">Scheduled Date *</label>
+              <input type="date" id="schedDate" class="form-control form-control-sm" required>
+            </div>
+
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small mb-1">Location / Unit *</label>
+                <input type="text" id="schedLocation" class="form-control form-control-sm" placeholder="e.g. Apt 302" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label small mb-1">Category</label>
+                <select id="schedCategory" class="form-select form-select-sm"></select>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small mb-1">Task Description / Notes *</label>
+              <textarea id="schedDesc" class="form-control form-control-sm" rows="3" placeholder="Details of upcoming scheduled work..." required></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 py-2 fs-6 fw-bold">
+              <i class="bi bi-calendar-check me-1"></i>Save Schedule Reminder
+            </button>
+          </form>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -342,6 +411,7 @@
       setupDefaults();
       checkSession();
       updateSyncBadge();
+      loadSchedulesReminder();
 
       window.addEventListener('online', () => {
         updateSyncBadge();
@@ -355,20 +425,30 @@
       document.getElementById('logDate').value = today;
       document.getElementById('readingDate').value = today;
       document.getElementById('otDate').value = today;
+      document.getElementById('schedDate').value = today;
 
       const techSelect = document.getElementById('techSelect');
       (CONFIG.TECHNICIANS || []).forEach(t => {
         techSelect.innerHTML += `<option value="${t}">${t}</option>`;
       });
 
-      const cat = document.getElementById('category');
-      (CONFIG.CATEGORIES || []).forEach(c => cat.innerHTML += `<option value="${c}">${c}</option>`);
+      const catSelects = ['category', 'schedCategory'];
+      catSelects.forEach(id => {
+        const sel = document.getElementById(id);
+        if (sel) {
+          (CONFIG.CATEGORIES || []).forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
+        }
+      });
 
       const pri = document.getElementById('priority');
       (CONFIG.PRIORITIES || []).forEach(p => pri.innerHTML += `<option value="${p}">${p}</option>`);
 
       const st = document.getElementById('status');
-      (CONFIG.STATUSES || []).forEach(s => st.innerHTML += `<option value="${s}">${s}</option>`);
+      (CONFIG.STATUSES || []).forEach(s => {
+        if(s !== "Completed" && s !== "Pending" && s !== "On Hold") {
+          // If custom status from config
+        }
+      });
 
       const meterSelect = document.getElementById('meterSelect');
       (CONFIG.METERS || []).forEach((m, idx) => {
@@ -391,8 +471,31 @@
 
     function togglePendingReason() {
       const st = document.getElementById('status').value;
+      const wrapper = document.getElementById('pendingWrapper');
       const input = document.getElementById('pending');
-      input.required = (st === "Pending" || st === "On Hold");
+      
+      if (st === "Pending" || st === "On Hold") {
+        wrapper.classList.remove('d-none');
+        input.required = true;
+      } else {
+        wrapper.classList.add('d-none');
+        input.required = false;
+        input.value = "";
+      }
+    }
+
+    function showDashboard() {
+      document.getElementById('dashboardView').style.display = 'block';
+      document.getElementById('formsView').style.display = 'none';
+      loadSchedulesReminder();
+    }
+
+    function switchView(moduleName) {
+      document.getElementById('dashboardView').style.display = 'none';
+      document.getElementById('formsView').style.display = 'block';
+      
+      document.querySelectorAll('.form-module').forEach(el => el.style.display = 'none');
+      document.getElementById(`module-${moduleName}`).style.display = 'block';
     }
 
     function checkSession() {
@@ -422,7 +525,6 @@
       }
       alertBox.classList.add('d-none');
 
-      // Admin Redirect Pathway
       if (selectedVal === "ADMIN_ACCOUNT") {
         try {
           const url = `${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&action=adminlogin&apin=${encodeURIComponent(pin)}`;
@@ -438,7 +540,6 @@
             return;
           }
         } catch (e) {
-          // Offline fallback check
           if (pin === "713361") {
             localStorage.setItem("admin_pin", pin);
             window.location.href = "admin.html";
@@ -450,7 +551,6 @@
         }
       }
 
-      // Standard Technician Login Pathway
       try {
         const url = `${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&action=login&name=${encodeURIComponent(selectedVal)}&pin=${encodeURIComponent(pin)}`;
         const res = await fetch(url);
@@ -479,6 +579,59 @@
       checkSession();
     }
 
+    // --- Schedules Reminder Handling ---
+    function getSchedules() {
+      return JSON.parse(localStorage.getItem("tech_schedules") || "[]");
+    }
+
+    function handleScheduleSubmit(e) {
+      e.preventDefault();
+      const sched = {
+        id: "SCH-" + Date.now(),
+        date: document.getElementById('schedDate').value,
+        location: document.getElementById('schedLocation').value,
+        category: document.getElementById('schedCategory').value,
+        desc: document.getElementById('schedDesc').value,
+        technician: localStorage.getItem("tech_name")
+      };
+
+      const schedules = getSchedules();
+      schedules.push(sched);
+      localStorage.setItem("tech_schedules", JSON.stringify(schedules));
+
+      alert("Schedule saved successfully!");
+      document.getElementById('scheduleForm').reset();
+      document.getElementById('schedDate').value = new Date().toISOString().slice(0, 10);
+      showDashboard();
+    }
+
+    function loadSchedulesReminder() {
+      const schedules = getSchedules();
+      const today = new Date().toISOString().slice(0, 10);
+      
+      // Filter schedules from today onwards
+      const upcoming = schedules.filter(s => s.date >= today).sort((a,b) => a.date.localeCompare(b.date));
+      
+      document.getElementById('scheduleCountBadge').textContent = `${upcoming.length} Pending`;
+      const listContainer = document.getElementById('upcomingSchedulesList');
+
+      if (upcoming.length === 0) {
+        listContainer.innerHTML = '<p class="text-muted mb-0">No upcoming schedules found.</p>';
+        return;
+      }
+
+      listContainer.innerHTML = upcoming.slice(0, 3).map(s => `
+        <div class="border-bottom border-secondary pb-1 mb-1">
+          <div class="d-flex justify-content-between fw-bold text-warning">
+            <span><i class="bi bi-geo-alt me-1"></i>${s.location}</span>
+            <span>${s.date}</span>
+          </div>
+          <small class="text-muted text-truncate d-block">${s.desc}</small>
+        </div>
+      `).join('');
+    }
+
+    // --- Offline Queue & Sync Engine ---
     function getQueue() { return JSON.parse(localStorage.getItem("offline_queue") || "[]"); }
     function saveQueue(queue) { localStorage.setItem("offline_queue", JSON.stringify(queue)); updateSyncBadge(); }
     function addToQueue(type, payload) { const queue = getQueue(); queue.push({ type, payload, timestamp: Date.now() }); saveQueue(queue); }
@@ -569,6 +722,7 @@
         alert("Offline Mode: Job entry saved locally!");
         document.getElementById('jobForm').reset();
         document.getElementById('logDate').value = new Date().toISOString().slice(0, 10);
+        showDashboard();
         return;
       }
 
@@ -579,13 +733,16 @@
           alert("Job entry logged successfully!");
           document.getElementById('jobForm').reset();
           document.getElementById('logDate').value = new Date().toISOString().slice(0, 10);
+          showDashboard();
         } else {
           addToQueue('job', entry);
           alert("Saved locally to sync automatically.");
+          showDashboard();
         }
       } catch (err) {
         addToQueue('job', entry);
         alert("Network issue: Saved locally.");
+        showDashboard();
       }
     }
 
@@ -615,6 +772,7 @@
         document.getElementById('utilityForm').reset();
         document.getElementById('readingDate').value = new Date().toISOString().slice(0, 10);
         document.getElementById('meterInfoCard').classList.add('d-none');
+        showDashboard();
         return;
       }
 
@@ -626,13 +784,16 @@
           document.getElementById('utilityForm').reset();
           document.getElementById('readingDate').value = new Date().toISOString().slice(0, 10);
           document.getElementById('meterInfoCard').classList.add('d-none');
+          showDashboard();
         } else {
           addToQueue('utility', reading);
           alert("Saved locally.");
+          showDashboard();
         }
       } catch (err) {
         addToQueue('utility', reading);
         alert("Saved locally.");
+        showDashboard();
       }
     }
 
@@ -658,6 +819,7 @@
         alert("Offline Mode: Overtime entry saved locally!");
         document.getElementById('otForm').reset();
         document.getElementById('otDate').value = new Date().toISOString().slice(0, 10);
+        showDashboard();
         return;
       }
 
@@ -668,13 +830,16 @@
           alert("Overtime logged successfully!");
           document.getElementById('otForm').reset();
           document.getElementById('otDate').value = new Date().toISOString().slice(0, 10);
+          showDashboard();
         } else {
           addToQueue('overtime', ot);
           alert("Saved locally.");
+          showDashboard();
         }
       } catch (err) {
         addToQueue('overtime', ot);
         alert("Saved locally.");
+        showDashboard();
       }
     }
   </script>
