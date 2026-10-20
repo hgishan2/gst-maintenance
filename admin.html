@@ -131,7 +131,7 @@
 
   <!-- Admin Main Portal Content Container -->
   <div id="adminContent" class="container mt-3" style="display: none;">
-    
+
     <!-- Filter & Export Controls Card -->
     <div class="card p-3 shadow-sm mb-3">
       <div class="row g-2 align-items-center">
@@ -222,7 +222,7 @@
 
     <!-- Tab Panels -->
     <div class="tab-content" id="adminTabsContent">
-      
+
       <!-- TAB 0: TECHNICIAN PERFORMANCE DASHBOARD -->
       <div class="tab-pane fade show active" id="pills-perf" role="tabpanel">
         <div class="card p-3 shadow-sm">
@@ -411,7 +411,7 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       adminModalInstance = new bootstrap.Modal(document.getElementById('adminLoginModal'));
-      
+
       const today = new Date().toISOString().slice(0, 10);
       const firstDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
       document.getElementById('filterFrom').value = firstDay;
@@ -423,6 +423,11 @@
 
       const adminCatSel = document.getElementById('adminSchedCategory');
       (CONFIG.CATEGORIES || []).forEach(c => adminCatSel.innerHTML += `<option value="${c}">${c}</option>`);
+
+      // Allow pressing Enter in the PIN box
+      document.getElementById('adminPinInput').addEventListener('keydown', e => {
+        if (e.key === 'Enter') verifyAdminLogin();
+      });
 
       checkAdminSession();
     });
@@ -463,17 +468,12 @@
           checkAdminSession();
         } else {
           alertBox.textContent = "Invalid Admin PIN. Please try again.";
-          alertBox.classList.add('d-none');
+          alertBox.classList.remove('d-none');
         }
       } catch (err) {
-        if (pin === "713361") {
-          localStorage.setItem("admin_pin", pin);
-          document.getElementById('adminPinInput').value = "";
-          checkAdminSession();
-          return;
-        }
-        alertBox.textContent = "Server connection error.";
-        alertBox.classList.add('d-none');
+        // PIN is verified server-side only (no PIN is stored in this page's source).
+        alertBox.textContent = "Server connection error. Please check your connection and try again.";
+        alertBox.classList.remove('d-none');
       }
     }
 
@@ -864,81 +864,27 @@
 
           if (!combinedReadings.length) { alert("No utility readings found."); return; }
 
-          // Sort all readings chronologically
-          combinedReadings.sort((a, b) => new Date(a.date || a.cleanDate) - new Date(b.date || b.cleanDate));
+          const uniqueMap = new Map();
+          combinedReadings.forEach(r => {
+            const cleanDate = String(r.date || '').split('T')[0];
+            if (cleanDate >= fromDate && cleanDate <= toDate) {
+              const key = `${cleanDate}_${r.meter}`;
+              uniqueMap.set(key, { ...r, cleanDate });
+            }
+          });
+
+          const finalReadings = Array.from(uniqueMap.values());
+          if (!finalReadings.length) {
+            alert(`No utility readings found strictly between ${fromDate} and ${toDate}.`);
+            return;
+          }
 
           const resp = await fetch('Utility_Report Template.xlsx');
           const buffer = await resp.arrayBuffer();
           const workbook = await XlsxPopulate.fromDataAsync(buffer);
 
-          // 1. POPULATE DAILY READINGS SHEET
-          const dailySheet = workbook.sheet('Daily Readings');
-          if (dailySheet) {
-            dailySheet.cell('A2').value(`Daily readings and consumption  |  ${fromDate} to ${toDate}`);
-
-            let rowIdx = 5;
-            combinedReadings.forEach((r) => {
-              const cleanDate = String(r.date || r.cleanDate || '').split('T')[0];
-              if (cleanDate >= fromDate && cleanDate <= toDate) {
-                dailySheet.cell(`A${rowIdx}`).value(cleanDate);
-                dailySheet.cell(`B${rowIdx}`).value(r.type || '');
-                dailySheet.cell(`C${rowIdx}`).value(r.area || '');
-                dailySheet.cell(`D${rowIdx}`).value(r.meter || '');
-                dailySheet.cell(`E${rowIdx}`).value(r.account || '');
-                dailySheet.cell(`F${rowIdx}`).value(Number(r.reading) || r.reading || 0);
-                dailySheet.cell(`K${rowIdx}`).value(normalizeTechName(r.technician));
-                rowIdx++;
-              }
-            });
-          }
-
-          // 2. POPULATE SUMMARY SHEET
-          const summarySheet = workbook.sheet('Summary');
-          if (summarySheet) {
-            summarySheet.cell('A2').value(`Consumption summary per meter  |  ${fromDate} to ${toDate}`);
-            
-            const meterMap = {};
-            combinedReadings.forEach(r => {
-              const m = r.meter;
-              if (!m) return;
-              if (!meterMap[m]) {
-                meterMap[m] = { type: r.type, area: r.area, account: r.account, readings: [] };
-              }
-              meterMap[m].readings.push({ date: String(r.date || r.cleanDate).split('T')[0], val: Number(r.reading) || 0 });
-            });
-
-            let sRow = 4;
-            Object.keys(meterMap).forEach(mKey => {
-              const data = meterMap[mKey];
-              const periodReadings = data.readings.filter(x => x.date >= fromDate && x.date <= toDate);
-              if (periodReadings.length > 0) {
-                const opening = periodReadings[0].val;
-                const closing = periodReadings[periodReadings.length - 1].val;
-                const consumption = closing >= opening ? closing - opening : 0;
-
-                summarySheet.cell(`A${sRow}`).value(data.type || '');
-                summarySheet.cell(`B${sRow}`).value(data.area || '');
-                summarySheet.cell(`C${sRow}`).value(mKey);
-                summarySheet.cell(`D${sRow}`).value(data.account || '');
-                summarySheet.cell(`E${sRow}`).value(opening);
-                summarySheet.cell(`F${sRow}`).value(closing);
-                summarySheet.cell(`G${sRow}`).value(consumption);
-                summarySheet.cell(`H${sRow}`).value(periodReadings.length);
-                sRow++;
-              }
-            });
-          }
-
-          // 3. POPULATE ELECTRICITY & WATER BREAKOUT SHEETS
-          const elecSheet = workbook.sheet('Electricity');
-          if (elecSheet) {
-            elecSheet.cell('A1').value(`Electricity readings and daily consumption  |  ${fromDate} to ${toDate}`);
-          }
-
-          const waterSheet = workbook.sheet('Water');
-          if (waterSheet) {
-            waterSheet.cell('A1').value(`Water readings and daily consumption  |  ${fromDate} to ${toDate}`);
-          }
+          // Fills Summary, Electricity, Water and Daily Readings sheets
+          fillUtilityWorkbook(workbook, finalReadings, fromDate, toDate);
 
           const outBuffer = await workbook.outputAsync();
           downloadBlob(new Blob([outBuffer]), `Utility_Readings_Report_${fromDate}_to_${toDate}.xlsx`);
@@ -980,7 +926,7 @@
           const resp = await fetch('Overtime Template.xlsx');
           const buffer = await resp.arrayBuffer();
           const workbook = await XlsxPopulate.fromDataAsync(buffer);
-          
+
           const templateSheet = workbook.sheet('Individual OT Sheet');
           if (!templateSheet) {
             alert("Template sheet 'Individual OT Sheet' not found.");
@@ -1057,6 +1003,181 @@
         console.error("Error populating Excel template:", err);
         alert("Failed to populate template. Ensure template XLSX files exist in your site root directory.");
       }
+    }
+
+    // ---------- Utility report helpers ----------
+    function isoToSerial(iso) {
+      const [y, m, d] = iso.split('-').map(Number);
+      return Date.UTC(y, m - 1, d) / 86400000 + 25569;   // Excel date serial (no timezone drift)
+    }
+
+    function fillUtilityWorkbook(workbook, readings, fromDate, toDate) {
+      const S = v => String(v ?? '').trim();
+      const toNum = v => { const n = parseFloat(String(v).replace(/,/g, '')); return isNaN(n) ? null : n; };
+      const round2 = n => Math.round(n * 100) / 100;
+      const NO_FILL = { type: 'pattern', pattern: 'none' };
+      // NB: never read style('fill') on an unfilled cell - xlsx-populate registers an empty <fill/> that corrupts the file.
+      const STYLE_KEYS = ['numberFormat','border','bold','fontFamily','fontSize','fontColor',
+                          'horizontalAlignment','verticalAlignment','wrapText'];
+      const grab = (cell, fill) => {
+        const o = cell.style(STYLE_KEYS);
+        cell.style('fill', fill || NO_FILL);       // reading an unfilled cell registers an empty fill; set it right away
+        Object.keys(o).forEach(k => { if (o[k] === undefined || o[k] === null) delete o[k]; });
+        return o;
+      };
+      const applyStyle = (cell, o, fill) => {      // fill is always set explicitly, and last
+        Object.keys(o).forEach(k => cell.style(k, o[k]));
+        cell.style('fill', fill || NO_FILL);
+      };
+
+      // 1) Group by meter (Type|Area) and work out previous reading / days / consumption
+      const series = new Map();
+      readings.forEach(r => {
+        const key = `${S(r.type)}|${S(r.area)}`;
+        if (!series.has(key)) series.set(key, []);
+        series.get(key).push(r);
+      });
+
+      series.forEach((list, key) => {
+        list.sort((a, b) => a.cleanDate.localeCompare(b.cleanDate));
+        list.forEach((r, i) => {
+          const prev = i > 0 ? list[i - 1] : null;
+          const cur = toNum(r.reading), prevVal = prev ? toNum(prev.reading) : null;
+          const days = prev ? Math.round(isoToSerial(r.cleanDate) - isoToSerial(prev.cleanDate)) : null;
+          const cons = (cur !== null && prevVal !== null) ? round2(cur - prevVal) : null;
+          let check = 'OK';
+          if (!prev) check = 'Opening reading';
+          else if (cons !== null && cons < 0) check = 'Lower than previous - verify';
+          else if (days > 1) check = `Covers ${days} days`;
+          r._c = { key, cur, prevVal, prevDate: prev ? prev.cleanDate : null, days, cons, check };
+        });
+      });
+
+      // keep the meter order used by the template's Summary sheet
+      const summary = workbook.sheet('Summary');
+      const order = [];
+      if (summary) {
+        for (let r = 5; r <= 40 && summary.cell(r, 1).value(); r++)
+          order.push(`${S(summary.cell(r, 1).value())}|${S(summary.cell(r, 2).value())}`);
+      }
+      [...series.keys()].forEach(k => { if (!order.includes(k)) order.push(k); });
+
+      // 2) Daily Readings sheet
+      const daily = workbook.sheet('Daily Readings');
+      if (daily) {
+        daily.cell('A2').value(`Daily readings and consumption  |  ${fromDate} to ${toDate}`);
+        const rowStyle = [];
+        const dailyFill = daily.cell(6, 10).style('fill');   // 'Consumption' column is shaded in the template
+        for (let c = 1; c <= 13; c++) rowStyle[c] = grab(daily.cell(6, c), c === 10 ? dailyFill : null);
+
+        const flat = [];
+        order.forEach(k => (series.get(k) || []).forEach(r => flat.push(r)));
+
+        const lastRow = Math.max(51, 4 + flat.length);
+        for (let r = 5; r <= lastRow; r++) {
+          const x = flat[r - 5];
+          for (let c = 1; c <= 13; c++) {
+            const cell = daily.cell(r, c);
+            if (r > 51) applyStyle(cell, rowStyle[c], c === 10 ? dailyFill : null);
+            if (!x) { cell.value(undefined); continue; }
+          }
+          if (!x) continue;
+          const k = x._c;
+          daily.cell(r, 1).value(isoToSerial(x.cleanDate));
+          daily.cell(r, 2).value(S(x.type));
+          daily.cell(r, 3).value(S(x.area));
+          daily.cell(r, 4).value(S(x.meter));
+          daily.cell(r, 5).value(S(x.account));
+          daily.cell(r, 6).value(k.cur !== null ? k.cur : S(x.reading));
+          daily.cell(r, 7).value(k.prevVal !== null ? k.prevVal : undefined);
+          daily.cell(r, 8).value(k.prevDate ? isoToSerial(k.prevDate) : undefined);
+          daily.cell(r, 9).value(k.days !== null ? k.days : undefined);
+          daily.cell(r, 10).value(k.cons !== null ? k.cons : undefined);
+          daily.cell(r, 11).value(normalizeTechName(x.technician));
+          daily.cell(r, 12).value(k.check);
+          daily.cell(r, 13).value(k.key);
+        }
+      }
+
+      // 3) Summary sheet (one row per meter)
+      if (summary) {
+        for (let r = 5; r <= 40 && summary.cell(r, 1).value(); r++) {
+          const key = `${S(summary.cell(r, 1).value())}|${S(summary.cell(r, 2).value())}`;
+          const list = series.get(key);
+          if (!list || !list.length) continue;
+          const first = list[0], last = list[list.length - 1];
+          const open = first._c.cur, close = last._c.cur;
+          const span = Math.round(isoToSerial(last.cleanDate) - isoToSerial(first.cleanDate));
+          const total = (open !== null && close !== null) ? round2(close - open) : null;
+          summary.cell(r, 5).value(open !== null ? open : undefined);
+          summary.cell(r, 6).value(close !== null ? close : undefined);
+          summary.cell(r, 7).value(total !== null ? total : undefined);
+          summary.cell(r, 8).value(list.length);
+          summary.cell(r, 9).value(total !== null && span > 0 ? round2(total / span) : undefined);
+        }
+      }
+
+      // 4) Electricity / Water sheets: one row per date, Reading + Consumption per meter
+      ['Electricity', 'Water'].forEach(type => {
+        const sheet = workbook.sheet(type);
+        if (!sheet) return;
+        sheet.cell('A2').value(`${type} readings and daily consumption  |  ${fromDate} to ${toDate}`);
+
+        // meter columns come from the header row, e.g. "Common  (21172699)"
+        const cols = [];
+        for (let c = 2; c <= 30; c += 2) {
+          const h = sheet.cell(4, c).value();
+          if (!h) continue;
+          const m = String(h).match(/^(.*?)\s*\((.*)\)\s*$/);
+          cols.push({ col: c, area: m ? m[1].trim() : String(h).trim(), meter: m ? m[2].trim() : '' });
+        }
+        if (!cols.length) return;
+        const lastCol = cols[cols.length - 1].col + 1;
+
+        const typeReadings = readings.filter(r => S(r.type) === type);
+        const dates = [...new Set(typeReadings.map(r => r.cleanDate))].sort();
+        if (!dates.length) return;
+
+        const lookup = new Map();   // "area|date" -> reading object
+        typeReadings.forEach(r => lookup.set(`${S(r.area)}|${r.cleanDate}`, r));
+
+        const consFill = sheet.cell(6, cols[0].col + 1).style('fill');   // shaded 'Consumption' cells
+        const dataStyle = [], totalStyle = [];
+        const isCons = c => cols.some(k => k.col + 1 === c);
+        for (let c = 1; c <= lastCol; c++) {
+          dataStyle[c] = grab(sheet.cell(6, c), isCons(c) ? consFill : null);
+          totalStyle[c] = grab(sheet.cell(13, c), null);
+        }
+
+        const totalRow = Math.max(13, 6 + dates.length);
+        for (let r = 6; r < totalRow; r++) {
+          const date = dates[r - 6];
+          for (let c = 1; c <= lastCol; c++) {
+            const cell = sheet.cell(r, c);
+            applyStyle(cell, dataStyle[c], isCons(c) ? consFill : null);
+            cell.value(undefined);
+          }
+          if (!date) continue;
+          sheet.cell(r, 1).value(isoToSerial(date));
+          cols.forEach(({ col, area }) => {
+            const x = lookup.get(`${area}|${date}`);
+            if (!x) return;
+            if (x._c.cur !== null) sheet.cell(r, col).value(x._c.cur);
+            if (x._c.cons !== null) sheet.cell(r, col + 1).value(x._c.cons);
+          });
+        }
+
+        for (let c = 1; c <= lastCol; c++) {
+          const cell = sheet.cell(totalRow, c);
+          applyStyle(cell, totalStyle[c], null);
+          cell.value(undefined);
+        }
+        sheet.cell(totalRow, 1).value('Total');
+        cols.forEach(({ col }) => {
+          const L = sheet.cell(totalRow, col + 1).address({ includeSheetName: false }).replace(/\d+/g, '').replace(/\$/g, '');
+          sheet.cell(totalRow, col + 1).formula(`SUM(${L}6:${L}${totalRow - 1})`);
+        });
+      });
     }
 
     function calculateHours(fromTime, toTime) {
