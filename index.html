@@ -266,7 +266,7 @@
               </div>
             </div>
 
-            <button type="submit" class="btn btn-accent w-100 py-2 fs-6">
+            <button type="submit" id="jobSubmitBtn" class="btn btn-accent w-100 py-2 fs-6">
               <i class="bi bi-send me-1"></i>Submit Job Log
             </button>
           </form>
@@ -303,13 +303,18 @@
               </div>
             </div>
 
+            <!-- Duplicate Warning Notice -->
+            <div id="utilityDupNotice" class="alert alert-warning py-2 small d-none">
+              <i class="bi bi-exclamation-triangle-fill me-1"></i>
+              <strong>Existing Record Found:</strong> You already entered a reading for this meter today. Submitting will update your existing entry.
+            </div>
+
             <div class="mb-3">
               <label class="form-label small mb-1">Current Reading Value *</label>
               <input type="number" step="any" id="meterValue" class="form-control form-control-lg" placeholder="Enter meter digits" required>
-              <small class="text-muted d-block mt-1" style="font-size:0.75rem;">Note: Only 1 reading is allowed per meter per day. Entering a new value will update today's reading.</small>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100 py-2 fs-6 fw-bold">
+            <button type="submit" id="utilitySubmitBtn" class="btn btn-primary w-100 py-2 fs-6 fw-bold">
               <i class="bi bi-check-circle me-1"></i>Submit Utility Reading
             </button>
           </form>
@@ -325,18 +330,24 @@
           <form id="otForm" onsubmit="handleOtSubmit(event)">
             <div class="mb-2">
               <label class="form-label small mb-1">Overtime Date</label>
-              <input type="date" id="otDate" class="form-control form-control-sm" required>
+              <input type="date" id="otDate" class="form-control form-control-sm" onchange="checkOtDuplicate()" required>
             </div>
 
             <div class="row g-2 mb-2">
               <div class="col-6">
                 <label class="form-label small mb-1">From Time *</label>
-                <input type="time" id="otFrom" class="form-control form-control-sm" required>
+                <input type="time" id="otFrom" class="form-control form-control-sm" onchange="checkOtDuplicate()" required>
               </div>
               <div class="col-6">
                 <label class="form-label small mb-1">To Time *</label>
-                <input type="time" id="otTo" class="form-control form-control-sm" required>
+                <input type="time" id="otTo" class="form-control form-control-sm" onchange="checkOtDuplicate()" required>
               </div>
+            </div>
+
+            <!-- Overtime Duplicate Warning Notice -->
+            <div id="otDupNotice" class="alert alert-warning py-2 small d-none mb-2">
+              <i class="bi bi-exclamation-triangle-fill me-1"></i>
+              <strong>Existing Time Slot Found:</strong> You already logged overtime for this exact time slot today. Submitting will update your existing entry.
             </div>
 
             <div class="row g-2 mb-2">
@@ -355,7 +366,7 @@
               <textarea id="otWork" class="form-control form-control-sm" rows="2" placeholder="Description of overtime work..." required></textarea>
             </div>
 
-            <button type="submit" class="btn btn-warning w-100 py-2 fs-6 fw-bold text-dark">
+            <button type="submit" id="otSubmitBtn" class="btn btn-warning w-100 py-2 fs-6 fw-bold text-dark">
               <i class="bi bi-clock me-1"></i>Submit Overtime Log
             </button>
           </form>
@@ -465,9 +476,11 @@
       const card = document.getElementById('meterInfoCard');
       const valueInput = document.getElementById('meterValue');
       const today = document.getElementById('readingDate').value;
+      const notice = document.getElementById('utilityDupNotice');
 
       if (idx === "") { 
         card.classList.add('d-none'); 
+        notice.classList.add('d-none');
         valueInput.value = "";
         return; 
       }
@@ -479,16 +492,41 @@
       document.getElementById('infoAccount').textContent = m.account;
       card.classList.remove('d-none');
 
-      // Check if a reading for this meter already exists today
-      const existingReadings = JSON.parse(localStorage.getItem("utility_readings_local") || "[]");
-      const found = existingReadings.find(r => r.date === today && r.meter === m.meter);
+      // Check for duplicate meter entry today
+      const localReadings = JSON.parse(localStorage.getItem("utility_readings_local") || "[]");
+      const found = localReadings.find(r => r.date === today && r.meter === m.meter);
 
       if (found) {
         valueInput.value = found.reading;
-        valueInput.placeholder = `Updating existing reading (was ${found.reading})`;
+        notice.classList.remove('d-none');
       } else {
         valueInput.value = "";
-        valueInput.placeholder = "Enter meter digits";
+        notice.classList.add('d-none');
+      }
+    }
+
+    function checkOtDuplicate() {
+      const date = document.getElementById('otDate').value;
+      const from = document.getElementById('otFrom').value;
+      const to = document.getElementById('otTo').value;
+      const tech = localStorage.getItem("tech_name");
+      const notice = document.getElementById('otDupNotice');
+
+      if (!date || !from || !to) {
+        notice.classList.add('d-none');
+        return;
+      }
+
+      const localOt = JSON.parse(localStorage.getItem("ot_local") || "[]");
+      const found = localOt.find(r => r.otDate === date && r.from === from && r.to === to && r.technician === tech);
+
+      if (found) {
+        document.getElementById('otType').value = found.type || '';
+        document.getElementById('otLocation').value = found.location || '';
+        document.getElementById('otWork').value = found.work || '';
+        notice.classList.remove('d-none');
+      } else {
+        notice.classList.add('d-none');
       }
     }
 
@@ -606,7 +644,7 @@
       checkSession();
     }
 
-    // --- Schedules Management & Filtering ---
+    // --- Schedules Management ---
     function getSchedules() {
       return JSON.parse(localStorage.getItem("tech_schedules") || "[]");
     }
@@ -779,8 +817,14 @@
       if (isManual || successCount > 0) alert(`Synced ${successCount} offline record(s)!`);
     }
 
+    // --- FORM SUBMISSIONS WITH DOUBLE-CLICK PROTECTION ---
+
     async function handleJobSubmit(e) {
       e.preventDefault();
+      const btn = document.getElementById('jobSubmitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Saving...';
+
       const tech = localStorage.getItem("tech_name");
       const pin = localStorage.getItem("tech_pin");
 
@@ -805,16 +849,16 @@
         pending: document.getElementById('pending').value
       };
 
-      if (!navigator.onLine) {
-        addToQueue('job', entry);
-        alert("Offline Mode: Job entry saved locally!");
-        document.getElementById('jobForm').reset();
-        document.getElementById('logDate').value = new Date().toISOString().slice(0, 10);
-        showDashboard();
-        return;
-      }
-
       try {
+        if (!navigator.onLine) {
+          addToQueue('job', entry);
+          alert("Offline Mode: Job entry saved locally!");
+          document.getElementById('jobForm').reset();
+          document.getElementById('logDate').value = new Date().toISOString().slice(0, 10);
+          showDashboard();
+          return;
+        }
+
         const res = await fetch(CONFIG.SCRIPT_URL, { method: "POST", body: JSON.stringify({ key: CONFIG.KEY, pin: pin, entries: [entry] }) });
         const data = await res.json();
         if (data.ok) {
@@ -831,20 +875,28 @@
         addToQueue('job', entry);
         alert("Network issue: Saved locally.");
         showDashboard();
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-send me-1"></i>Submit Job Log';
       }
     }
 
     async function handleUtilitySubmit(e) {
       e.preventDefault();
+      const btn = document.getElementById('utilitySubmitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Saving...';
+
       const tech = localStorage.getItem("tech_name");
       const pin = localStorage.getItem("tech_pin");
       const idx = document.getElementById('meterSelect').value;
-      if (idx === "") return;
+      if (idx === "") { btn.disabled = false; return; }
+
       const m = CONFIG.METERS[idx];
       const dateVal = document.getElementById('readingDate').value;
       const val = document.getElementById('meterValue').value;
 
-      // Maintain local override to enforce 1 reading per meter per day and allow instant updates
+      // Update local storage record (enforcing 1 reading per meter per day)
       let localReadings = JSON.parse(localStorage.getItem("utility_readings_local") || "[]");
       localReadings = localReadings.filter(r => !(r.date === dateVal && r.meter === m.meter));
 
@@ -863,24 +915,26 @@
       localReadings.push(reading);
       localStorage.setItem("utility_readings_local", JSON.stringify(localReadings));
 
-      if (!navigator.onLine) {
-        addToQueue('utility', reading);
-        alert("Offline Mode: Meter reading saved/updated locally!");
-        document.getElementById('utilityForm').reset();
-        document.getElementById('readingDate').value = new Date().toISOString().slice(0, 10);
-        document.getElementById('meterInfoCard').classList.add('d-none');
-        showDashboard();
-        return;
-      }
-
       try {
-        const res = await fetch(CONFIG.SCRIPT_URL, { method: "POST", body: JSON.stringify({ key: CONFIG.KEY, pin: pin, readings: [reading] }) });
-        const data = await res.json();
-        if (data.ok) {
-          alert("Meter reading recorded/updated successfully!");
+        if (!navigator.onLine) {
+          addToQueue('utility', reading);
+          alert("Offline Mode: Utility reading saved/updated locally!");
           document.getElementById('utilityForm').reset();
           document.getElementById('readingDate').value = new Date().toISOString().slice(0, 10);
           document.getElementById('meterInfoCard').classList.add('d-none');
+          document.getElementById('utilityDupNotice').classList.add('d-none');
+          showDashboard();
+          return;
+        }
+
+        const res = await fetch(CONFIG.SCRIPT_URL, { method: "POST", body: JSON.stringify({ key: CONFIG.KEY, pin: pin, readings: [reading] }) });
+        const data = await res.json();
+        if (data.ok) {
+          alert("Utility reading recorded/updated successfully!");
+          document.getElementById('utilityForm').reset();
+          document.getElementById('readingDate').value = new Date().toISOString().slice(0, 10);
+          document.getElementById('meterInfoCard').classList.add('d-none');
+          document.getElementById('utilityDupNotice').classList.add('d-none');
           showDashboard();
         } else {
           addToQueue('utility', reading);
@@ -891,42 +945,61 @@
         addToQueue('utility', reading);
         alert("Saved locally.");
         showDashboard();
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Submit Utility Reading';
       }
     }
 
     async function handleOtSubmit(e) {
       e.preventDefault();
+      const btn = document.getElementById('otSubmitBtn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Saving...';
+
       const tech = localStorage.getItem("tech_name");
       const pin = localStorage.getItem("tech_pin");
+      const otDate = document.getElementById('otDate').value;
+      const from = document.getElementById('otFrom').value;
+      const to = document.getElementById('otTo').value;
+
+      // Update local storage record (enforcing unique overtime slots per technician per day)
+      let localOt = JSON.parse(localStorage.getItem("ot_local") || "[]");
+      localOt = localOt.filter(r => !(r.otDate === otDate && r.from === from && r.to === to && r.technician === tech));
 
       const ot = {
         id: "OT-" + Date.now(),
         submittedAt: new Date().toISOString(),
         technician: tech,
-        otDate: document.getElementById('otDate').value,
-        from: document.getElementById('otFrom').value,
-        to: document.getElementById('otTo').value,
+        otDate: otDate,
+        from: from,
+        to: to,
         type: document.getElementById('otType').value,
         location: document.getElementById('otLocation').value,
         work: document.getElementById('otWork').value
       };
 
-      if (!navigator.onLine) {
-        addToQueue('overtime', ot);
-        alert("Offline Mode: Overtime entry saved locally!");
-        document.getElementById('otForm').reset();
-        document.getElementById('otDate').value = new Date().toISOString().slice(0, 10);
-        showDashboard();
-        return;
-      }
+      localOt.push(ot);
+      localStorage.setItem("ot_local", JSON.stringify(localOt));
 
       try {
+        if (!navigator.onLine) {
+          addToQueue('overtime', ot);
+          alert("Offline Mode: Overtime entry saved/updated locally!");
+          document.getElementById('otForm').reset();
+          document.getElementById('otDate').value = new Date().toISOString().slice(0, 10);
+          document.getElementById('otDupNotice').classList.add('d-none');
+          showDashboard();
+          return;
+        }
+
         const res = await fetch(CONFIG.SCRIPT_URL, { method: "POST", body: JSON.stringify({ key: CONFIG.KEY, pin: pin, overtime: [ot] }) });
         const data = await res.json();
         if (data.ok) {
-          alert("Overtime logged successfully!");
+          alert("Overtime logged/updated successfully!");
           document.getElementById('otForm').reset();
           document.getElementById('otDate').value = new Date().toISOString().slice(0, 10);
+          document.getElementById('otDupNotice').classList.add('d-none');
           showDashboard();
         } else {
           addToQueue('overtime', ot);
@@ -937,6 +1010,9 @@
         addToQueue('overtime', ot);
         alert("Saved locally.");
         showDashboard();
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-clock me-1"></i>Submit Overtime Log';
       }
     }
   </script>
