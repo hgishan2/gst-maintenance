@@ -692,8 +692,6 @@
 
     function renderReadingsTable(rows) {
       const tbody = document.getElementById('readingsTableBody');
-
-      // Deduplicate readings in table display
       const localReadings = JSON.parse(localStorage.getItem("utility_readings_local") || "[]");
       const combined = [...rows, ...localReadings];
       const uniqueMap = new Map();
@@ -725,8 +723,6 @@
 
     function renderOtTable(rows) {
       const tbody = document.getElementById('otTableBody');
-
-      // Deduplicate overtime entries in table display
       const localOt = JSON.parse(localStorage.getItem("ot_local") || "[]");
       const combined = [...rows, ...localOt];
       const uniqueMap = new Map();
@@ -754,6 +750,31 @@
           <td>${r.work || ''}</td>
         </tr>
       `).join('');
+    }
+
+    // Helper lookup to resolve technician employee ID and designation
+    function getTechProfile(techName) {
+      if (!techName) return { empCode: "", designation: "Technician" };
+      
+      const cleanKey = techName.replace(/\s+/g, ' ').trim().toUpperCase();
+      
+      const profiles = {
+        "MEHEDI HASAN LIYAKAT ALI": { empCode: "3765", designation: "Mason/Painter" },
+        "MOHAMMAD KAUSHAR ALI": { empCode: "711312", designation: "Plumber" },
+        "AJEESH MOHANKUMAR GEETHA": { empCode: "712371", designation: "Painter" },
+        "NAGENDRA VISHWAKARMA": { empCode: "712892", designation: "General Technician" },
+        "RAM JATAN MAHADEV": { empCode: "713052", designation: "Carpenter" },
+        "MUHAMMAD JAHANGEER": { empCode: "713150", designation: "AC Technician" },
+        "ALI HASSAN": { empCode: "713502", designation: "Electrician" },
+        "IMTIYAZ KAMRUDDIN": { empCode: "713520", designation: "AC Technician" }
+      };
+
+      if (profiles[cleanKey]) return profiles[cleanKey];
+
+      const matchedKey = Object.keys(profiles).find(k => k.includes(cleanKey) || cleanKey.includes(k));
+      if (matchedKey) return profiles[matchedKey];
+
+      return { empCode: "N/A", designation: "Technician" };
     }
 
     // --- EXCEL TEMPLATE POPULATION LOGIC ---
@@ -802,7 +823,6 @@
 
           if (!combinedReadings.length) { alert("No utility readings found."); return; }
 
-          // Deduplicate by date + meter
           const uniqueMap = new Map();
           combinedReadings.forEach(r => {
             const cleanDate = String(r.date || '').split('T')[0];
@@ -822,13 +842,11 @@
           const buffer = await resp.arrayBuffer();
           const workbook = await XlsxPopulate.fromDataAsync(buffer);
 
-          // Populate Summary / Title Header
           const summarySheet = workbook.sheet('Summary');
           if (summarySheet) {
             summarySheet.cell('A2').value(`Consumption summary per meter  |  ${fromDate} to ${toDate}`);
           }
 
-          // Populate Daily Readings Sheet
           const dailySheet = workbook.sheet('Daily Readings');
           if (dailySheet) {
             dailySheet.cell('A2').value(`Daily readings and consumption  |  ${fromDate} to ${toDate}`);
@@ -845,31 +863,6 @@
             });
           }
 
-          // Populate Electricity & Water Sub-Sheets if available
-          const elecSheet = workbook.sheet('Electricity');
-          if (elecSheet) {
-            const elecReadings = finalReadings.filter(r => r.type === 'Electricity');
-            elecReadings.forEach((r, idx) => {
-              const row = 5 + idx;
-              elecSheet.cell(`A${row}`).value(r.cleanDate || '');
-              elecSheet.cell(`B${row}`).value(r.area || '');
-              elecSheet.cell(`C${row}`).value(r.meter || '');
-              elecSheet.cell(`D${row}`).value(Number(r.reading) || 0);
-            });
-          }
-
-          const waterSheet = workbook.sheet('Water');
-          if (waterSheet) {
-            const waterReadings = finalReadings.filter(r => r.type === 'Water');
-            waterReadings.forEach((r, idx) => {
-              const row = 5 + idx;
-              waterSheet.cell(`A${row}`).value(r.cleanDate || '');
-              waterSheet.cell(`B${row}`).value(r.area || '');
-              waterSheet.cell(`C${row}`).value(r.meter || '');
-              waterSheet.cell(`D${row}`).value(Number(r.reading) || 0);
-            });
-          }
-
           const outBuffer = await workbook.outputAsync();
           downloadBlob(new Blob([outBuffer]), `Utility_Readings_Report_${fromDate}_to_${toDate}.xlsx`);
         }
@@ -880,55 +873,107 @@
 
           if (!combinedOt.length) { alert("No overtime records found."); return; }
 
-          // Deduplicate by date + technician + time slot
-          const uniqueMap = new Map();
-          combinedOt.forEach(r => {
-            const cleanDate = String(r.otDate || r.date || '').split('T')[0];
-            if (cleanDate >= fromDate && cleanDate <= toDate) {
-              const key = `${cleanDate}_${r.technician}_${r.from}_${r.to}`;
-              uniqueMap.set(key, { ...r, cleanDate });
-            }
+          const filteredOt = combinedOt.filter(r => {
+            const cDate = String(r.otDate || r.date || '').split('T')[0];
+            return cDate >= fromDate && cDate <= toDate;
           });
 
-          const finalOt = Array.from(uniqueMap.values());
-          if (!finalOt.length) {
+          if (!filteredOt.length) {
             alert(`No overtime records found strictly between ${fromDate} and ${toDate}.`);
             return;
           }
 
+          const techGrouped = {};
+          filteredOt.forEach(r => {
+            const t = r.technician || "Unknown";
+            if (!techGrouped[t]) techGrouped[t] = [];
+            techGrouped[t].push(r);
+          });
+
           const resp = await fetch('Overtime Template.xlsx');
           const buffer = await resp.arrayBuffer();
           const workbook = await XlsxPopulate.fromDataAsync(buffer);
+          
+          const templateSheet = workbook.sheet('Individual OT Sheet');
+          if (!templateSheet) {
+            alert("Template sheet 'Individual OT Sheet' not found.");
+            return;
+          }
 
-          const mainSheet = workbook.sheet('Individual OT Sheet');
-          if (mainSheet) {
-            mainSheet.cell('H12').value(`Month : ${fromDate} to ${toDate}`);
+          const dateObj = new Date(fromDate);
+          const monthName = dateObj.toLocaleString('en-US', { month: 'long' }).toUpperCase();
+          const yearNum = dateObj.getFullYear();
+          const monthHeaderText = `Month : ${monthName} - ${yearNum}`;
 
-            finalOt.forEach((r) => {
-              const dayNum = parseInt((r.cleanDate || '').split('-')[2], 10);
+          Object.keys(techGrouped).forEach(techName => {
+            const techEntries = techGrouped[techName];
+            const profile = getTechProfile(techName);
+
+            const techSheet = workbook.cloneSheet(templateSheet, techName.substring(0, 31));
+
+            techSheet.cell('B12').value(techName);
+            techSheet.cell('G12').value(profile.empCode || '');
+            techSheet.cell('B13').value(profile.designation || '');
+            techSheet.cell('H12').value(monthHeaderText);
+
+            const dayGrouped = {};
+            techEntries.forEach(entry => {
+              const cDate = String(entry.otDate || entry.date || '').split('T')[0];
+              const dayNum = parseInt(cDate.split('-')[2], 10);
               if (!isNaN(dayNum) && dayNum >= 1 && dayNum <= 31) {
-                const row = 16 + dayNum;
-                mainSheet.cell(`B${row}`).value(r.from || '');
-                mainSheet.cell(`C${row}`).value(r.to || '');
-                mainSheet.cell(`E${row}`).value(r.work || '');
-                mainSheet.cell(`H${row}`).value(`${r.technician} - ${r.location}`);
+                if (!dayGrouped[dayNum]) dayGrouped[dayNum] = [];
+                dayGrouped[dayNum].push(entry);
               }
             });
-          }
 
+            for (let day = 31; day >= 1; day--) {
+              const baseRow = 16 + day;
+              const entriesForDay = dayGrouped[day] || [];
+
+              if (entriesForDay.length > 0) {
+                const first = entriesForDay[0];
+                techSheet.cell(`A${baseRow}`).value(day);
+                techSheet.cell(`B${baseRow}`).value(first.from || '');
+                techSheet.cell(`C${baseRow}`).value(first.to || '');
+
+                const hrs = calculateHours(first.from, first.to);
+                const cat = first.otCategoryType || first.type || 'N';
+
+                if (cat === 'N') techSheet.cell(`D${baseRow}`).value(hrs);
+                else if (cat === 'WO') techSheet.cell(`E${baseRow}`).value(hrs);
+                else if (cat === 'PH') techSheet.cell(`F${baseRow}`).value(hrs);
+                else if (cat === 'N. Shift') techSheet.cell(`G${baseRow}`).value(hrs);
+                else techSheet.cell(`D${baseRow}`).value(hrs);
+
+                techSheet.cell(`H${baseRow}`).value(`${first.location || ''} - ${first.work || ''}`);
+
+                for (let k = 1; k < entriesForDay.length; k++) {
+                  const extra = entriesForDay[k];
+                  const insertRowIdx = baseRow + k;
+                  
+                  techSheet.row(insertRowIdx).addPageBreak();
+                  techSheet.cell(`A${insertRowIdx}`).value(day);
+                  techSheet.cell(`B${insertRowIdx}`).value(extra.from || '');
+                  techSheet.cell(`C${insertRowIdx}`).value(extra.to || '');
+
+                  const extraHrs = calculateHours(extra.from, extra.to);
+                  const extraCat = extra.otCategoryType || extra.type || 'N';
+
+                  if (extraCat === 'N') techSheet.cell(`D${insertRowIdx}`).value(extraHrs);
+                  else if (extraCat === 'WO') techSheet.cell(`E${insertRowIdx}`).value(extraHrs);
+                  else if (extraCat === 'PH') techSheet.cell(`F${insertRowIdx}`).value(extraHrs);
+                  else if (extraCat === 'N. Shift') techSheet.cell(`G${insertRowIdx}`).value(extraHrs);
+                  else techSheet.cell(`D${insertRowIdx}`).value(extraHrs);
+
+                  techSheet.cell(`H${insertRowIdx}`).value(`${extra.location || ''} - ${extra.work || ''}`);
+                }
+              }
+            }
+          });
+
+          templateSheet.delete();
           const compatSheet = workbook.sheet('Compatibility Report');
-          if (compatSheet) {
-            finalOt.forEach((r, idx) => {
-              const row = 5 + idx;
-              compatSheet.cell(`A${row}`).value(r.cleanDate || '');
-              compatSheet.cell(`B${row}`).value(r.technician || '');
-              compatSheet.cell(`C${row}`).value(r.from || '');
-              compatSheet.cell(`D${row}`).value(r.to || '');
-              compatSheet.cell(`E${row}`).value(r.type || '');
-              compatSheet.cell(`F${row}`).value(r.location || '');
-              compatSheet.cell(`G${row}`).value(r.work || '');
-            });
-          }
+          if (compatSheet) compatSheet.delete();
 
           const outBuffer = await workbook.outputAsync();
           downloadBlob(new Blob([outBuffer]), `Overtime_Report_${fromDate}_to_${toDate}.xlsx`);
@@ -937,6 +982,15 @@
         console.error("Error populating Excel template:", err);
         alert("Failed to populate template. Ensure template XLSX files exist in your site root directory.");
       }
+    }
+
+    function calculateHours(fromTime, toTime) {
+      if (!fromTime || !toTime) return '';
+      const [fH, fM] = fromTime.split(':').map(Number);
+      const [tH, tM] = toTime.split(':').map(Number);
+      let diff = (tH * 60 + tM) - (fH * 60 + fM);
+      if (diff < 0) diff += 24 * 60;
+      return Math.round((diff / 60) * 100) / 100;
     }
 
     function downloadBlob(blob, filename) {
