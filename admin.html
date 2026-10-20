@@ -463,7 +463,7 @@
           checkAdminSession();
         } else {
           alertBox.textContent = "Invalid Admin PIN. Please try again.";
-          alertBox.classList.remove('d-none');
+          alertBox.classList.add('d-none');
         }
       } catch (err) {
         if (pin === "713361") {
@@ -473,7 +473,7 @@
           return;
         }
         alertBox.textContent = "Server connection error.";
-        alertBox.classList.remove('d-none');
+        alertBox.classList.add('d-none');
       }
     }
 
@@ -540,12 +540,30 @@
       renderAdminSchedules();
     }
 
-    // --- Strict Technician Name Normalization ---
+    // --- Robust Fuzzy Technician Name Normalization ---
     function normalizeTechName(name) {
       if (!name) return "Unknown";
       const clean = name.replace(/\s+/g, ' ').trim().toUpperCase();
-      const match = (CONFIG.TECHNICIANS || []).find(t => t.toUpperCase() === clean || t.toUpperCase().includes(clean) || clean.includes(t.toUpperCase()));
-      return match || clean;
+      const techList = CONFIG.TECHNICIANS || [];
+
+      // Exact match
+      const exact = techList.find(t => t.toUpperCase() === clean);
+      if (exact) return exact;
+
+      // Partial / Fuzzy match for known spelling variations
+      if (clean.includes("MEHEDI")) return "MEHEDI HASAN LIYAKAT ALI";
+      if (clean.includes("JAHANGEER") || clean.includes("JAHANGIR")) return "MUHAMMAD JAHANGEER";
+      if (clean.includes("MADHAB")) return "MADHAB CHARAN";
+      if (clean.includes("KAUSHAR") || clean.includes("KAWSAR")) return "MOHAMMAD KAUSHAR ALI";
+      if (clean.includes("AJEESH")) return "AJEESH MOHANKUMAR GEETHA";
+      if (clean.includes("NAGENDRA")) return "NAGENDRA VISHWAKARMA";
+      if (clean.includes("RAM JATAN")) return "RAM JATAN MAHADEV";
+      if (clean.includes("ALI HASSAN")) return "ALI HASSAN";
+      if (clean.includes("IMTIYAZ")) return "IMTIYAZ KAMRUDDIN";
+
+      // General substring check against official list
+      const matched = techList.find(t => t.toUpperCase().includes(clean) || clean.includes(t.toUpperCase()));
+      return matched || clean;
     }
 
     // --- Admin Schedules Management ---
@@ -755,8 +773,9 @@
 
       combined.forEach(r => {
         const cDate = String(r.otDate || r.date || '').split('T')[0];
-        const key = `${cDate}_${normalizeTechName(r.technician)}_${r.from}_${r.to}`;
-        uniqueMap.set(key, { ...r, cleanDate: cDate });
+        const normTech = normalizeTechName(r.technician);
+        const key = `${cDate}_${normTech}_${r.from}_${r.to}`;
+        uniqueMap.set(key, { ...r, technician: normTech, cleanDate: cDate });
       });
 
       const displayList = Array.from(uniqueMap.values());
