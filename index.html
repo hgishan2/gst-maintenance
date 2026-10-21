@@ -468,6 +468,7 @@
     document.addEventListener("DOMContentLoaded", () => {
       loginModalInstance = new bootstrap.Modal(document.getElementById('loginModal'));
       setupDefaults();
+      refreshTechList();
       checkSession();
       updateSyncBadge();
       loadSchedulesReminder();
@@ -476,12 +477,38 @@
 
       window.addEventListener('online', async () => {
         updateSyncBadge();
+        refreshTechList();
         await syncOfflineQueue();
         refreshAll();
       });
       window.addEventListener('offline', updateSyncBadge);
       document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshAll(); });
     });
+
+    // Technician names come from the Lists sheet (managed from the admin page), cached for offline use.
+    // config.js TECHNICIANS is only the fallback for a phone that has never been online with this version.
+    function renderTechDropdown() {
+      const sel = document.getElementById('techSelect');
+      let names = [];
+      try { names = JSON.parse(localStorage.getItem('tech_list_cache') || '[]'); } catch (e) {}
+      if (!Array.isArray(names) || !names.length) names = CONFIG.TECHNICIANS || [];
+      const keep = sel.value;
+      sel.innerHTML = '<option value="">-- Choose Name --</option>' +
+        '<option value="ADMIN_ACCOUNT" class="text-warning fw-bold">⚙️ System Administrator / Supervisor</option>' +
+        names.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+      sel.value = keep;
+    }
+    async function refreshTechList() {
+      if (!navigator.onLine) return;
+      try {
+        const res = await fetchWithTimeout(`${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&action=techs`, 8000);
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.technicians) && data.technicians.length) {
+          localStorage.setItem('tech_list_cache', JSON.stringify(data.technicians));
+          renderTechDropdown();
+        }
+      } catch (e) { /* offline: keep the cached list */ }
+    }
 
     function setupDefaults() {
       const today = todayStr();
@@ -490,10 +517,7 @@
       document.getElementById('otDate').value = today;
       document.getElementById('schedDate').value = today;
 
-      const techSelect = document.getElementById('techSelect');
-      (CONFIG.TECHNICIANS || []).forEach(t => {
-        techSelect.innerHTML += `<option value="${esc(t)}">${esc(t)}</option>`;
-      });
+      renderTechDropdown();
 
       const catSelects = ['category', 'schedCategory'];
       catSelects.forEach(id => {
