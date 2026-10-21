@@ -1,6 +1,6 @@
 // Service worker: keeps the technician app working with no signal.
 // Bump CACHE_VERSION whenever you change index.html / config.js so phones pick up the new files.
-const CACHE_VERSION = 'gst-ops-v4';
+const CACHE_VERSION = 'gst-ops-v5';
 
 const CORE = [
   './',
