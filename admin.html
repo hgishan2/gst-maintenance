@@ -214,7 +214,7 @@
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="pills-admin-schedules-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-schedules" type="button" role="tab" onclick="renderAdminSchedules()">
+        <button class="nav-link" id="pills-admin-schedules-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-schedules" type="button" role="tab" onclick="loadAdminSchedules()">
           <i class="bi bi-calendar-check me-1"></i>Schedules
         </button>
       </li>
@@ -537,7 +537,8 @@
       } catch (e) { console.error("Error fetching overtime", e); }
 
       renderPerformanceTable();
-      renderAdminSchedules();
+      await migrateLocalSchedules();
+      await loadAdminSchedules();
     }
 
     // --- Robust Fuzzy Technician Name Normalization ---
@@ -566,19 +567,47 @@
       return matched || clean;
     }
 
-    // --- Admin Schedules Management ---
-    function getAdminSchedules() {
-      return JSON.parse(localStorage.getItem("tech_schedules") || "[]").map(s => ({
-        ...s,
-        technician: normalizeTechName(s.technician)
-      }));
+    // --- Admin Schedules Management (stored on the server so technicians' phones receive them) ---
+    let adminSchedules = [];
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    async function postSchedOps(ops) {
+      const apin = localStorage.getItem("admin_pin");
+      const res = await fetch(CONFIG.SCRIPT_URL, { method: "POST", body: JSON.stringify({ key: CONFIG.KEY, apin: apin, schedOps: ops }) });
+      const data = await res.json();
+      const done = new Set(data.schedDone || []);
+      return !!(data.ok && ops.every(o => done.has(o.id)));
     }
 
-    function saveAdminSchedules(schedules) {
-      localStorage.setItem("tech_schedules", JSON.stringify(schedules));
+    async function loadAdminSchedules() {
+      const apin = localStorage.getItem("admin_pin");
+      if (!apin) return;
+      try {
+        const url = `${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&action=allschedules&apin=${encodeURIComponent(apin)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+        if (data.ok && data.rows) {
+          adminSchedules = data.rows.map(s => ({ ...s, technician: normalizeTechName(s.technician) }))
+                                    .sort((a, b) => String(a.date).localeCompare(String(b.date)));
+        }
+      } catch (e) { console.error("Error fetching schedules", e); }
+      renderAdminSchedules();
     }
 
-    function handleAdminScheduleSubmit(e) {
+    // one-time: uploads schedules that were saved in this browser by the old version
+    async function migrateLocalSchedules() {
+      if (localStorage.getItem("sched_migrated_admin")) return;
+      let legacy = [];
+      try { legacy = JSON.parse(localStorage.getItem("tech_schedules") || "[]"); } catch (e) {}
+      legacy = legacy.filter(s => s && s.id && s.technician);
+      if (!legacy.length) { localStorage.setItem("sched_migrated_admin", "1"); return; }
+      try {
+        const ops = legacy.map(s => ({ op: "upsert", id: s.id, item: { ...s, technician: normalizeTechName(s.technician) } }));
+        if (await postSchedOps(ops)) localStorage.setItem("sched_migrated_admin", "1");
+      } catch (e) { console.error("Schedule migration failed", e); }
+    }
+
+    async function handleAdminScheduleSubmit(e) {
       e.preventDefault();
       const sched = {
         id: "SCH-" + Date.now(),
@@ -590,18 +619,21 @@
         status: "Pending"
       };
 
-      const schedules = getAdminSchedules();
-      schedules.push(sched);
-      saveAdminSchedules(schedules);
+      try {
+        if (!(await postSchedOps([{ op: "upsert", id: sched.id, item: sched }]))) throw new Error("rejected");
+      } catch (err) {
+        alert("Could not save the schedule to the server. Check your connection and admin PIN, then try again.");
+        return;
+      }
 
-      alert("Schedule assigned successfully!");
+      alert("Schedule assigned successfully! It will appear on the technician's phone next time it is online.");
       document.getElementById('adminScheduleForm').reset();
       document.getElementById('adminSchedDate').value = new Date().toISOString().slice(0, 10);
-      renderAdminSchedules();
+      await loadAdminSchedules();
     }
 
     function renderAdminSchedules() {
-      const schedules = getAdminSchedules();
+      const schedules = adminSchedules;
       document.getElementById('adminSchedCountBadge').textContent = `${schedules.length} Total`;
       const tbody = document.getElementById('adminSchedTableBody');
 
@@ -612,44 +644,47 @@
 
       tbody.innerHTML = schedules.map(s => `
         <tr>
-          <td>${s.date}</td>
-          <td><strong>${s.technician}</strong></td>
-          <td>${s.location}</td>
-          <td><small>${s.desc}</small></td>
-          <td><span class="badge ${s.status === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${s.status}</span></td>
+          <td>${esc(s.date)}</td>
+          <td><strong>${esc(s.technician)}</strong></td>
+          <td>${esc(s.location)}</td>
+          <td><small>${esc(s.desc)}</small></td>
+          <td><span class="badge ${s.status === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${esc(s.status)}</span></td>
           <td class="text-center">
             <div class="btn-group btn-group-sm">
-              ${s.status === 'Pending' ? `<button class="btn btn-outline-success py-0 px-2" title="Mark Done" onclick="adminUpdateStatus('${s.id}', 'Completed')"><i class="bi bi-check2"></i></button>` : ''}
-              <button class="btn btn-outline-warning py-0 px-2" title="Reschedule" onclick="adminReschedule('${s.id}')"><i class="bi bi-calendar-arrow-right"></i></button>
-              <button class="btn btn-outline-danger py-0 px-2" title="Delete" onclick="adminDeleteSchedule('${s.id}')"><i class="bi bi-trash"></i></button>
+              ${s.status !== 'Completed' ? `<button class="btn btn-outline-success py-0 px-2" title="Mark Done" onclick="adminUpdateStatus('${esc(s.id)}', 'Completed')"><i class="bi bi-check2"></i></button>` : ''}
+              <button class="btn btn-outline-warning py-0 px-2" title="Reschedule" onclick="adminReschedule('${esc(s.id)}')"><i class="bi bi-calendar-arrow-right"></i></button>
+              <button class="btn btn-outline-danger py-0 px-2" title="Delete" onclick="adminDeleteSchedule('${esc(s.id)}')"><i class="bi bi-trash"></i></button>
             </div>
           </td>
         </tr>
       `).join('');
     }
 
-    function adminUpdateStatus(id, newStatus) {
-      let schedules = getAdminSchedules();
-      schedules = schedules.map(s => s.id === id ? { ...s, status: newStatus } : s);
-      saveAdminSchedules(schedules);
-      renderAdminSchedules();
+    async function adminUpdateStatus(id, newStatus) {
+      const s = adminSchedules.find(x => x.id === id);
+      if (!s) return;
+      try { await postSchedOps([{ op: "upsert", id: id, item: { ...s, status: newStatus } }]); }
+      catch (e) { alert("Could not update. Check your connection."); }
+      await loadAdminSchedules();
     }
 
-    function adminReschedule(id) {
+    async function adminReschedule(id) {
+      const s = adminSchedules.find(x => x.id === id);
+      if (!s) return;
       const newDate = prompt("Enter new schedule date (YYYY-MM-DD):", new Date().toISOString().slice(0, 10));
       if (!newDate) return;
-      let schedules = getAdminSchedules();
-      schedules = schedules.map(s => s.id === id ? { ...s, date: newDate, status: 'Pending' } : s);
-      saveAdminSchedules(schedules);
-      renderAdminSchedules();
-      alert("Schedule rescheduled successfully!");
+      try {
+        await postSchedOps([{ op: "upsert", id: id, item: { ...s, date: newDate, status: 'Pending' } }]);
+        alert("Schedule rescheduled successfully!");
+      } catch (e) { alert("Could not reschedule. Check your connection."); }
+      await loadAdminSchedules();
     }
 
-    function adminDeleteSchedule(id) {
+    async function adminDeleteSchedule(id) {
       if (!confirm("Delete this schedule?")) return;
-      let schedules = getAdminSchedules().filter(s => s.id !== id);
-      saveAdminSchedules(schedules);
-      renderAdminSchedules();
+      try { await postSchedOps([{ op: "delete", id: id }]); }
+      catch (e) { alert("Could not delete. Check your connection."); }
+      await loadAdminSchedules();
     }
 
     function renderPerformanceTable() {
