@@ -75,6 +75,10 @@
     .stat-card {
       border-left: 4px solid var(--accent-blue);
     }
+    #adminTabs { flex-wrap: nowrap; overflow-x: auto; }
+    #adminTabs .nav-link { white-space: nowrap; }
+    .chart-box { position: relative; height: 300px; }
+    .range-btn { font-size: 0.75rem; }
   </style>
 </head>
 <body>
@@ -134,6 +138,14 @@
 
     <!-- Filter & Export Controls Card -->
     <div class="card p-3 shadow-sm mb-3">
+      <div class="d-flex flex-wrap gap-1 mb-2">
+        <button class="btn btn-outline-info btn-sm range-btn" onclick="setRange('today')">Today</button>
+        <button class="btn btn-outline-info btn-sm range-btn" onclick="setRange('yesterday')">Yesterday</button>
+        <button class="btn btn-outline-info btn-sm range-btn" onclick="setRange('week')">This week</button>
+        <button class="btn btn-outline-info btn-sm range-btn" onclick="setRange('last7')">Last 7 days</button>
+        <button class="btn btn-outline-info btn-sm range-btn" onclick="setRange('month')">This month</button>
+        <button class="btn btn-outline-info btn-sm range-btn" onclick="setRange('lastmonth')">Last month</button>
+      </div>
       <div class="row g-2 align-items-center">
         <div class="col-md-3 col-6">
           <label class="form-label small mb-1">From Date</label>
@@ -159,6 +171,31 @@
               <li><a class="dropdown-item small" href="#" onclick="exportTemplateReport('overtime')"><i class="bi bi-clock-history me-2 text-warning"></i>Overtime Timesheet (.xlsx)</a></li>
             </ul>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Today Overview -->
+    <div class="card p-3 shadow-sm mb-3">
+      <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
+        <h6 class="text-warning fw-bold m-0"><i class="bi bi-binoculars me-1"></i>Today Overview</h6>
+        <div class="d-flex align-items-center gap-2">
+          <span id="todayDateBadge" class="badge bg-secondary"></span>
+          <button class="btn btn-outline-warning btn-sm py-0 px-2" onclick="loadTodayOverview()" title="Refresh"><i class="bi bi-arrow-clockwise"></i></button>
+        </div>
+      </div>
+      <div class="row g-3 small">
+        <div class="col-md-4 col-12">
+          <div class="fw-semibold text-info mb-1"><i class="bi bi-speedometer2 me-1"></i>Meters not read today</div>
+          <div id="tdMeters" class="text-muted">Loading...</div>
+        </div>
+        <div class="col-md-4 col-12">
+          <div class="fw-semibold text-info mb-1"><i class="bi bi-wrench-adjustable me-1"></i>Open jobs (Pending / On Hold)</div>
+          <div id="tdOpenJobs" class="text-muted">Loading...</div>
+        </div>
+        <div class="col-md-4 col-12">
+          <div class="fw-semibold text-info mb-1"><i class="bi bi-calendar-check me-1"></i>Schedules</div>
+          <div id="tdSched" class="text-muted">Loading...</div>
         </div>
       </div>
     </div>
@@ -216,6 +253,16 @@
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="pills-admin-schedules-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-schedules" type="button" role="tab" onclick="loadAdminSchedules()">
           <i class="bi bi-calendar-check me-1"></i>Schedules
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-charts-tab" data-bs-toggle="pill" data-bs-target="#pills-charts" type="button" role="tab">
+          <i class="bi bi-graph-up me-1"></i>Charts
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-admin-techs-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-techs" type="button" role="tab">
+          <i class="bi bi-people me-1"></i>Technicians
         </button>
       </li>
     </ul>
@@ -398,11 +445,98 @@
         </div>
       </div>
 
+      <!-- TAB 5: CHARTS -->
+      <div class="tab-pane fade" id="pills-charts" role="tabpanel">
+        <div class="card p-3 shadow-sm mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
+            <h6 class="text-info fw-bold m-0"><i class="bi bi-lightning-charge me-1"></i>Daily Consumption per Meter</h6>
+            <select id="chartUtilType" class="form-select form-select-sm w-auto" onchange="renderCharts()">
+              <option value="Electricity">Electricity</option>
+              <option value="Water">Water</option>
+            </select>
+          </div>
+          <div class="chart-box"><canvas id="chartConsumption"></canvas></div>
+          <small id="chartConsumptionNote" class="text-muted d-block mt-2">Consumption = reading minus the previous reading, so the first day of the range has no bar.</small>
+        </div>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6 col-12">
+            <div class="card p-3 shadow-sm h-100">
+              <h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2"><i class="bi bi-pie-chart me-1"></i>Jobs by Category</h6>
+              <div class="chart-box"><canvas id="chartCategory"></canvas></div>
+            </div>
+          </div>
+          <div class="col-md-6 col-12">
+            <div class="card p-3 shadow-sm h-100">
+              <h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2"><i class="bi bi-bar-chart me-1"></i>Jobs per Technician</h6>
+              <div class="chart-box"><canvas id="chartTechJobs"></canvas></div>
+            </div>
+          </div>
+        </div>
+        <div class="card p-3 shadow-sm">
+          <h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2"><i class="bi bi-clock-history me-1"></i>Overtime Hours per Technician</h6>
+          <div class="chart-box"><canvas id="chartOt"></canvas></div>
+          <small class="text-muted d-block mt-2">Overtime entries saved before this update have no type recorded, so they appear under N.</small>
+        </div>
+      </div>
+
+      <!-- TAB 6: TECHNICIANS -->
+      <div class="tab-pane fade" id="pills-admin-techs" role="tabpanel">
+        <div class="card p-3 shadow-sm mb-3">
+          <h6 class="text-warning fw-bold mb-3 border-bottom border-secondary pb-2">
+            <i class="bi bi-person-plus me-1"></i><span id="techFormTitle">Add Technician</span>
+          </h6>
+          <form id="techForm" onsubmit="handleTechSubmit(event)">
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small mb-1">Full Name *</label>
+                <input type="text" id="techFormName" class="form-control form-control-sm" placeholder="e.g. JOHN SMITH" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label small mb-1">PIN <span id="techPinHint">*</span></label>
+                <input type="text" id="techFormPin" class="form-control form-control-sm" placeholder="4-10 characters" maxlength="10" autocomplete="off">
+              </div>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label small mb-1">Employee Code</label>
+                <input type="text" id="techFormEmp" class="form-control form-control-sm" placeholder="Printed on overtime sheet">
+              </div>
+              <div class="col-6">
+                <label class="form-label small mb-1">Designation</label>
+                <input type="text" id="techFormDes" class="form-control form-control-sm" placeholder="e.g. Plumber">
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-warning text-dark flex-grow-1 py-2 fw-bold"><i class="bi bi-save me-1"></i>Save Technician</button>
+              <button type="button" id="techCancelBtn" class="btn btn-outline-secondary d-none" onclick="resetTechForm()">Cancel</button>
+            </div>
+          </form>
+        </div>
+        <div class="card p-3 shadow-sm">
+          <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
+            <h6 class="text-info fw-bold m-0"><i class="bi bi-people me-1"></i>Technicians</h6>
+            <span id="techCountBadge" class="badge bg-secondary">0 Total</span>
+          </div>
+          <div class="table-responsive" style="max-height: 450px;">
+            <table class="table table-dark table-hover table-striped small align-middle">
+              <thead>
+                <tr><th>Name</th><th>Emp Code</th><th>Designation</th><th>PIN</th><th class="text-center">Actions</th></tr>
+              </thead>
+              <tbody id="techTableBody">
+                <tr><td colspan="5" class="text-center text-muted py-3">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <small class="text-muted d-block mt-2">Removing a technician stops their sign-in. Their past logs, readings and overtime are kept. PINs are never shown here; enter a new PIN to reset one.</small>
+        </div>
+      </div>
+
     </div>
   </div>
 
   <!-- Excel Template Processing Library -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx-populate@1.21.0/browser/xlsx-populate.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
@@ -412,14 +546,15 @@
     document.addEventListener("DOMContentLoaded", () => {
       adminModalInstance = new bootstrap.Modal(document.getElementById('adminLoginModal'));
 
-      const today = new Date().toISOString().slice(0, 10);
-      const firstDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10);
-      document.getElementById('filterFrom').value = firstDay;
+      const now = new Date();
+      const today = localISO(now);
+      document.getElementById('filterFrom').value = localISO(new Date(now.getFullYear(), now.getMonth(), 1));
       document.getElementById('filterTo').value = today;
       document.getElementById('adminSchedDate').value = today;
 
-      const adminTechSel = document.getElementById('adminSchedTech');
-      (CONFIG.TECHNICIANS || []).forEach(t => adminTechSel.innerHTML += `<option value="${t}">${t}</option>`);
+      fillTechDropdown();
+      document.getElementById('pills-charts-tab').addEventListener('shown.bs.tab', renderCharts);
+      document.getElementById('pills-admin-techs-tab').addEventListener('shown.bs.tab', loadTechList);
 
       const adminCatSel = document.getElementById('adminSchedCategory');
       (CONFIG.CATEGORIES || []).forEach(c => adminCatSel.innerHTML += `<option value="${c}">${c}</option>`);
@@ -438,7 +573,9 @@
         document.getElementById('adminLogoutBtn').classList.remove('d-none');
         document.getElementById('adminContent').style.display = 'block';
         adminModalInstance.hide();
+        loadTechList();
         loadDashboardData();
+        loadTodayOverview();
       } else {
         document.getElementById('adminLogoutBtn').classList.add('d-none');
         document.getElementById('adminContent').style.display = 'none';
@@ -482,7 +619,15 @@
       checkAdminSession();
     }
 
-    async function loadDashboardData() {
+    let dashLoading = false, dashPending = false;
+    async function loadDashboardData() {              // quick taps on date buttons never run two loads at once
+      if (dashLoading) { dashPending = true; return; }
+      dashLoading = true;
+      try { await loadDashboardDataInner(); } finally { dashLoading = false; }
+      if (dashPending) { dashPending = false; loadDashboardData(); }
+    }
+
+    async function loadDashboardDataInner() {
       const apin = localStorage.getItem("admin_pin");
       const from = document.getElementById('filterFrom').value;
       const to = document.getElementById('filterTo').value;
@@ -539,13 +684,14 @@
       renderPerformanceTable();
       await migrateLocalSchedules();
       await loadAdminSchedules();
+      renderCharts();
     }
 
     // --- Robust Fuzzy Technician Name Normalization ---
     function normalizeTechName(name) {
       if (!name) return "Unknown";
       const clean = name.replace(/\s+/g, ' ').trim().toUpperCase();
-      const techList = CONFIG.TECHNICIANS || [];
+      const techList = techNames();
 
       // Exact match
       const exact = techList.find(t => t.toUpperCase() === clean);
@@ -592,6 +738,7 @@
         }
       } catch (e) { console.error("Error fetching schedules", e); }
       renderAdminSchedules();
+      renderTodayOverview();
     }
 
     // one-time: uploads schedules that were saved in this browser by the old version
@@ -691,7 +838,7 @@
       const tbody = document.getElementById('perfTableBody');
       const techStats = {};
 
-      (CONFIG.TECHNICIANS || []).forEach(t => {
+      techNames().forEach(t => {
         techStats[t] = { jobs: 0, completed: 0, pending: 0, readings: 0, ot: 0 };
       });
 
@@ -832,22 +979,346 @@
       `).join('');
     }
 
-    // Helper lookup to resolve technician employee ID and designation
+    // Helper lookup to resolve technician employee ID and designation (Lists sheet first, config.js as fallback)
     function getTechProfile(techName) {
       const normName = normalizeTechName(techName);
-      const profiles = CONFIG.TECHNICIAN_PROFILES || {
-        "MEHEDI HASAN LIYAKAT ALI": { empCode: "3765", designation: "Mason/Painter" },
-        "MOHAMMAD KAUSHAR ALI": { empCode: "711312", designation: "Plumber" },
-        "AJEESH MOHANKUMAR GEETHA": { empCode: "712371", designation: "Painter" },
-        "NAGENDRA VISHWAKARMA": { empCode: "712892", designation: "General Technician" },
-        "RAM JATAN MAHADEV": { empCode: "713052", designation: "Carpenter" },
-        "MUHAMMAD JAHANGEER": { empCode: "713150", designation: "AC Technician" },
-        "ALI HASSAN": { empCode: "713502", designation: "Electrician" },
-        "IMTIYAZ KAMRUDDIN": { empCode: "713520", designation: "AC Technician" }
+      const live = techProfiles[String(normName).toUpperCase()] || {};
+      const cfg = (CONFIG.TECHNICIAN_PROFILES || {})[normName] || {};
+      return {
+        empCode: live.empCode || cfg.empCode || "N/A",
+        designation: live.designation || cfg.designation || "Technician"
       };
+    }
 
-      if (profiles[normName]) return profiles[normName];
-      return { empCode: "N/A", designation: "Technician" };
+    // =================== DATE SHORTCUTS ===================
+    const localISO = d => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+
+    function setRange(kind) {
+      const n = new Date();
+      const t = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+      let from = t, to = t;
+      if (kind === 'yesterday') { from = to = addDays(t, -1); }
+      else if (kind === 'week') { from = addDays(t, -((t.getDay() + 6) % 7)); }            // week starts Monday
+      else if (kind === 'last7') { from = addDays(t, -6); }
+      else if (kind === 'month') { from = new Date(t.getFullYear(), t.getMonth(), 1); }
+      else if (kind === 'lastmonth') { from = new Date(t.getFullYear(), t.getMonth() - 1, 1); to = new Date(t.getFullYear(), t.getMonth(), 0); }
+      document.getElementById('filterFrom').value = localISO(from);
+      document.getElementById('filterTo').value = localISO(to);
+      loadDashboardData();
+    }
+
+    // =================== TODAY OVERVIEW ===================
+    let todayData = { loaded: false, readings: [], logs: [], meters: [] };
+
+    async function loadTodayOverview() {
+      const apin = localStorage.getItem("admin_pin");
+      if (!apin) return;
+      const today = localISO(new Date());
+      const since = localISO(addDays(new Date(), -90));
+      const base = `${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&apin=${encodeURIComponent(apin)}`;
+      const get = async u => { try { const r = await fetch(u); return await r.json(); } catch (e) { return null; } };
+      const [rd, lg, ls] = await Promise.all([
+        get(`${base}&action=readings&from=${today}&to=${today}`),
+        get(`${base}&from=${since}&to=${today}`),
+        get(`${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&action=lists`)
+      ]);
+      todayData = {
+        loaded: true,
+        readings: (rd && rd.ok && rd.rows) ? rd.rows : [],
+        logs: (lg && lg.ok && lg.rows) ? lg.rows : [],
+        meters: (ls && ls.ok && ls.lists && ls.lists.meters) ? ls.lists.meters : [],
+        failed: !(rd && rd.ok) || !(lg && lg.ok)
+      };
+      renderTodayOverview();
+    }
+
+    function renderTodayOverview() {
+      const badge = document.getElementById('todayDateBadge');
+      if (!badge) return;
+      const today = localISO(new Date());
+      badge.textContent = today;
+      if (!todayData.loaded) return;
+
+      // meters not read today (expected meters come from the Meters sheet)
+      const readToday = new Set(todayData.readings.map(r => String(r.meter).trim()));
+      const missing = todayData.meters.filter(m => !readToday.has(String(m.meter).trim()));
+      document.getElementById('tdMeters').innerHTML = !todayData.meters.length
+        ? 'Meter list unavailable.'
+        : missing.length === 0
+          ? '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>All ' + todayData.meters.length + ' meters read</span>'
+          : `<div class="text-warning mb-1">${missing.length} of ${todayData.meters.length} still to read</div>` +
+            missing.map(m => `<div>${esc(m.type)} - ${esc(m.area)} <span class="text-muted">(${esc(m.meter)})</span></div>`).join('');
+
+      // open jobs, oldest first
+      const open = todayData.logs.filter(l => (l.status || 'Pending') !== 'Completed')
+        .map(l => ({ ...l, age: Math.round(isoToSerial(today) - isoToSerial(String(l.logDate).split('T')[0])) }))
+        .sort((a, b) => b.age - a.age);
+      document.getElementById('tdOpenJobs').innerHTML = open.length === 0
+        ? '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>No open jobs</span>'
+        : `<div class="text-warning mb-1">${open.length} open (last 90 days)</div>` +
+          open.slice(0, 6).map(l => `<div class="border-bottom border-secondary pb-1 mb-1">
+              <strong>${esc(l.location)}</strong> <span class="badge ${l.age > 3 ? 'bg-danger' : 'bg-secondary'}">${l.age}d</span>
+              <div class="text-muted text-truncate">${esc(normalizeTechName(l.technician))} - ${esc(l.complaint)}</div></div>`).join('') +
+          (open.length > 6 ? `<div class="text-muted">+ ${open.length - 6} more (see Job Logs)</div>` : '');
+
+      // schedules: overdue and due today
+      const pend = adminSchedules.filter(s => s.status !== 'Completed');
+      const overdue = pend.filter(s => String(s.date) < today);
+      const dueToday = pend.filter(s => String(s.date) === today);
+      document.getElementById('tdSched').innerHTML =
+        `<div class="mb-1"><span class="badge bg-info text-dark">${dueToday.length}</span> due today</div>` +
+        (overdue.length === 0
+          ? '<div class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Nothing overdue</div>'
+          : `<div class="text-danger mb-1">${overdue.length} overdue</div>` +
+            overdue.slice(0, 5).map(s => `<div class="border-bottom border-secondary pb-1 mb-1"><strong>${esc(s.location)}</strong> <span class="text-muted">${esc(s.date)}</span>
+              <div class="text-muted text-truncate">${esc(s.technician)} - ${esc(s.desc)}</div></div>`).join('') +
+            (overdue.length > 5 ? `<div class="text-muted">+ ${overdue.length - 5} more (see Schedules)</div>` : ''));
+    }
+
+    // =================== CHARTS ===================
+    let charts = {};
+    const PALETTE = ['#38bdf8', '#f59e0b', '#10b981', '#f472b6', '#a78bfa', '#f87171', '#34d399', '#fbbf24', '#60a5fa'];
+
+    function mkChart(id, cfg) {
+      if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+      const canvas = document.getElementById(id);
+      if (!canvas || typeof Chart === 'undefined') return;
+      charts[id] = new Chart(canvas, cfg);
+    }
+
+    // reading minus the previous reading of the same meter within the selected range
+    function consumptionSeries(type) {
+      const latest = new Map();
+      fetchedReadings.filter(r => r.type === type).forEach(r => {
+        const d = String(r.date || '').split('T')[0];
+        const k = d + '|' + r.meter, prev = latest.get(k);
+        if (!prev || String(r.submittedAt) >= String(prev.submittedAt)) latest.set(k, { ...r, d: d });
+      });
+      const byArea = {};
+      latest.forEach(r => { const a = String(r.area || r.meter); (byArea[a] = byArea[a] || []).push(r); });
+      const out = {};
+      Object.keys(byArea).forEach(a => {
+        const list = byArea[a].sort((x, y) => x.d.localeCompare(y.d));
+        out[a] = [];
+        list.forEach((r, i) => {
+          if (i === 0) return;
+          const cur = parseFloat(r.reading), prev = parseFloat(list[i - 1].reading);
+          if (!isNaN(cur) && !isNaN(prev)) out[a].push({ d: r.d, v: Math.round((cur - prev) * 100) / 100 });
+        });
+      });
+      return out;
+    }
+
+    function renderCharts() {
+      if (typeof Chart === 'undefined') return;
+      Chart.defaults.color = '#cbd5e1';
+      Chart.defaults.borderColor = '#334155';
+      const common = { responsive: true, maintainAspectRatio: false };
+
+      // 1) consumption per meter
+      const type = document.getElementById('chartUtilType').value;
+      const series = consumptionSeries(type);
+      const areas = Object.keys(series);
+      const labels = [...new Set(areas.flatMap(a => series[a].map(p => p.d)))].sort();
+      document.getElementById('chartConsumptionNote').textContent = labels.length
+        ? 'Consumption = reading minus the previous reading, so the first day of the range has no bar.'
+        : 'Not enough readings in this date range (at least two days of readings per meter are needed).';
+      mkChart('chartConsumption', {
+        type: 'bar',
+        data: { labels: labels, datasets: areas.map((a, i) => ({
+          label: a, backgroundColor: PALETTE[i % PALETTE.length],
+          data: labels.map(d => { const p = series[a].find(x => x.d === d); return p ? p.v : null; })
+        })) },
+        options: { ...common, scales: { y: { beginAtZero: true, title: { display: true, text: type === 'Water' ? 'Water units' : 'kWh' } } } }
+      });
+
+      // 2) jobs by category
+      const cat = {};
+      fetchedLogs.forEach(r => { const c = r.category || 'Uncategorised'; cat[c] = (cat[c] || 0) + 1; });
+      mkChart('chartCategory', {
+        type: 'doughnut',
+        data: { labels: Object.keys(cat), datasets: [{ data: Object.values(cat), backgroundColor: Object.keys(cat).map((_, i) => PALETTE[i % PALETTE.length]), borderWidth: 0 }] },
+        options: { ...common, plugins: { legend: { position: 'bottom' } } }
+      });
+
+      // 3) jobs per technician (completed vs pending)
+      const tj = {};
+      fetchedLogs.forEach(r => {
+        const t = normalizeTechName(r.technician);
+        tj[t] = tj[t] || { c: 0, p: 0 };
+        if (r.status === 'Completed') tj[t].c++; else tj[t].p++;
+      });
+      const tNames = Object.keys(tj);
+      mkChart('chartTechJobs', {
+        type: 'bar',
+        data: { labels: tNames, datasets: [
+          { label: 'Completed', backgroundColor: '#10b981', data: tNames.map(t => tj[t].c) },
+          { label: 'Pending / On Hold', backgroundColor: '#f59e0b', data: tNames.map(t => tj[t].p) }
+        ] },
+        options: { ...common, indexAxis: 'y', scales: { x: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }, y: { stacked: true } } }
+      });
+
+      // 4) overtime hours per technician by type
+      const cats = ['N', 'WO', 'PH', 'N. Shift'];
+      const seen = new Map();
+      fetchedOt.forEach(r => {                       // same slot saved twice counts once
+        const d = String(r.otDate || r.date || '').split('T')[0];
+        const k = `${d}_${normalizeTechName(r.technician)}_${r.from}_${r.to}`, prev = seen.get(k);
+        if (!prev || String(r.submittedAt) >= String(prev.submittedAt)) seen.set(k, r);
+      });
+      const ot = {};
+      seen.forEach(r => {
+        const t = normalizeTechName(r.technician);
+        const c = cats.includes(r.otCategoryType) ? r.otCategoryType : 'N';
+        ot[t] = ot[t] || {};
+        ot[t][c] = (ot[t][c] || 0) + (Number(calculateHours(r.from, r.to)) || 0);
+      });
+      const oNames = Object.keys(ot);
+      mkChart('chartOt', {
+        type: 'bar',
+        data: { labels: oNames, datasets: cats.map((c, i) => ({
+          label: c, backgroundColor: PALETTE[i],
+          data: oNames.map(t => Math.round((ot[t][c] || 0) * 100) / 100)
+        })) },
+        options: { ...common, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Hours' } } } }
+      });
+    }
+
+    // =================== TECHNICIANS (stored in the Lists sheet) ===================
+    let techRows = [];
+    let techProfiles = {};
+    const normTechName = v => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().toUpperCase();
+
+    function techNames() { return techRows.length ? techRows.map(t => t.name) : (CONFIG.TECHNICIANS || []); }
+
+    function fillTechDropdown() {
+      const sel = document.getElementById('adminSchedTech');
+      if (!sel) return;
+      const keep = sel.value;
+      sel.innerHTML = '<option value="">-- Select Technician --</option>' + techNames().map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join('');
+      sel.value = keep;
+    }
+
+    async function postAdminBody(body) {
+      const apin = localStorage.getItem("admin_pin");
+      const res = await fetch(CONFIG.SCRIPT_URL, { method: "POST", body: JSON.stringify({ key: CONFIG.KEY, apin: apin, ...body }) });
+      return await res.json();
+    }
+
+    async function fetchTechRows() {
+      const apin = localStorage.getItem("admin_pin");
+      if (!apin) return false;
+      try {
+        const res = await fetch(`${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&action=techlist&apin=${encodeURIComponent(apin)}`);
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.rows)) {
+          techRows = data.rows;
+          techProfiles = {};
+          techRows.forEach(t => { techProfiles[normTechName(t.name)] = { empCode: t.empCode, designation: t.designation }; });
+          return true;
+        }
+      } catch (e) { console.error("Error loading technicians", e); }
+      return false;
+    }
+
+    // one-time: copies employee codes / designations from config.js into the Lists sheet
+    async function seedTechProfiles() {
+      if (localStorage.getItem("tech_profiles_seeded")) return;
+      const cfg = CONFIG.TECHNICIAN_PROFILES || {};
+      const ops = techRows.filter(t => !t.empCode && !t.designation && cfg[normTechName(t.name)])
+        .map(t => ({ op: 'upsert', name: t.name, empCode: cfg[normTechName(t.name)].empCode, designation: cfg[normTechName(t.name)].designation }));
+      localStorage.setItem("tech_profiles_seeded", "1");
+      if (!ops.length) return;
+      try { await postAdminBody({ techOps: ops }); await fetchTechRows(); } catch (e) { console.error(e); }
+    }
+
+    async function loadTechList() {
+      if (await fetchTechRows()) await seedTechProfiles();
+      fillTechDropdown();
+      renderTechTable();
+      renderPerformanceTable();
+    }
+
+    function renderTechTable() {
+      document.getElementById('techCountBadge').textContent = `${techRows.length} Total`;
+      const tbody = document.getElementById('techTableBody');
+      if (!techRows.length) { tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-3">No technicians found.</td></tr>'; return; }
+      tbody.innerHTML = techRows.map((t, i) => `
+        <tr>
+          <td><strong>${esc(t.name)}</strong></td>
+          <td>${esc(t.empCode) || '-'}</td>
+          <td>${esc(t.designation) || '-'}</td>
+          <td>${t.hasPin ? '<span class="badge bg-success">Set</span>' : '<span class="badge bg-danger">No PIN</span>'}</td>
+          <td class="text-center">
+            <div class="btn-group btn-group-sm">
+              <button class="btn btn-outline-warning py-0 px-2" title="Edit / reset PIN" onclick="editTech(${i})"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-outline-danger py-0 px-2" title="Remove" onclick="deleteTech(${i})"><i class="bi bi-trash"></i></button>
+            </div>
+          </td>
+        </tr>`).join('');
+    }
+
+    function resetTechForm() {
+      document.getElementById('techForm').reset();
+      document.getElementById('techFormName').readOnly = false;
+      document.getElementById('techFormTitle').textContent = 'Add Technician';
+      document.getElementById('techPinHint').textContent = '*';
+      document.getElementById('techFormPin').placeholder = '4-10 characters';
+      document.getElementById('techCancelBtn').classList.add('d-none');
+    }
+
+    function editTech(i) {
+      const t = techRows[i];
+      if (!t) return;
+      document.getElementById('techFormName').value = t.name;
+      document.getElementById('techFormName').readOnly = true;
+      document.getElementById('techFormPin').value = '';
+      document.getElementById('techFormPin').placeholder = 'Leave blank to keep current PIN';
+      document.getElementById('techFormEmp').value = t.empCode || '';
+      document.getElementById('techFormDes').value = t.designation || '';
+      document.getElementById('techFormTitle').textContent = 'Edit Technician';
+      document.getElementById('techPinHint').textContent = '(optional)';
+      document.getElementById('techCancelBtn').classList.remove('d-none');
+      document.getElementById('techForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    async function handleTechSubmit(e) {
+      e.preventDefault();
+      const name = normTechName(document.getElementById('techFormName').value);
+      const pin = document.getElementById('techFormPin').value.trim();
+      const exists = techRows.some(t => normTechName(t.name) === name);
+      if (!name) return;
+      if (!exists && !pin) { alert("A new technician needs a PIN."); return; }
+      if (pin && (pin.length < 4 || /\s/.test(pin))) { alert("PIN must be 4-10 characters with no spaces."); return; }
+
+      const op = { op: 'upsert', name: name, pin: pin,
+        empCode: document.getElementById('techFormEmp').value.trim(),
+        designation: document.getElementById('techFormDes').value.trim() };
+      try {
+        const data = await postAdminBody({ techOps: [op] });
+        if (!(data.ok && (data.techDone || []).includes(name))) throw new Error('rejected');
+      } catch (err) {
+        alert("Could not save. Check your connection and admin PIN.");
+        return;
+      }
+      alert(exists ? "Technician updated." : "Technician added. They will see their name on phones the next time the app is opened online.");
+      resetTechForm();
+      await loadTechList();
+    }
+
+    async function deleteTech(i) {
+      const t = techRows[i];
+      if (!t) return;
+      if (!confirm(`Remove ${t.name}? They will no longer be able to sign in. Their past records are kept.`)) return;
+      try {
+        const data = await postAdminBody({ techOps: [{ op: 'delete', name: t.name }] });
+        if (!(data.ok && (data.techDone || []).includes(normTechName(t.name)))) throw new Error('rejected');
+      } catch (err) {
+        alert("Could not remove. Check your connection and admin PIN.");
+        return;
+      }
+      await loadTechList();
     }
 
     // --- EXCEL TEMPLATE POPULATION LOGIC ---
