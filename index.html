@@ -144,6 +144,22 @@
         </div>
       </div>
 
+      <!-- My Day Summary -->
+      <div class="card p-3 mb-3 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
+          <h6 class="text-info fw-bold m-0"><i class="bi bi-clipboard-data me-2"></i>My Day</h6>
+          <span id="myDayDate" class="badge bg-secondary"></span>
+        </div>
+        <div class="row g-2 text-center mb-2">
+          <div class="col-3"><div class="border border-secondary rounded p-1"><small class="text-muted d-block">Jobs</small><span id="myDayTotal" class="fw-bold fs-5">0</span></div></div>
+          <div class="col-3"><div class="border border-success rounded p-1"><small class="text-muted d-block">Done</small><span id="myDayDone" class="fw-bold fs-5 text-success">0</span></div></div>
+          <div class="col-3"><div class="border border-warning rounded p-1"><small class="text-muted d-block">Pending</small><span id="myDayPending" class="fw-bold fs-5 text-warning">0</span></div></div>
+          <div class="col-3"><div class="border border-info rounded p-1"><small class="text-muted d-block">OT hrs</small><span id="myDayOtHrs" class="fw-bold fs-5 text-info">0</span></div></div>
+        </div>
+        <div id="myDayJobs" class="small"></div>
+        <div id="myDayOt" class="small"></div>
+      </div>
+
       <!-- Quick Action Cards Grid -->
       <div class="row g-3">
         <div class="col-6">
@@ -440,7 +456,7 @@
     // ---------- small helpers ----------
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const normName = v => String(v == null ? '' : v).replace(/\s+/g, ' ').trim().toUpperCase();
-    const todayStr = () => new Date().toISOString().slice(0, 10);
+    const todayStr = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
 
     // ---------- offline support: service worker ----------
     if ('serviceWorker' in navigator) {
@@ -461,10 +477,10 @@
       window.addEventListener('online', async () => {
         updateSyncBadge();
         await syncOfflineQueue();
-        refreshSchedules();
+        refreshAll();
       });
       window.addEventListener('offline', updateSyncBadge);
-      document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshSchedules(); });
+      document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshAll(); });
     });
 
     function setupDefaults() {
@@ -574,7 +590,8 @@
       document.getElementById('dashboardView').style.display = 'block';
       document.getElementById('formsView').style.display = 'none';
       loadSchedulesReminder();
-      refreshSchedules();
+      renderMyDay();
+      refreshAll();
     }
 
     function switchView(moduleName) {
@@ -600,7 +617,8 @@
         loginModalInstance.hide();
         migrateLegacySchedules();
         loadSchedulesReminder();
-        syncOfflineQueue().then(refreshSchedules);
+        renderMyDay();
+        syncOfflineQueue().then(refreshAll);
       } else {
         document.getElementById('logoutBtn').classList.add('d-none');
         document.getElementById('appContent').style.display = 'none';
@@ -701,6 +719,98 @@
       localStorage.removeItem("tech_pin");
       checkSession();
     }
+
+    // ---------- My Day: today's own jobs + overtime (server copy cached on the phone, plus anything not yet synced) ----------
+    function getDayCache() {
+      const user = localStorage.getItem("tech_name"), date = todayStr();
+      try {
+        const c = JSON.parse(localStorage.getItem("day_cache") || "{}");
+        if (c.user === user && c.date === date) return { user, date, logs: c.logs || [], overtime: c.overtime || [] };
+      } catch (e) {}
+      return { user, date, logs: [], overtime: [] };
+    }
+    function saveDayCache(c) { localStorage.setItem("day_cache", JSON.stringify(c)); }
+    function cacheAddDay(type, payload) {              // remember a just-saved entry so it shows straight away
+      const c = getDayCache(), today = todayStr();
+      if (type === 'job' && payload.logDate === today) { c.logs = c.logs.filter(x => x.id !== payload.id); c.logs.push(payload); }
+      if (type === 'overtime' && payload.otDate === today) { c.overtime = c.overtime.filter(x => x.id !== payload.id); c.overtime.push(payload); }
+      saveDayCache(c);
+    }
+    function otHours(from, to) {
+      if (!from || !to) return 0;
+      const [fH, fM] = from.split(':').map(Number), [tH, tM] = to.split(':').map(Number);
+      let diff = (tH * 60 + tM) - (fH * 60 + fM);
+      if (diff < 0) diff += 24 * 60;
+      return Math.round((diff / 60) * 100) / 100;
+    }
+
+    function renderMyDay() {
+      const user = localStorage.getItem("tech_name");
+      if (!user || !document.getElementById('myDayJobs')) return;
+      const today = todayStr(), c = getDayCache(), queued = getQueue();
+      const unsynced = new Set(queued.filter(q => q.type === 'job' || q.type === 'overtime').map(q => q.payload.id));
+      let logs = c.logs.slice(), ot = c.overtime.slice();
+
+      queued.forEach(q => {                              // entries saved offline and not yet on the server
+        const p = q.payload;
+        if (normName(p.technician) !== normName(user)) return;
+        if (q.type === 'job' && p.logDate === today && !logs.some(x => x.id === p.id)) logs.push(p);
+        if (q.type === 'overtime' && p.otDate === today && !ot.some(x => x.id === p.id)) ot.push(p);
+      });
+
+      const slots = new Map();                           // re-submitting the same time slot replaces the earlier one
+      ot.forEach(o => {
+        const k = o.from + '|' + o.to, prev = slots.get(k);
+        if (!prev || String(o.submittedAt) >= String(prev.submittedAt)) slots.set(k, o);
+      });
+      ot = Array.from(slots.values()).sort((a, b) => String(a.from).localeCompare(String(b.from)));
+      logs.sort((a, b) => String(a.submittedAt).localeCompare(String(b.submittedAt)));
+
+      const done = logs.filter(l => l.status === 'Completed').length;
+      const hours = Math.round(ot.reduce((sum, o) => sum + otHours(o.from, o.to), 0) * 100) / 100;
+
+      document.getElementById('myDayDate').textContent = today;
+      document.getElementById('myDayTotal').textContent = logs.length;
+      document.getElementById('myDayDone').textContent = done;
+      document.getElementById('myDayPending').textContent = logs.length - done;
+      document.getElementById('myDayOtHrs').textContent = hours;
+
+      const badge = s => `<span class="badge ${s === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${esc(s || 'Pending')}</span>`;
+      const notSynced = id => unsynced.has(id) ? ' <span class="badge bg-secondary">Not synced</span>' : '';
+
+      document.getElementById('myDayJobs').innerHTML = logs.length
+        ? `<div class="text-muted fw-semibold mb-1">Jobs today</div>` + logs.map(l => `
+            <div class="border-bottom border-secondary pb-1 mb-1">
+              <div class="d-flex justify-content-between"><span class="fw-bold">${esc(l.location)}</span><span>${badge(l.status)}${notSynced(l.id)}</span></div>
+              <small class="text-muted d-block text-truncate">${esc(l.complaint)}</small>
+            </div>`).join('')
+        : '<p class="text-muted mb-1">No jobs logged yet today.</p>';
+
+      document.getElementById('myDayOt').innerHTML = ot.length
+        ? `<div class="text-muted fw-semibold mt-2 mb-1">Overtime today</div>` + ot.map(o => `
+            <div class="border-bottom border-secondary pb-1 mb-1">
+              <div class="d-flex justify-content-between"><span class="fw-bold">${esc(o.from)} - ${esc(o.to)} (${otHours(o.from, o.to)} h)</span><span>${esc(o.otCategoryType || 'N')}${notSynced(o.id)}</span></div>
+              <small class="text-muted d-block text-truncate">${esc(o.location)}${o.work ? ' - ' + esc(o.work) : ''}</small>
+            </div>`).join('')
+        : '';
+    }
+
+    async function refreshMyDay() {
+      const user = localStorage.getItem("tech_name"), pin = localStorage.getItem("tech_pin");
+      if (!user || !pin || !navigator.onLine) return;
+      const date = todayStr();
+      try {
+        const url = `${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&action=mydaily&name=${encodeURIComponent(user)}&pin=${encodeURIComponent(pin)}&date=${date}`;
+        const res = await fetchWithTimeout(url, 10000);
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.logs)) {
+          saveDayCache({ user: user, date: date, logs: data.logs, overtime: data.overtime || [] });
+          renderMyDay();
+        }
+      } catch (e) { /* offline: keep what is cached */ }
+    }
+
+    function refreshAll() { refreshSchedules(); refreshMyDay(); }
 
     // ---------- Schedules (stored on the server, cached on the phone, changes queue while offline) ----------
     function getAllCachedSchedules() {
@@ -927,6 +1037,7 @@
             doneKeys.add(qKey(item));
             successCount++;
             if (item.type === 'sched') schedSynced = true;
+            if (item.type === 'job' || item.type === 'overtime') cacheAddDay(item.type, item.payload);
           } else if (data.ok) {
             rejectedCount++;
           }
@@ -938,6 +1049,7 @@
       isSyncing = false;
       updateSyncBadge();
 
+      renderMyDay();
       if (schedSynced) refreshSchedules();
       if (isManual || successCount > 0 || rejectedCount > 0) {
         let msg = `Synced ${successCount} record(s).`;
@@ -996,6 +1108,7 @@
         const res = await fetch(CONFIG.SCRIPT_URL, { method: "POST", body: JSON.stringify({ key: CONFIG.KEY, pin: pin, entries: [entry] }) });
         const data = await res.json();
         if (wasStored(data, 'saved', entry.id)) {
+          cacheAddDay('job', entry);
           alert("Job entry logged successfully!");
         } else {
           addToQueue('job', entry);
@@ -1134,6 +1247,7 @@
         const res = await fetch(CONFIG.SCRIPT_URL, { method: "POST", body: JSON.stringify({ key: CONFIG.KEY, pin: pin, overtime: [ot] }) });
         const data = await res.json();
         if (wasStored(data, 'savedOt', ot.id)) {
+          cacheAddDay('overtime', ot);
           alert("Overtime logged/updated successfully!");
         } else {
           addToQueue('overtime', ot);
