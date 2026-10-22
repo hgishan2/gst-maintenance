@@ -116,6 +116,51 @@
     </div>
   </div>
 
+  <!-- Update Job Modal -->
+  <div class="modal fade" id="jobUpdateModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h6 class="modal-title fw-bold text-warning"><i class="bi bi-pencil-square me-2"></i>Update Job</h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="juId">
+          <div id="juTitle" class="small text-info mb-2"></div>
+          <div class="mb-2">
+            <label class="form-label small mb-1">Status</label>
+            <select id="juStatus" class="form-select form-select-sm" onchange="toggleJuPending()">
+              <option value="Completed">Completed</option>
+              <option value="Pending">Pending</option>
+              <option value="On Hold">On Hold</option>
+            </select>
+          </div>
+          <div class="mb-2 d-none" id="juPendingWrap">
+            <label class="form-label small mb-1 text-warning fw-bold">Pending Reason / Remarks *</label>
+            <input type="text" id="juPending" class="form-control form-control-sm border-warning">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small mb-1">Action Taken</label>
+            <textarea id="juAction" class="form-control form-control-sm" rows="2" placeholder="Work performed..."></textarea>
+          </div>
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label small mb-1">Finish Time</label>
+              <input type="time" id="juFinish" class="form-control form-control-sm">
+            </div>
+            <div class="col-6">
+              <label class="form-label small mb-1">Materials Used</label>
+              <input type="text" id="juMaterials" class="form-control form-control-sm">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-top-0 pt-0">
+          <button type="button" class="btn btn-accent w-100 py-2" onclick="saveJobUpdate()"><i class="bi bi-check2-circle me-1"></i>Save Update</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- App Main Content Container -->
   <div id="appContent" class="container mt-3" style="display: none;">
 
@@ -158,6 +203,15 @@
         </div>
         <div id="myDayJobs" class="small"></div>
         <div id="myDayOt" class="small"></div>
+      </div>
+
+      <!-- My Open Jobs -->
+      <div class="card p-3 mb-3 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
+          <h6 class="text-warning fw-bold m-0"><i class="bi bi-hourglass-split me-2"></i>My Open Jobs</h6>
+          <span id="myOpenCount" class="badge bg-warning text-dark">0</span>
+        </div>
+        <div id="myOpenJobs" class="small"></div>
       </div>
 
       <!-- Quick Action Cards Grid -->
@@ -757,6 +811,9 @@
     function cacheAddDay(type, payload) {              // remember a just-saved entry so it shows straight away
       const c = getDayCache(), today = todayStr();
       if (type === 'job' && payload.logDate === today) { c.logs = c.logs.filter(x => x.id !== payload.id); c.logs.push(payload); }
+      if (type === 'job' && payload.status !== 'Completed') {
+        const rows = getOpenCache().filter(x => x.id !== payload.id); rows.push(payload); saveOpenCache(rows);
+      }
       if (type === 'overtime' && payload.otDate === today) { c.overtime = c.overtime.filter(x => x.id !== payload.id); c.overtime.push(payload); }
       saveDayCache(c);
     }
@@ -817,6 +874,7 @@
               <small class="text-muted d-block text-truncate">${esc(o.location)}${o.work ? ' - ' + esc(o.work) : ''}</small>
             </div>`).join('')
         : '';
+      renderMyOpen();
     }
 
     async function refreshMyDay() {
@@ -829,9 +887,100 @@
         const data = await res.json();
         if (data.ok && Array.isArray(data.logs)) {
           saveDayCache({ user: user, date: date, logs: data.logs, overtime: data.overtime || [] });
+          saveOpenCache(data.open || []);
+          getQueue().filter(q => q.type === 'logupd').forEach(q => applyLocalJobUpdate(q.payload.id, q.payload.updates));   // unsent updates stay visible
           renderMyDay();
         }
       } catch (e) { /* offline: keep what is cached */ }
+    }
+
+    // ---------- My Open Jobs: finish a Pending / On Hold job later ----------
+    function getOpenCache() {
+      try { const c = JSON.parse(localStorage.getItem("open_cache") || "{}"); if (c.user === localStorage.getItem("tech_name") && Array.isArray(c.rows)) return c.rows; } catch (e) {}
+      return [];
+    }
+    function saveOpenCache(rows) { localStorage.setItem("open_cache", JSON.stringify({ user: localStorage.getItem("tech_name"), rows: rows })); }
+
+    function openJobsList() {                          // server copy + jobs still waiting to sync
+      const user = localStorage.getItem("tech_name");
+      const rows = getOpenCache().slice();
+      getQueue().forEach(q => {
+        const p = q.payload;
+        if (q.type === 'job' && p.status !== 'Completed' && normName(p.technician) === normName(user) && !rows.some(r => r.id === p.id)) rows.push(p);
+      });
+      return rows.filter(r => r.status !== 'Completed').sort((a, b) => String(a.logDate).localeCompare(String(b.logDate)));
+    }
+
+    function renderMyOpen() {
+      const box = document.getElementById('myOpenJobs');
+      if (!box) return;
+      const today = todayStr(), list = openJobsList();
+      const unsynced = new Set(getQueue().filter(q => q.type === 'job' || q.type === 'logupd').map(q => q.payload.id));
+      document.getElementById('myOpenCount').textContent = list.length;
+      box.innerHTML = list.length ? list.map(j => {
+        const age = Math.round((new Date(today) - new Date(String(j.logDate).split('T')[0])) / 86400000);
+        return `<div class="border-bottom border-secondary pb-2 mb-2">
+          <div class="d-flex justify-content-between align-items-center">
+            <span class="fw-bold">${esc(j.location)} <span class="badge ${age > 3 ? 'bg-danger' : 'bg-secondary'}">${isNaN(age) ? '' : age + 'd'}</span>${unsynced.has(j.id) ? ' <span class="badge bg-secondary">Not synced</span>' : ''}</span>
+            <span class="badge bg-warning text-dark">${esc(j.status || 'Pending')}</span>
+          </div>
+          <small class="text-muted d-block text-truncate">${esc(j.complaint)}</small>
+          ${j.pending ? `<small class="text-warning d-block text-truncate">Reason: ${esc(j.pending)}</small>` : ''}
+          <button class="btn btn-sm btn-outline-success py-0 px-2 mt-1" onclick="openJobUpdate('${esc(j.id)}')"><i class="bi bi-pencil-square me-1"></i>Update / Complete</button>
+        </div>`;
+      }).join('') : '<p class="text-muted mb-0">No open jobs. Anything left Pending or On Hold will show here.</p>';
+    }
+
+    let jobUpdateModal;
+    function toggleJuPending() {
+      const open = document.getElementById('juStatus').value !== 'Completed';
+      document.getElementById('juPendingWrap').classList.toggle('d-none', !open);
+    }
+    function openJobUpdate(id) {
+      const j = openJobsList().find(x => x.id === id);
+      if (!j) return;
+      document.getElementById('juId').value = id;
+      document.getElementById('juTitle').textContent = `${j.location} - ${j.complaint || ''}`;
+      document.getElementById('juStatus').value = 'Completed';
+      document.getElementById('juPending').value = j.pending || '';
+      document.getElementById('juAction').value = j.action || '';
+      document.getElementById('juMaterials').value = j.materials || '';
+      const n = new Date();
+      document.getElementById('juFinish').value = String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0');
+      toggleJuPending();
+      if (!jobUpdateModal) jobUpdateModal = new bootstrap.Modal(document.getElementById('jobUpdateModal'));
+      jobUpdateModal.show();
+    }
+    function saveJobUpdate() {
+      const id = document.getElementById('juId').value;
+      const status = document.getElementById('juStatus').value;
+      const pending = document.getElementById('juPending').value.trim();
+      if (status !== 'Completed' && !pending) { alert("Please enter the reason it is still " + status + "."); return; }
+      const updates = {
+        status: status,
+        action: document.getElementById('juAction').value,
+        materials: document.getElementById('juMaterials').value,
+        pending: status === 'Completed' ? '' : pending
+      };
+      if (status === 'Completed') updates.finish = document.getElementById('juFinish').value;
+      updateJob(id, updates);
+      jobUpdateModal.hide();
+      alert(navigator.onLine ? "Job updated." : "Offline: update saved on this phone and will sync later.");
+    }
+
+    function applyLocalJobUpdate(id, u) {              // keeps this phone's cached copies in step with an update
+      const c = getDayCache(), i = c.logs.findIndex(x => x.id === id);
+      if (i >= 0) { c.logs[i] = Object.assign({}, c.logs[i], u); saveDayCache(c); }
+      const rows = getOpenCache(), j = rows.findIndex(x => x.id === id);
+      if (j >= 0) { if (u.status === 'Completed') rows.splice(j, 1); else rows[j] = Object.assign({}, rows[j], u); saveOpenCache(rows); }
+    }
+    function updateJob(id, updates) {
+      applyLocalJobUpdate(id, updates);
+      const q = getQueue(), waiting = q.find(x => x.type === 'job' && x.payload.id === id);
+      if (waiting) { Object.assign(waiting.payload, updates); saveQueue(q); }       // job not on the server yet: just change it before it is sent
+      else addToQueue('logupd', { id: id, updates: updates });
+      renderMyDay();
+      if (navigator.onLine) syncOfflineQueue();
     }
 
     function refreshAll() { refreshSchedules(); refreshMyDay(); }
@@ -1051,12 +1200,13 @@
           else if (item.type === 'utility') postBody.readings = [item.payload];
           else if (item.type === 'overtime') postBody.overtime = [item.payload];
           else if (item.type === 'sched') postBody.schedOps = [item.payload];
+          else if (item.type === 'logupd') postBody.logOps = [{ id: item.payload.id, updates: item.payload.updates }];
           else { doneKeys.add(qKey(item)); continue; }          // unknown type: drop
 
           const res = await fetch(CONFIG.SCRIPT_URL, { method: "POST", body: JSON.stringify(postBody) });
           const data = await res.json();
           // An item only counts as synced if the server says it stored it (rejected PIN/name entries stay queued).
-          const stored = new Set([].concat(data.saved || [], data.savedU || [], data.savedOt || [], data.schedDone || []));
+          const stored = new Set([].concat(data.saved || [], data.savedU || [], data.savedOt || [], data.schedDone || [], data.logDone || []));
           if (data.ok && stored.has(item.payload.id)) {
             doneKeys.add(qKey(item));
             successCount++;
