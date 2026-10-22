@@ -40,11 +40,12 @@ const CONFIG = {
     "Emergency"
   ],
   METERS: [
-    { type: "Electricity", area: "Common Area", meter: "2117269905", account: "1498" },
-    { type: "Electricity", area: "Shop 1", meter: "2113502336", account: "1711" },
-    { type: "Electricity", area: "Shop 2", meter: "2113549234", account: "7923" },
-    { type: "Water", area: "Common Area", meter: "10W708361", account: "9729" },
-    { type: "Water", area: "Fire Water", meter: "1101946050", account: "0088" },
-    { type: "Water", area: "Shop 1", meter: "10112A0090", account: "01602.417" }
+    { type: "Electricity", area: "Common Area", meter: "21172699", account: "2888542999" },
+    { type: "Electricity", area: "101", meter: "21135023", account: "4254023806" },
+    { type: "Electricity", area: "205", meter: "21135492", account: "20000282308" },
+    { type: "Water", area: "Common Area", meter: "10W708361", account: "2888542999" },
+    { type: "Water", area: "Fire Water", meter: "110194605", account: "7004047472" },
+    { type: "Water", area: "101", meter: "12A009001", account: "4254023806" },
+    { type: "Water", area: "205", meter: "12A009016", account: "20000282308" }
   ]
 };
