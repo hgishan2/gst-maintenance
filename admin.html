@@ -133,6 +133,51 @@
     </div>
   </div>
 
+  <!-- Update Job Modal -->
+  <div class="modal fade" id="adminJobModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg">
+        <div class="modal-header border-bottom-0 pb-0">
+          <h6 class="modal-title fw-bold text-warning"><i class="bi bi-pencil-square me-2"></i>Update Job</h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="ajId">
+          <div id="ajTitle" class="small text-info mb-2"></div>
+          <div class="mb-2">
+            <label class="form-label small mb-1">Status</label>
+            <select id="ajStatus" class="form-select form-select-sm" onchange="toggleAjPending()">
+              <option value="Completed">Completed</option>
+              <option value="Pending">Pending</option>
+              <option value="On Hold">On Hold</option>
+            </select>
+          </div>
+          <div class="mb-2 d-none" id="ajPendingWrap">
+            <label class="form-label small mb-1 text-warning fw-bold">Pending Reason / Remarks *</label>
+            <input type="text" id="ajPending" class="form-control form-control-sm border-warning">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small mb-1">Action Taken</label>
+            <textarea id="ajAction" class="form-control form-control-sm" rows="2"></textarea>
+          </div>
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label small mb-1">Finish Time</label>
+              <input type="time" id="ajFinish" class="form-control form-control-sm">
+            </div>
+            <div class="col-6">
+              <label class="form-label small mb-1">Materials Used</label>
+              <input type="text" id="ajMaterials" class="form-control form-control-sm">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer border-top-0 pt-0">
+          <button type="button" class="btn btn-warning text-dark w-100 py-2 fw-bold" onclick="saveAdminJobUpdate()"><i class="bi bi-check2-circle me-1"></i>Save Update</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Admin Main Portal Content Container -->
   <div id="adminContent" class="container mt-3" style="display: none;">
 
@@ -303,7 +348,13 @@
         <div class="card p-3 shadow-sm">
           <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
             <h6 class="text-info fw-bold m-0"><i class="bi bi-list-task me-1"></i>Maintenance Work Orders</h6>
-            <span id="logsStatusBadge" class="badge bg-secondary">Loading...</span>
+            <div class="d-flex align-items-center gap-2">
+              <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" id="logsOpenOnly" onchange="renderLogsTable(fetchedLogs)">
+                <label class="form-check-label small" for="logsOpenOnly">Open only</label>
+              </div>
+              <span id="logsStatusBadge" class="badge bg-secondary">Loading...</span>
+            </div>
           </div>
           <div class="table-responsive" style="max-height: 500px;">
             <table class="table table-dark table-hover table-striped small">
@@ -317,10 +368,11 @@
                   <th>Complaint</th>
                   <th>Status</th>
                   <th>Action Taken</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody id="logsTableBody">
-                <tr><td colspan="8" class="text-center text-muted py-3">No log records loaded yet.</td></tr>
+                <tr><td colspan="9" class="text-center text-muted py-3">No log records loaded yet.</td></tr>
               </tbody>
             </table>
           </div>
@@ -889,11 +941,13 @@
       }).join('');
     }
 
-    function renderLogsTable(rows) {
+    function renderLogsTable(allRows) {
       const tbody = document.getElementById('logsTableBody');
-      document.getElementById('logsStatusBadge').textContent = `${rows.length} Total`;
+      const openOnly = document.getElementById('logsOpenOnly') && document.getElementById('logsOpenOnly').checked;
+      const rows = openOnly ? allRows.filter(r => (r.status || 'Pending') !== 'Completed') : allRows;
+      document.getElementById('logsStatusBadge').textContent = openOnly ? `${rows.length} of ${allRows.length}` : `${rows.length} Total`;
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-3">No job logs found for date range.</td></tr>';
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-3">${openOnly ? 'No open jobs in this date range.' : 'No job logs found for date range.'}</td></tr>`;
         return;
       }
       tbody.innerHTML = rows.map(r => `
@@ -906,6 +960,7 @@
           <td>${r.complaint || ''}</td>
           <td><span class="badge ${r.status === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${r.status || 'Pending'}</span></td>
           <td><small class="text-muted">${r.action || '-'}</small></td>
+          <td><button class="btn btn-outline-warning btn-sm py-0 px-2" title="Update status" onclick="openAdminJobUpdate('${esc(r.id)}')"><i class="bi bi-pencil-square"></i></button></td>
         </tr>
       `).join('');
     }
@@ -988,6 +1043,50 @@
         empCode: live.empCode || cfg.empCode || "N/A",
         designation: live.designation || cfg.designation || "Technician"
       };
+    }
+
+    // =================== UPDATE A JOB'S STATUS ===================
+    let adminJobModal;
+    function toggleAjPending() {
+      document.getElementById('ajPendingWrap').classList.toggle('d-none', document.getElementById('ajStatus').value === 'Completed');
+    }
+    function openAdminJobUpdate(id) {
+      const j = fetchedLogs.find(x => x.id === id);
+      if (!j) return;
+      document.getElementById('ajId').value = id;
+      document.getElementById('ajTitle').textContent = `${j.location || ''} - ${j.complaint || ''} (${normalizeTechName(j.technician)})`;
+      document.getElementById('ajStatus').value = j.status || 'Pending';
+      document.getElementById('ajPending').value = j.pending || '';
+      document.getElementById('ajAction').value = j.action || '';
+      document.getElementById('ajMaterials').value = j.materials || '';
+      const n = new Date();
+      document.getElementById('ajFinish').value = j.finish || (String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0'));
+      toggleAjPending();
+      if (!adminJobModal) adminJobModal = new bootstrap.Modal(document.getElementById('adminJobModal'));
+      adminJobModal.show();
+    }
+    async function saveAdminJobUpdate() {
+      const id = document.getElementById('ajId').value;
+      const status = document.getElementById('ajStatus').value;
+      const pending = document.getElementById('ajPending').value.trim();
+      if (status !== 'Completed' && !pending) { alert("Please enter the reason it is still " + status + "."); return; }
+      const updates = {
+        status: status,
+        action: document.getElementById('ajAction').value,
+        materials: document.getElementById('ajMaterials').value,
+        pending: status === 'Completed' ? '' : pending
+      };
+      if (status === 'Completed') updates.finish = document.getElementById('ajFinish').value;
+      try {
+        const data = await postAdminBody({ logOps: [{ id: id, updates: updates }] });
+        if (!(data.ok && (data.logDone || []).includes(id))) throw new Error('rejected');
+      } catch (e) {
+        alert("Could not update the job. Check your connection and admin PIN.");
+        return;
+      }
+      adminJobModal.hide();
+      await loadDashboardData();
+      loadTodayOverview();
     }
 
     // =================== DATE SHORTCUTS ===================
