@@ -1635,6 +1635,32 @@
         cell.style('fill', fill || NO_FILL);
       };
 
+      // 0) Recognise each reading by the template's own meter list, whichever spelling was saved
+      //    (e.g. "Common Area" / 2117269905  ->  "Common" / 21172699). Matches by meter number first,
+      //    then by a meter number that starts with the other, then by area name.
+      const summary = workbook.sheet('Summary');
+      const tmpl = [];
+      if (summary) {
+        for (let r = 5; r <= 40 && summary.cell(r, 1).value(); r++)
+          tmpl.push({ type: S(summary.cell(r, 1).value()), area: S(summary.cell(r, 2).value()), meter: S(summary.cell(r, 3).value()), account: S(summary.cell(r, 4).value()) });
+      }
+      const normArea = v => S(v).toLowerCase().replace(/\barea\b/g, '').replace(/\s+/g, ' ').trim();
+      const matchMeter = r => {
+        const cands = tmpl.filter(t => t.type === S(r.type));
+        const m = S(r.meter).toUpperCase(), a = normArea(r.area);
+        return cands.find(t => t.meter.toUpperCase() === m)
+          || cands.find(t => { const tm = t.meter.toUpperCase(); return m.length >= 6 && tm.length >= 6 && (m.startsWith(tm) || tm.startsWith(m)); })
+          || cands.find(t => normArea(t.area) === a);
+      };
+      const canon = new Map();                     // one reading per meter per day: the latest one wins
+      readings.forEach(r0 => {
+        const r = { ...r0 }, t = matchMeter(r);
+        if (t) { r.area = t.area; r.meter = t.meter; r.account = t.account; }
+        const k = `${S(r.type)}|${S(r.area)}|${r.cleanDate}`, prev = canon.get(k);
+        if (!prev || String(r.submittedAt || '') >= String(prev.submittedAt || '')) canon.set(k, r);
+      });
+      readings = Array.from(canon.values());
+
       // 1) Group by meter (Type|Area) and work out previous reading / days / consumption
       const series = new Map();
       readings.forEach(r => {
@@ -1659,7 +1685,6 @@
       });
 
       // keep the meter order used by the template's Summary sheet
-      const summary = workbook.sheet('Summary');
       const order = [];
       if (summary) {
         for (let r = 5; r <= 40 && summary.cell(r, 1).value(); r++)
