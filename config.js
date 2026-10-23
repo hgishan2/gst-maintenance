@@ -28,10 +28,9 @@ const CONFIG = {
   CATEGORIES: [
     "Electrical",
     "Plumbing",
-    "HVAC",
-    "Civil / Carpentry",
-    "Fire Alarm & Safety",
-    "Elevators / Lifts",
+    "Air Conditioning",
+    "Civil / Painting",
+    "Carpentry",
     "General Maintenance"
   ],
   PRIORITIES: [
@@ -39,13 +38,14 @@ const CONFIG = {
     "Urgent",
     "Emergency"
   ],
+  // Fallback only. The app reads the live meter list from the "Meters" sheet; these match it.
   METERS: [
-    { type: "Electricity", area: "Common Area", meter: "21172699", account: "2888542999" },
+    { type: "Electricity", area: "Common", meter: "21172699", account: "2888542999" },
     { type: "Electricity", area: "101", meter: "21135023", account: "4254023806" },
     { type: "Electricity", area: "205", meter: "21135492", account: "20000282308" },
-    { type: "Water", area: "Common Area", meter: "10W708361", account: "2888542999" },
-    { type: "Water", area: "Fire Water", meter: "110194605", account: "7004047472" },
+    { type: "Water", area: "Common", meter: "10W708361", account: "2888542999" },
     { type: "Water", area: "101", meter: "12A009001", account: "4254023806" },
-    { type: "Water", area: "205", meter: "12A009016", account: "20000282308" }
+    { type: "Water", area: "205", meter: "12A009016", account: "20000282308" },
+    { type: "Water", area: "Fire Water", meter: "110194605", account: "7004047472" }
   ]
 };
