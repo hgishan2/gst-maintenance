@@ -590,32 +590,11 @@
       });
     }
 
-    async function refreshUtilityReadings() {
-      const user = localStorage.getItem("tech_name"), pin = localStorage.getItem("tech_pin");
-      if (!user || !pin || !navigator.onLine) return;
-      try {
-        const url = `${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&action=utilityreadings&name=${encodeURIComponent(user)}&pin=${encodeURIComponent(pin)}`;
-        const res = await fetchWithTimeout(url, 10000);
-        const data = await res.json();
-        if (data.ok && Array.isArray(data.readings || data.utilityReadings)) {
-          const serverReadings = data.readings || data.utilityReadings;
-          let localReadings = JSON.parse(localStorage.getItem("utility_readings_local") || "[]");
-          serverReadings.forEach(sr => {
-            const idx = localReadings.findIndex(lr => lr.id === sr.id || (lr.date === sr.date && lr.meter === sr.meter));
-            if (idx >= 0) localReadings[idx] = sr;
-            else localReadings.push(sr);
-          });
-          localStorage.setItem("utility_readings_local", JSON.stringify(localReadings));
-          displayMeterInfo();
-        }
-      } catch (e) { /* offline fallback */ }
-    }
-
     function displayMeterInfo() {
       const idx = document.getElementById('meterSelect').value;
       const card = document.getElementById('meterInfoCard');
       const valueInput = document.getElementById('meterValue');
-      const dateVal = document.getElementById('readingDate').value;
+      const today = document.getElementById('readingDate').value;
       const notice = document.getElementById('utilityDupNotice');
 
       if (idx === "") {
@@ -633,24 +612,13 @@
       card.classList.remove('d-none');
 
       const localReadings = JSON.parse(localStorage.getItem("utility_readings_local") || "[]");
-      const found = localReadings.find(r => r.date === dateVal && r.meter === m.meter);
+      const found = localReadings.find(r => r.date === today && r.meter === m.meter);
 
       if (found) {
         valueInput.value = found.reading;
-        notice.innerHTML = `
-          <i class="bi bi-exclamation-triangle-fill me-1"></i>
-          <strong>Duplicate Record Notice:</strong> A reading for this meter on this date has already been entered 
-          ${found.technician ? `by <strong>${esc(found.technician)}</strong>` : ''} 
-          (Existing Value: <strong class="text-info">${esc(found.reading)}</strong>). 
-          <br><strong class="text-warning">Replacement Instructions:</strong> Submitting a new value will replace and update the existing reading in the system.
-        `;
         notice.classList.remove('d-none');
       } else {
         valueInput.value = "";
-        notice.innerHTML = `
-          <i class="bi bi-exclamation-triangle-fill me-1"></i>
-          <strong>Duplicate Record Notice:</strong> You already entered a reading for this meter today. Submitting will update your existing entry.
-        `;
         notice.classList.add('d-none');
       }
     }
@@ -714,8 +682,6 @@
       if (moduleName === 'schedules') {
         renderManageSchedulesList();
         refreshSchedules();
-      } else if (moduleName === 'utility') {
-        refreshUtilityReadings();
       }
     }
 
@@ -1017,11 +983,7 @@
       if (navigator.onLine) syncOfflineQueue();
     }
 
-    function refreshAll() { 
-      refreshSchedules(); 
-      refreshMyDay(); 
-      refreshUtilityReadings(); 
-    }
+    function refreshAll() { refreshSchedules(); refreshMyDay(); }
 
     // ---------- Schedules (stored on the server, cached on the phone, changes queue while offline) ----------
     function getAllCachedSchedules() {
