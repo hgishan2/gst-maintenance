@@ -79,6 +79,7 @@
     #adminTabs .nav-link { white-space: nowrap; }
     .chart-box { position: relative; height: 300px; }
     .range-btn { font-size: 0.75rem; }
+    .ic{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.125em;flex:none}
   </style>
 </head>
 <body>
@@ -87,7 +88,7 @@
   <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-sm">
     <div class="container-fluid px-3">
       <a class="navbar-brand d-flex align-items-center gap-2" href="#">
-        <i class="bi bi-shield-check text-warning fs-4"></i>
+        <svg class="ic text-warning fs-4" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.4 8-8 9-4.6-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
         <div>
           <div class="fw-bold fs-6 lh-1">Facility Management Portal</div>
           <small class="text-muted" style="font-size:0.75rem;">GST Operations Dashboard</small>
@@ -95,10 +96,10 @@
       </a>
       <div class="d-flex align-items-center gap-2">
         <a href="index.html" class="btn btn-sm btn-outline-info me-1">
-          <i class="bi bi-box-arrow-in-left me-1"></i>Technician View
+          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M8 8l-4 4 4 4M4 12h11"/></svg>Technician View
         </a>
         <button id="adminLogoutBtn" class="btn btn-sm btn-outline-light d-none" onclick="adminLogout()">
-          <i class="bi bi-box-arrow-right me-1"></i>Sign Out
+          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/></svg>Sign Out
         </button>
       </div>
     </div>
@@ -109,7 +110,7 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow-lg">
         <div class="modal-header border-bottom-0 pb-0">
-          <h5 class="modal-title fw-bold text-warning"><i class="bi bi-shield-lock-fill me-2"></i>Admin Authentication</h5>
+          <h5 class="modal-title fw-bold text-warning"><svg class="ic me-2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.4 8-8 9-4.6-1-8-4-8-9V6z"/><rect x="9.5" y="11" width="5" height="4" rx="1"/><path d="M10.5 11V9.5a1.5 1.5 0 0 1 3 0V11"/></svg>Admin Authentication</h5>
         </div>
         <div class="modal-body py-4">
           <div id="adminLoginAlert" class="alert alert-danger d-none py-2 small"></div>
@@ -126,7 +127,7 @@
         </div>
         <div class="modal-footer border-top-0 pt-0">
           <button type="button" class="btn btn-warning text-dark w-100 py-2 fs-6 fw-bold" onclick="verifyAdminLogin()">
-            <i class="bi bi-unlock me-1"></i>Access Admin Portal
+            <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/></svg>Access Admin Portal
           </button>
         </div>
       </div>
@@ -138,7 +139,7 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow-lg">
         <div class="modal-header border-bottom-0 pb-0">
-          <h6 class="modal-title fw-bold text-warning"><i class="bi bi-pencil-square me-2"></i>Update Job</h6>
+          <h6 class="modal-title fw-bold text-warning"><svg class="ic me-2" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>Update Job</h6>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
@@ -172,7 +173,7 @@
           </div>
         </div>
         <div class="modal-footer border-top-0 pt-0">
-          <button type="button" class="btn btn-warning text-dark w-100 py-2 fw-bold" onclick="saveAdminJobUpdate()"><i class="bi bi-check2-circle me-1"></i>Save Update</button>
+          <button type="button" class="btn btn-warning text-dark w-100 py-2 fw-bold" onclick="saveAdminJobUpdate()"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>Save Update</button>
         </div>
       </div>
     </div>
@@ -202,18 +203,18 @@
         </div>
         <div class="col-md-3 col-6 d-flex gap-2 mt-md-4">
           <button class="btn btn-accent btn-sm w-100" onclick="loadDashboardData()">
-            <i class="bi bi-arrow-clockwise me-1"></i>Refresh Range
+            <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8M20 4v5h-5"/></svg>Refresh Range
           </button>
         </div>
         <div class="col-md-3 col-6 d-flex gap-2 mt-md-4">
           <div class="dropdown w-100">
             <button class="btn btn-outline-success btn-sm dropdown-toggle w-100 fw-semibold" type="button" data-bs-toggle="dropdown">
-              <i class="bi bi-file-earmark-excel me-1"></i>Export Reports
+              <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5M9.5 12l5 6M14.5 12l-5 6"/></svg>Export Reports
             </button>
             <ul class="dropdown-menu dropdown-menu-dark w-100">
-              <li><a class="dropdown-item small" href="#" onclick="exportTemplateReport('jobs')"><i class="bi bi-journal-text me-2 text-success"></i>Daily Work Order Log (.xlsx)</a></li>
-              <li><a class="dropdown-item small" href="#" onclick="exportTemplateReport('utilities')"><i class="bi bi-lightning-charge me-2 text-info"></i>Utility Meter Log (.xlsx)</a></li>
-              <li><a class="dropdown-item small" href="#" onclick="exportTemplateReport('overtime')"><i class="bi bi-clock-history me-2 text-warning"></i>Overtime Timesheet (.xlsx)</a></li>
+              <li><a class="dropdown-item small" href="#" onclick="exportTemplateReport('jobs')"><svg class="ic me-2 text-success" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg>Daily Work Order Log (.xlsx)</a></li>
+              <li><a class="dropdown-item small" href="#" onclick="exportTemplateReport('utilities')"><svg class="ic me-2 text-info" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg>Utility Meter Log (.xlsx)</a></li>
+              <li><a class="dropdown-item small" href="#" onclick="exportTemplateReport('overtime')"><svg class="ic me-2 text-warning" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Overtime Timesheet (.xlsx)</a></li>
             </ul>
           </div>
         </div>
@@ -223,23 +224,23 @@
     <!-- Today Overview -->
     <div class="card p-3 shadow-sm mb-3">
       <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-        <h6 class="text-warning fw-bold m-0"><i class="bi bi-binoculars me-1"></i>Today Overview</h6>
+        <h6 class="text-warning fw-bold m-0"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="16" r="3.5"/><circle cx="17" cy="16" r="3.5"/><path d="M4.5 13.5L7 5h3v7M19.5 13.5L17 5h-3v7M10 9h4"/></svg>Today Overview</h6>
         <div class="d-flex align-items-center gap-2">
           <span id="todayDateBadge" class="badge bg-secondary"></span>
-          <button class="btn btn-outline-warning btn-sm py-0 px-2" onclick="loadTodayOverview()" title="Refresh"><i class="bi bi-arrow-clockwise"></i></button>
+          <button class="btn btn-outline-warning btn-sm py-0 px-2" onclick="loadTodayOverview()" title="Refresh"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8M20 4v5h-5"/></svg></button>
         </div>
       </div>
       <div class="row g-3 small">
         <div class="col-md-4 col-12">
-          <div class="fw-semibold text-info mb-1"><i class="bi bi-speedometer2 me-1"></i>Meter readings today</div>
+          <div class="fw-semibold text-info mb-1"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/></svg>Meters not read today</div>
           <div id="tdMeters" class="text-muted">Loading...</div>
         </div>
         <div class="col-md-4 col-12">
-          <div class="fw-semibold text-info mb-1"><i class="bi bi-wrench-adjustable me-1"></i>Open jobs (Pending / On Hold)</div>
+          <div class="fw-semibold text-info mb-1"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5 5L3 18l3 3 6.7-6.7a4 4 0 0 0 5-5l-2.4 2.4-2.6-.7-.7-2.6z"/></svg>Open jobs (Pending / On Hold)</div>
           <div id="tdOpenJobs" class="text-muted">Loading...</div>
         </div>
         <div class="col-md-4 col-12">
-          <div class="fw-semibold text-info mb-1"><i class="bi bi-calendar-check me-1"></i>Schedules</div>
+          <div class="fw-semibold text-info mb-1"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M9 15.5l2 2 4-4"/></svg>Schedules</div>
           <div id="tdSched" class="text-muted">Loading...</div>
         </div>
       </div>
@@ -277,37 +278,37 @@
     <ul class="nav nav-pills nav-fill mb-3 gap-1 bg-slate-900 p-1 rounded-3" id="adminTabs" role="tablist">
       <li class="nav-item" role="presentation">
         <button class="nav-link active" id="pills-perf-tab" data-bs-toggle="pill" data-bs-target="#pills-perf" type="button" role="tab">
-          <i class="bi bi-bar-chart-line me-1"></i>Performance
+          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V4M4 20h16M8 16v-4M12 16V8M16 16v-6"/></svg>Performance
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="pills-admin-logs-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-logs" type="button" role="tab">
-          <i class="bi bi-journal-text me-1"></i>Job Logs
+          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg>Job Logs
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="pills-admin-readings-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-readings" type="button" role="tab">
-          <i class="bi bi-speedometer me-1"></i>Utilities
+          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/></svg>Utilities
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="pills-admin-ot-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-ot" type="button" role="tab">
-          <i class="bi bi-clock-history me-1"></i>Overtime
+          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Overtime
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="pills-admin-schedules-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-schedules" type="button" role="tab" onclick="loadAdminSchedules()">
-          <i class="bi bi-calendar-check me-1"></i>Schedules
+          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M9 15.5l2 2 4-4"/></svg>Schedules
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="pills-charts-tab" data-bs-toggle="pill" data-bs-target="#pills-charts" type="button" role="tab">
-          <i class="bi bi-graph-up me-1"></i>Charts
+          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V4M4 20h16M7 15l4-4 3 3 5-6"/></svg>Charts
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="pills-admin-techs-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-techs" type="button" role="tab">
-          <i class="bi bi-people me-1"></i>Technicians
+          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.2a3 3 0 0 1 0 5.6M18 14.5c2 .8 3 2.7 3 5.5"/></svg>Technicians
         </button>
       </li>
     </ul>
@@ -319,7 +320,7 @@
       <div class="tab-pane fade show active" id="pills-perf" role="tabpanel">
         <div class="card p-3 shadow-sm">
           <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-            <h6 class="text-info fw-bold m-0"><i class="bi bi-person-check me-1"></i>Technician Activity & Output Breakdown</h6>
+            <h6 class="text-info fw-bold m-0"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="3.5"/><path d="M3 20c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M16 11l2 2 4-4"/></svg>Technician Activity & Output Breakdown</h6>
             <span id="perfRangeLabel" class="badge bg-secondary">Selected Period</span>
           </div>
           <div class="table-responsive" style="max-height: 500px;">
@@ -347,7 +348,7 @@
       <div class="tab-pane fade" id="pills-admin-logs" role="tabpanel">
         <div class="card p-3 shadow-sm">
           <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-            <h6 class="text-info fw-bold m-0"><i class="bi bi-list-task me-1"></i>Maintenance Work Orders</h6>
+            <h6 class="text-info fw-bold m-0"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M3.5 6l1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"/></svg>Maintenance Work Orders</h6>
             <div class="d-flex align-items-center gap-2">
               <div class="form-check form-switch m-0">
                 <input class="form-check-input" type="checkbox" id="logsOpenOnly" onchange="renderLogsTable(fetchedLogs)">
@@ -383,7 +384,7 @@
       <div class="tab-pane fade" id="pills-admin-readings" role="tabpanel">
         <div class="card p-3 shadow-sm">
           <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-            <h6 class="text-info fw-bold m-0"><i class="bi bi-lightning-charge me-1"></i>Recorded Meter Readings</h6>
+            <h6 class="text-info fw-bold m-0"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg>Recorded Meter Readings</h6>
             <span id="readingsStatusBadge" class="badge bg-secondary">Loading...</span>
           </div>
           <div class="table-responsive" style="max-height: 500px;">
@@ -410,7 +411,7 @@
       <div class="tab-pane fade" id="pills-admin-ot" role="tabpanel">
         <div class="card p-3 shadow-sm">
           <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-            <h6 class="text-info fw-bold m-0"><i class="bi bi-clock me-1"></i>Overtime Submissions</h6>
+            <h6 class="text-info fw-bold m-0"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Overtime Submissions</h6>
             <span id="otStatusBadge" class="badge bg-secondary">Loading...</span>
           </div>
           <div class="table-responsive" style="max-height: 500px;">
@@ -437,7 +438,7 @@
       <div class="tab-pane fade" id="pills-admin-schedules" role="tabpanel">
         <div class="card p-3 shadow-sm mb-3">
           <h6 class="text-warning fw-bold mb-3 border-bottom border-secondary pb-2">
-            <i class="bi bi-calendar-plus me-1"></i>Create Schedule for Technician
+            <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M12 13v5M9.5 15.5h5"/></svg>Create Schedule for Technician
           </h6>
           <form id="adminScheduleForm" onsubmit="handleAdminScheduleSubmit(event)">
             <div class="row g-2 mb-2">
@@ -467,14 +468,14 @@
               <textarea id="adminSchedDesc" class="form-control form-control-sm" rows="2" placeholder="Task details..." required></textarea>
             </div>
             <button type="submit" class="btn btn-warning text-dark w-100 py-2 fs-6 fw-bold">
-              <i class="bi bi-calendar-check me-1"></i>Assign Schedule
+              <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M9 15.5l2 2 4-4"/></svg>Assign Schedule
             </button>
           </form>
         </div>
 
         <div class="card p-3 shadow-sm">
           <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-            <h6 class="text-info fw-bold m-0"><i class="bi bi-list-check me-1"></i>All Technician Schedules</h6>
+            <h6 class="text-info fw-bold m-0"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M3.5 6l1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"/></svg>All Technician Schedules</h6>
             <span id="adminSchedCountBadge" class="badge bg-secondary">0 Total</span>
           </div>
           <div class="table-responsive" style="max-height: 450px;">
@@ -501,7 +502,7 @@
       <div class="tab-pane fade" id="pills-charts" role="tabpanel">
         <div class="card p-3 shadow-sm mb-3">
           <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-            <h6 class="text-info fw-bold m-0"><i class="bi bi-lightning-charge me-1"></i>Daily Consumption per Meter</h6>
+            <h6 class="text-info fw-bold m-0"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg>Daily Consumption per Meter</h6>
             <select id="chartUtilType" class="form-select form-select-sm w-auto" onchange="renderCharts()">
               <option value="Electricity">Electricity</option>
               <option value="Water">Water</option>
@@ -513,19 +514,19 @@
         <div class="row g-3 mb-3">
           <div class="col-md-6 col-12">
             <div class="card p-3 shadow-sm h-100">
-              <h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2"><i class="bi bi-pie-chart me-1"></i>Jobs by Category</h6>
+              <h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9h9"/><path d="M20.5 15A9 9 0 1 1 9 3.5"/></svg>Jobs by Category</h6>
               <div class="chart-box"><canvas id="chartCategory"></canvas></div>
             </div>
           </div>
           <div class="col-md-6 col-12">
             <div class="card p-3 shadow-sm h-100">
-              <h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2"><i class="bi bi-bar-chart me-1"></i>Jobs per Technician</h6>
+              <h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M7 20v-8M12 20V6M17 20v-5"/></svg>Jobs per Technician</h6>
               <div class="chart-box"><canvas id="chartTechJobs"></canvas></div>
             </div>
           </div>
         </div>
         <div class="card p-3 shadow-sm">
-          <h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2"><i class="bi bi-clock-history me-1"></i>Overtime Hours per Technician</h6>
+          <h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Overtime Hours per Technician</h6>
           <div class="chart-box"><canvas id="chartOt"></canvas></div>
           <small class="text-muted d-block mt-2">Overtime entries saved before this update have no type recorded, so they appear under N.</small>
         </div>
@@ -535,7 +536,7 @@
       <div class="tab-pane fade" id="pills-admin-techs" role="tabpanel">
         <div class="card p-3 shadow-sm mb-3">
           <h6 class="text-warning fw-bold mb-3 border-bottom border-secondary pb-2">
-            <i class="bi bi-person-plus me-1"></i><span id="techFormTitle">Add Technician</span>
+            <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="3.5"/><path d="M3 20c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M19 8v6M16 11h6"/></svg><span id="techFormTitle">Add Technician</span>
           </h6>
           <form id="techForm" onsubmit="handleTechSubmit(event)">
             <div class="row g-2 mb-2">
@@ -559,14 +560,14 @@
               </div>
             </div>
             <div class="d-flex gap-2">
-              <button type="submit" class="btn btn-warning text-dark flex-grow-1 py-2 fw-bold"><i class="bi bi-save me-1"></i>Save Technician</button>
+              <button type="submit" class="btn btn-warning text-dark flex-grow-1 py-2 fw-bold"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg>Save Technician</button>
               <button type="button" id="techCancelBtn" class="btn btn-outline-secondary d-none" onclick="resetTechForm()">Cancel</button>
             </div>
           </form>
         </div>
         <div class="card p-3 shadow-sm">
           <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-            <h6 class="text-info fw-bold m-0"><i class="bi bi-people me-1"></i>Technicians</h6>
+            <h6 class="text-info fw-bold m-0"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.2a3 3 0 0 1 0 5.6M18 14.5c2 .8 3 2.7 3 5.5"/></svg>Technicians</h6>
             <span id="techCountBadge" class="badge bg-secondary">0 Total</span>
           </div>
           <div class="table-responsive" style="max-height: 450px;">
@@ -850,9 +851,9 @@
           <td><span class="badge ${s.status === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${esc(s.status)}</span></td>
           <td class="text-center">
             <div class="btn-group btn-group-sm">
-              ${s.status !== 'Completed' ? `<button class="btn btn-outline-success py-0 px-2" title="Mark Done" onclick="adminUpdateStatus('${esc(s.id)}', 'Completed')"><i class="bi bi-check2"></i></button>` : ''}
-              <button class="btn btn-outline-warning py-0 px-2" title="Reschedule" onclick="adminReschedule('${esc(s.id)}')"><i class="bi bi-calendar-arrow-right"></i></button>
-              <button class="btn btn-outline-danger py-0 px-2" title="Delete" onclick="adminDeleteSchedule('${esc(s.id)}')"><i class="bi bi-trash"></i></button>
+              ${s.status !== 'Completed' ? `<button class="btn btn-outline-success py-0 px-2" title="Mark Done" onclick="adminUpdateStatus('${esc(s.id)}', 'Completed')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg></button>` : ''}
+              <button class="btn btn-outline-warning py-0 px-2" title="Reschedule" onclick="adminReschedule('${esc(s.id)}')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M9 15.5h6M13 12.5l3 3-3 3"/></svg></button>
+              <button class="btn btn-outline-danger py-0 px-2" title="Delete" onclick="adminDeleteSchedule('${esc(s.id)}')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
             </div>
           </td>
         </tr>
@@ -960,7 +961,7 @@
           <td>${r.complaint || ''}</td>
           <td><span class="badge ${r.status === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${r.status || 'Pending'}</span></td>
           <td><small class="text-muted">${r.action || '-'}</small></td>
-          <td><button class="btn btn-outline-warning btn-sm py-0 px-2" title="Update status" onclick="openAdminJobUpdate('${esc(r.id)}')"><i class="bi bi-pencil-square"></i></button></td>
+          <td><button class="btn btn-outline-warning btn-sm py-0 px-2" title="Update status" onclick="openAdminJobUpdate('${esc(r.id)}')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg></button></td>
         </tr>
       `).join('');
     }
@@ -1145,7 +1146,7 @@
       document.getElementById('tdMeters').innerHTML = !todayData.meters.length
         ? 'Meter list unavailable.'
         : missing.length === 0
-          ? '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>All ' + todayData.meters.length + ' meters read</span>'
+          ? '<span class="text-success"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>All ' + todayData.meters.length + ' meters read</span>'
           : `<div class="text-warning mb-1">${missing.length} of ${todayData.meters.length} still to read</div>` +
             missing.map(m => `<div>${esc(m.type)} - ${esc(m.area)} <span class="text-muted">(${esc(m.meter)})</span></div>`).join('');
 
@@ -1154,7 +1155,7 @@
         .map(l => ({ ...l, age: Math.round(isoToSerial(today) - isoToSerial(String(l.logDate).split('T')[0])) }))
         .sort((a, b) => b.age - a.age);
       document.getElementById('tdOpenJobs').innerHTML = open.length === 0
-        ? '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>No open jobs</span>'
+        ? '<span class="text-success"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>No open jobs</span>'
         : `<div class="text-warning mb-1">${open.length} open (last 90 days)</div>` +
           open.slice(0, 6).map(l => `<div class="border-bottom border-secondary pb-1 mb-1">
               <strong>${esc(l.location)}</strong> <span class="badge ${l.age > 3 ? 'bg-danger' : 'bg-secondary'}">${l.age}d</span>
@@ -1168,7 +1169,7 @@
       document.getElementById('tdSched').innerHTML =
         `<div class="mb-1"><span class="badge bg-info text-dark">${dueToday.length}</span> due today</div>` +
         (overdue.length === 0
-          ? '<div class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Nothing overdue</div>'
+          ? '<div class="text-success"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>Nothing overdue</div>'
           : `<div class="text-danger mb-1">${overdue.length} overdue</div>` +
             overdue.slice(0, 5).map(s => `<div class="border-bottom border-secondary pb-1 mb-1"><strong>${esc(s.location)}</strong> <span class="text-muted">${esc(s.date)}</span>
               <div class="text-muted text-truncate">${esc(s.technician)} - ${esc(s.desc)}</div></div>`).join('') +
@@ -1351,8 +1352,8 @@
           <td>${t.hasPin ? '<span class="badge bg-success">Set</span>' : '<span class="badge bg-danger">No PIN</span>'}</td>
           <td class="text-center">
             <div class="btn-group btn-group-sm">
-              <button class="btn btn-outline-warning py-0 px-2" title="Edit / reset PIN" onclick="editTech(${i})"><i class="bi bi-pencil"></i></button>
-              <button class="btn btn-outline-danger py-0 px-2" title="Remove" onclick="deleteTech(${i})"><i class="bi bi-trash"></i></button>
+              <button class="btn btn-outline-warning py-0 px-2" title="Edit / reset PIN" onclick="editTech(${i})"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg></button>
+              <button class="btn btn-outline-danger py-0 px-2" title="Remove" onclick="deleteTech(${i})"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
             </div>
           </td>
         </tr>`).join('');
