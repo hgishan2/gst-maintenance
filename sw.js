@@ -1,6 +1,6 @@
 // Service worker: keeps the technician app working with no signal.
 // Bump CACHE_VERSION whenever you change index.html / config.js so phones pick up the new files.
-const CACHE_VERSION = 'gst-ops-v6';
+const CACHE_VERSION = 'gst-ops-v13';
 
 const CORE = [
   './',
@@ -10,6 +10,7 @@ const CORE = [
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js',
   'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css',
+  'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap',
   'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/fonts/bootstrap-icons.woff2',
   'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/fonts/bootstrap-icons.woff'
 ];
