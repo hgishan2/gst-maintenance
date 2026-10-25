@@ -2,11 +2,12 @@
 <html lang="en" data-bs-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Facility Operations - Technician Portal</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
   <style>
     :root {
       --bg-dark: #0f172a;
@@ -63,15 +64,70 @@
       transform: translateY(-3px);
       border-color: var(--accent-blue) !important;
     }
+    /* ===== premium theme layer ===== */
+    :root{--bg-dark:#0f172a;--card-bg:#162036;--border-color:#25324d;--accent-blue:#c9a45c;--accent:#c9a45c}
+    body{font-family:Manrope,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums;padding-bottom:calc(96px + env(safe-area-inset-bottom))}
+    .card{border-radius:18px}
+    .text-info{color:#eef2f8!important}
+    .btn{border-radius:12px;font-weight:700}
+    .btn-accent{background:var(--accent);color:#0f172a;border:0;min-height:50px;font-weight:800}
+    .btn-accent:hover{background:#d8b56c;color:#0f172a}
+    .btn-primary,.btn-warning{background:var(--accent)!important;border:0!important;color:#0f172a!important;min-height:50px;font-weight:800}
+    .form-control,.form-select{min-height:46px;font-size:15px;font-weight:500;border:1px solid #2a3a5c;border-radius:12px}
+    textarea.form-control{min-height:72px}
+    .form-control:focus,.form-select:focus{border-color:var(--accent);box-shadow:0 0 0 .2rem rgba(201,164,92,.22)}
+    .form-label{font-size:12px!important;font-weight:600;color:#8fa0bd}
+    #meterValue{min-height:64px;font-size:28px;font-weight:800}
+    .badge{border-radius:99px;font-weight:700;padding:.38em .75em}
+    .badge.bg-success{background:rgba(74,190,140,.14)!important;color:#6fd3a8!important}
+    .badge.bg-warning{background:rgba(224,176,82,.14)!important;color:#e6bb6a!important}
+    .badge.bg-danger{background:rgba(232,111,101,.14)!important;color:#f0908a!important}
+    .badge.bg-info,.badge.bg-primary{background:rgba(201,164,92,.16)!important;color:#d9b970!important}
+    .badge.bg-secondary{background:#25324d!important;color:#aab6cc!important}
+    .alert-warning,.alert-danger{border:0;border-radius:12px}
+    .alert-warning{background:rgba(224,176,82,.12);color:#e6bb6a}
+    .modal-content{border-radius:20px}
+    .nav-card .ic{color:var(--accent)!important}
+    .ic{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.125em;flex:none}
+    .seg{display:flex;background:#0f172a;border:1px solid #2a3a5c;border-radius:12px;padding:3px;gap:3px}
+    .seg button{flex:1;border:0;background:transparent;color:#8fa0bd;font:700 13px Manrope,sans-serif;padding:11px 0;border-radius:9px;min-height:44px}
+    .seg button.on{background:#25324d;color:var(--accent)}
+    .seg button.on[data-v="Completed"]{color:#6fd3a8}
+    .seg button.on[data-v="Pending"],.seg button.on[data-v="On Hold"]{color:#e6bb6a}
+    .ring-bg{fill:none;stroke:#25324d;stroke-width:9}
+    .ring-arc{fill:none;stroke:var(--accent);stroke-width:9;stroke-linecap:round;transition:stroke-dasharray .6s ease}
+    #bottomNav{display:none;position:fixed;left:0;right:0;bottom:0;z-index:1030;background:#0c1322;border-top:1px solid #25324d;padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+    #bottomNav.on{display:flex}
+    .kb #bottomNav{display:none!important}
+    #bottomNav button{flex:1;background:none;border:0;color:#8fa0bd;font:600 11px Manrope,sans-serif;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;min-height:56px}
+    #bottomNav button .ic{width:22px;height:22px}
+    #bottomNav button.act{color:var(--accent)}
+    #toastBox{position:fixed;left:16px;right:16px;bottom:calc(92px + env(safe-area-inset-bottom));z-index:2500;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+    .toast-i{pointer-events:auto;display:flex;gap:12px;align-items:flex-start;background:#1d2b47;border:1px solid #33466d;border-radius:14px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.35);font-size:14px;font-weight:600;white-space:pre-line;animation:tin .25s ease}
+    .toast-i .tdot{width:26px;height:26px;border-radius:99px;background:var(--accent);color:#0f172a;display:flex;align-items:center;justify-content:center;flex:none}
+    .toast-i.warn .tdot{background:#e0b052}
+    .toast-i.out{opacity:0;transform:translateY(8px);transition:.35s}
+    @keyframes tin{from{opacity:0;transform:translateY(10px)}}
+    @media (prefers-reduced-motion:reduce){.toast-i{animation:none}.ring-arc{transition:none}}
   </style>
 </head>
 <body>
+
+  <!-- Opening splash: shown once when the app is launched, then fades away -->
+  <div id="splash" style="position:fixed;top:0;right:0;bottom:0;left:0;z-index:3000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0f172a;transition:opacity .5s ease;padding:24px;text-align:center;">
+    <div id="splashLogo" style="width:35vw;max-width:160px;min-width:96px;display:flex;align-items:center;justify-content:center;">
+      <svg class="ic" viewBox="0 0 24 24" aria-hidden="true" style="width:4.5rem;height:4.5rem;color:#c9a45c;stroke-width:1.5"><path d="M14.7 6.3a4 4 0 0 0-5 5L3 18l3 3 6.7-6.7a4 4 0 0 0 5-5l-2.4 2.4-2.6-.7-.7-2.6z"/></svg>
+    </div>
+    <div style="font-weight:700;font-size:1.5rem;margin-top:18px;color:#f8fafc;">Facility Management Portal</div>
+    <div style="font-size:0.75rem;margin-top:4px;color:#94a3b8;">by Ishan Madhushanka</div>
+  </div>
+  <script>try { if (sessionStorage.getItem('splash_shown')) document.getElementById('splash').remove(); } catch (e) {}</script>
 
   <!-- Top Navbar Header -->
   <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-sm">
     <div class="container-fluid px-3">
       <a class="navbar-brand d-flex align-items-center gap-2 cursor-pointer" onclick="showDashboard()">
-        <i class="bi bi-tools text-info fs-4"></i>
+        <svg class="ic text-info fs-4" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5 5L3 18l3 3 6.7-6.7a4 4 0 0 0 5-5l-2.4 2.4-2.6-.7-.7-2.6z"/></svg>
         <div>
           <div class="fw-bold fs-6 lh-1">Facility Operations Portal</div>
           <small class="text-muted" style="font-size:0.75rem;">GST Field Operations</small>
@@ -82,7 +138,7 @@
           Online
         </span>
         <button id="logoutBtn" class="btn btn-sm btn-outline-light d-none" onclick="logout()">
-          <i class="bi bi-box-arrow-right me-1"></i>Sign Out
+          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/></svg>Sign Out
         </button>
       </div>
     </div>
@@ -92,8 +148,13 @@
   <div class="modal fade" id="loginModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow-lg">
+        <div class="text-center pt-4 px-3">
+          <div style="width:64px;height:64px;margin:0 auto 12px;border-radius:18px;background:#0f172a;border:1px solid #25324d;display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:30px"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5 5L3 18l3 3 6.7-6.7a4 4 0 0 0 5-5l-2.4 2.4-2.6-.7-.7-2.6z"/></svg></div>
+          <div class="fw-bold fs-5">Facility Management Portal</div>
+          <div class="text-muted" style="font-size:0.75rem;">by Ishan Madhushanka</div>
+        </div>
         <div class="modal-header border-bottom-0 pb-0">
-          <h5 class="modal-title fw-bold text-info"><i class="bi bi-shield-lock me-2"></i>User Sign In</h5>
+          <h5 class="modal-title fw-bold text-info"><svg class="ic me-2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.4 8-8 9-4.6-1-8-4-8-9V6z"/><rect x="9.5" y="11" width="5" height="4" rx="1"/><path d="M10.5 11V9.5a1.5 1.5 0 0 1 3 0V11"/></svg>User Sign In</h5>
         </div>
         <div class="modal-body py-4">
           <div id="loginAlert" class="alert alert-danger d-none py-2 small"></div>
@@ -121,7 +182,7 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow-lg">
         <div class="modal-header border-bottom-0 pb-0">
-          <h6 class="modal-title fw-bold text-warning"><i class="bi bi-pencil-square me-2"></i>Update Job</h6>
+          <h6 class="modal-title fw-bold text-warning"><svg class="ic me-2" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>Update Job</h6>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
@@ -155,7 +216,7 @@
           </div>
         </div>
         <div class="modal-footer border-top-0 pt-0">
-          <button type="button" class="btn btn-accent w-100 py-2" onclick="saveJobUpdate()"><i class="bi bi-check2-circle me-1"></i>Save Update</button>
+          <button type="button" class="btn btn-accent w-100 py-2" onclick="saveJobUpdate()"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>Save Update</button>
         </div>
       </div>
     </div>
@@ -170,9 +231,6 @@
         <small class="text-muted d-block">Welcome back,</small>
         <span id="activeTechDisplay" class="fw-bold text-info fs-5">Technician</span>
       </div>
-      <button class="btn btn-sm btn-outline-secondary" onclick="showDashboard()">
-        <i class="bi bi-house-door me-1"></i>Dashboard
-      </button>
     </div>
 
     <!-- VIEW 1: TECHNICIAN LANDING DASHBOARD -->
@@ -181,7 +239,7 @@
       <!-- Reminder Box: Upcoming Schedules -->
       <div class="card p-3 mb-3 border-info shadow-sm bg-gradient">
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <h6 class="text-info fw-bold m-0"><i class="bi bi-calendar-event me-2"></i>My Upcoming Schedules</h6>
+          <h6 class="text-info fw-bold m-0"><svg class="ic me-2" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M8 14h3v3H8z"/></svg>My Upcoming Schedules</h6>
           <span id="scheduleCountBadge" class="badge bg-info text-dark">0 Pending</span>
         </div>
         <div id="upcomingSchedulesList" class="small text-light">
@@ -192,14 +250,18 @@
       <!-- My Day Summary -->
       <div class="card p-3 mb-3 shadow-sm">
         <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-          <h6 class="text-info fw-bold m-0"><i class="bi bi-clipboard-data me-2"></i>My Day</h6>
+          <h6 class="text-info fw-bold m-0"><svg class="ic me-2" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3H9zM9 17v-3M12 17v-5M15 17v-2"/></svg>My Day</h6>
           <span id="myDayDate" class="badge bg-secondary"></span>
         </div>
-        <div class="row g-2 text-center mb-2">
-          <div class="col-3"><div class="border border-secondary rounded p-1"><small class="text-muted d-block">Jobs</small><span id="myDayTotal" class="fw-bold fs-5">0</span></div></div>
-          <div class="col-3"><div class="border border-success rounded p-1"><small class="text-muted d-block">Done</small><span id="myDayDone" class="fw-bold fs-5 text-success">0</span></div></div>
-          <div class="col-3"><div class="border border-warning rounded p-1"><small class="text-muted d-block">Pending</small><span id="myDayPending" class="fw-bold fs-5 text-warning">0</span></div></div>
-          <div class="col-3"><div class="border border-info rounded p-1"><small class="text-muted d-block">OT hrs</small><span id="myDayOtHrs" class="fw-bold fs-5 text-info">0</span></div></div>
+        <div class="d-flex align-items-center gap-3 mb-2">
+          <div style="position:relative;width:96px;height:96px;flex:none"><svg viewBox="0 0 96 96" width="96" height="96"><circle class="ring-bg" cx="48" cy="48" r="38"/><circle id="ringArc" class="ring-arc" cx="48" cy="48" r="38" stroke-dasharray="0 238.8" transform="rotate(-90 48 48)"/></svg>
+            <div class="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column align-items-center justify-content-center"><span id="ringText" class="fw-bold fs-5 lh-1">0</span><small class="text-muted">done</small></div></div>
+          <div class="flex-fill" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div class="border border-secondary rounded p-2"><small class="text-muted d-block">Jobs</small><span id="myDayTotal" class="fw-bold fs-5">0</span></div>
+            <div class="border border-secondary rounded p-2"><small class="text-muted d-block">Done</small><span id="myDayDone" class="fw-bold fs-5 text-success">0</span></div>
+            <div class="border border-secondary rounded p-2"><small class="text-muted d-block">Pending</small><span id="myDayPending" class="fw-bold fs-5 text-warning">0</span></div>
+            <div class="border border-secondary rounded p-2"><small class="text-muted d-block">OT hrs</small><span id="myDayOtHrs" class="fw-bold fs-5" style="color:var(--accent)">0</span></div>
+          </div>
         </div>
         <div id="myDayJobs" class="small"></div>
         <div id="myDayOt" class="small"></div>
@@ -208,7 +270,7 @@
       <!-- My Open Jobs -->
       <div class="card p-3 mb-3 shadow-sm">
         <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-          <h6 class="text-warning fw-bold m-0"><i class="bi bi-hourglass-split me-2"></i>My Open Jobs</h6>
+          <h6 class="text-warning fw-bold m-0"><svg class="ic me-2" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10M7 21h10M8 3v3.5a4 4 0 0 0 1.6 3.2L12 12l-2.4 2.3A4 4 0 0 0 8 17.5V21M16 3v3.5a4 4 0 0 1-1.6 3.2L12 12l2.4 2.3a4 4 0 0 1 1.6 3.2V21"/></svg>My Open Jobs</h6>
           <span id="myOpenCount" class="badge bg-warning text-dark">0</span>
         </div>
         <div id="myOpenJobs" class="small"></div>
@@ -218,28 +280,28 @@
       <div class="row g-3">
         <div class="col-6">
           <div class="card p-3 text-center cursor-pointer nav-card h-100" onclick="switchView('job')">
-            <i class="bi bi-journal-text text-info fs-1 mb-2"></i>
+            <svg class="ic text-info fs-1 mb-2" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg>
             <h6 class="fw-bold mb-1">Job Log</h6>
             <small class="text-muted">Record daily maintenance work</small>
           </div>
         </div>
         <div class="col-6">
           <div class="card p-3 text-center cursor-pointer nav-card h-100" onclick="switchView('utility')">
-            <i class="bi bi-speedometer2 text-success fs-1 mb-2"></i>
+            <svg class="ic text-success fs-1 mb-2" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/></svg>
             <h6 class="fw-bold mb-1">Utilities</h6>
             <small class="text-muted">Electricity & Water meters</small>
           </div>
         </div>
         <div class="col-6">
           <div class="card p-3 text-center cursor-pointer nav-card h-100" onclick="switchView('overtime')">
-            <i class="bi bi-clock-history text-warning fs-1 mb-2"></i>
+            <svg class="ic text-warning fs-1 mb-2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
             <h6 class="fw-bold mb-1">Overtime</h6>
             <small class="text-muted">Log extra duty hours</small>
           </div>
         </div>
         <div class="col-6">
           <div class="card p-3 text-center cursor-pointer nav-card h-100" onclick="switchView('schedules')">
-            <i class="bi bi-calendar-check text-primary fs-1 mb-2"></i>
+            <svg class="ic text-primary fs-1 mb-2" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M9 15.5l2 2 4-4"/></svg>
             <h6 class="fw-bold mb-1">Schedules</h6>
             <small class="text-muted">Future work & tasks</small>
           </div>
@@ -250,15 +312,11 @@
     <!-- VIEW 2: FORM ENTRY MODULES -->
     <div id="formsView" style="display: none;">
 
-      <button class="btn btn-sm btn-outline-light mb-3" onclick="showDashboard()">
-        <i class="bi bi-arrow-left me-1"></i>Back to Dashboard
-      </button>
-
       <!-- MODULE 1: JOB LOG ENTRY -->
       <div id="module-job" class="form-module" style="display: none;">
         <div class="card p-3 shadow-sm">
           <h6 class="text-info fw-bold mb-3 border-bottom border-secondary pb-2">
-            <i class="bi bi-plus-circle me-1"></i>New Work Request / Job Entry
+            <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>New Work Request / Job Entry
           </h6>
           <form id="jobForm" onsubmit="handleJobSubmit(event)">
             <div class="row g-2 mb-2">
@@ -337,7 +395,7 @@
             </div>
 
             <button type="submit" id="jobSubmitBtn" class="btn btn-accent w-100 py-2 fs-6">
-              <i class="bi bi-send me-1"></i>Submit Job Log
+              <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></svg>Submit Job Log
             </button>
           </form>
         </div>
@@ -347,7 +405,7 @@
       <div id="module-utility" class="form-module" style="display: none;">
         <div class="card p-3 shadow-sm">
           <h6 class="text-info fw-bold mb-3 border-bottom border-secondary pb-2">
-            <i class="bi bi-speedometer2 me-1"></i>Utility Meter Reading Log
+            <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/></svg>Utility Meter Reading Log
           </h6>
           <form id="utilityForm" onsubmit="handleUtilitySubmit(event)">
             <div class="mb-2">
@@ -375,7 +433,7 @@
 
             <!-- Duplicate Warning Notice -->
             <div id="utilityDupNotice" class="alert alert-warning py-2 small d-none">
-              <i class="bi bi-exclamation-triangle-fill me-1"></i>
+              <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4L2.5 20h19z"/><path d="M12 10v5M12 18v.01"/></svg>
               <strong>Duplicate Record Notice:</strong> You already entered a reading for this meter today. Submitting will update your existing entry.
             </div>
 
@@ -385,7 +443,7 @@
             </div>
 
             <button type="submit" id="utilitySubmitBtn" class="btn btn-primary w-100 py-2 fs-6 fw-bold">
-              <i class="bi bi-check-circle me-1"></i>Submit Utility Reading
+              <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>Submit Utility Reading
             </button>
           </form>
         </div>
@@ -395,7 +453,7 @@
       <div id="module-overtime" class="form-module" style="display: none;">
         <div class="card p-3 shadow-sm">
           <h6 class="text-info fw-bold mb-3 border-bottom border-secondary pb-2">
-            <i class="bi bi-clock-history me-1"></i>Overtime Hours Entry
+            <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Overtime Hours Entry
           </h6>
           <form id="otForm" onsubmit="handleOtSubmit(event)">
             <div class="mb-2">
@@ -416,17 +474,18 @@
 
             <div class="mb-2">
               <label class="form-label small mb-1">Overtime Type (Category) *</label>
-              <select id="otCategoryType" class="form-select form-select-sm" required>
-                <option value="N">N - Normal Overtime</option>
-                <option value="WO">WO - Weekly Off</option>
-                <option value="PH">PH - Public Holiday</option>
-                <option value="N. Shift">N. Shift - Night Shift</option>
+              <select id="otCategoryType" class="form-select form-select-sm" data-hint="otTypeHint" required>
+                <option value="N" data-short="N">N - Normal Overtime</option>
+                <option value="WO" data-short="WO">WO - Weekly Off</option>
+                <option value="PH" data-short="PH">PH - Public Holiday</option>
+                <option value="N. Shift" data-short="N. Shift">N. Shift - Night Shift</option>
               </select>
+              <div id="otTypeHint" class="small text-muted mt-1"></div>
             </div>
 
             <!-- Overtime Duplicate Warning Notice -->
             <div id="otDupNotice" class="alert alert-warning py-2 small d-none mb-2">
-              <i class="bi bi-exclamation-triangle-fill me-1"></i>
+              <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4L2.5 20h19z"/><path d="M12 10v5M12 18v.01"/></svg>
               <strong>Duplicate Time Slot Notice:</strong> You already logged overtime for this exact time slot today. Submitting will update your existing entry.
             </div>
 
@@ -447,7 +506,7 @@
             </div>
 
             <button type="submit" id="otSubmitBtn" class="btn btn-warning w-100 py-2 fs-6 fw-bold text-dark">
-              <i class="bi bi-clock me-1"></i>Submit Overtime Log
+              <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Submit Overtime Log
             </button>
           </form>
         </div>
@@ -457,7 +516,7 @@
       <div id="module-schedules" class="form-module" style="display: none;">
         <div class="card p-3 shadow-sm mb-3">
           <h6 class="text-info fw-bold mb-3 border-bottom border-secondary pb-2">
-            <i class="bi bi-calendar-plus me-1"></i>Schedule Future Maintenance / Task
+            <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M12 13v5M9.5 15.5h5"/></svg>Schedule Future Maintenance / Task
           </h6>
           <form id="scheduleForm" onsubmit="handleScheduleSubmit(event)">
             <div class="mb-2">
@@ -482,14 +541,14 @@
             </div>
 
             <button type="submit" class="btn btn-primary w-100 py-2 fs-6 fw-bold">
-              <i class="bi bi-calendar-check me-1"></i>Save Schedule Reminder
+              <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M9 15.5l2 2 4-4"/></svg>Save Schedule Reminder
             </button>
           </form>
         </div>
 
         <div class="card p-3 shadow-sm">
           <h6 class="text-warning fw-bold mb-3 border-bottom border-secondary pb-2">
-            <i class="bi bi-list-check me-1"></i>Manage My Schedules
+            <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M3.5 6l1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"/></svg>Manage My Schedules
           </h6>
           <div id="manageSchedulesList">
             <p class="text-muted small">No schedules found.</p>
@@ -500,12 +559,115 @@
     </div>
   </div>
 
+  <!-- Bottom navigation: always visible once signed in -->
+  <nav id="bottomNav">
+    <button type="button" data-nav="home" class="act" onclick="navTo('home')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+    <button type="button" data-nav="job" onclick="navTo('job')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg>Job log</button>
+    <button type="button" data-nav="utility" onclick="navTo('utility')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/></svg>Utilities</button>
+    <button type="button" data-nav="overtime" onclick="navTo('overtime')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Overtime</button>
+    <button type="button" data-nav="schedules" onclick="navTo('schedules')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M9 15.5l2 2 4-4"/></svg>Schedules</button>
+  </nav>
+
   <!-- Scripts -->
   <script src="config.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     let loginModalInstance;
     let isSyncing = false;
+
+    // ---------- in-app notices and dialogs (replace the browser pop-ups) ----------
+    function toast(msg) {
+      msg = String(msg);
+      const warn = /could not|not accept|rejected|invalid|incorrect|no connection|needs internet|error|still waiting|please enter|not found|no longer/i.test(msg);
+      let box = document.getElementById('toastBox');
+      if (!box) { box = document.createElement('div'); box.id = 'toastBox'; document.body.appendChild(box); }
+      const t = document.createElement('div');
+      t.className = 'toast-i' + (warn ? ' warn' : '');
+      t.innerHTML = '<span class="tdot"><svg class="ic" viewBox="0 0 24 24">' + (warn ? '<path d="M12 8v5M12 16.5v.01"/>' : '<path d="M5 12l4 4 10-10"/>') + '</svg></span><div>' + esc(msg) + '</div>';
+      box.appendChild(t);
+      const gone = () => { t.classList.add('out'); setTimeout(() => t.remove(), 400); };
+      t.addEventListener('click', gone);
+      setTimeout(gone, Math.min(9000, 3200 + msg.length * 45));
+    }
+    window.alert = m => toast(m);
+
+    function dialog(o) {                              // returns true/false, or the typed value / null when o.input is set
+      return new Promise(resolve => {
+        let m = document.getElementById('dlgModal');
+        if (!m) {
+          m = document.createElement('div'); m.id = 'dlgModal'; m.className = 'modal fade'; m.tabIndex = -1;
+          m.innerHTML = '<div class="modal-dialog modal-dialog-centered"><div class="modal-content shadow-lg"><div class="modal-body p-4"><div id="dlgTitle" class="fw-bold mb-1"></div><div id="dlgMsg" class="small text-muted mb-3" style="white-space:pre-line"></div><input id="dlgInput" class="form-control mb-3 d-none"><div class="d-flex gap-2"><button id="dlgNo" type="button" class="btn btn-outline-secondary flex-fill"></button><button id="dlgYes" type="button" class="btn btn-accent flex-fill"></button></div></div></div></div>';
+          document.body.appendChild(m);
+        }
+        document.getElementById('dlgTitle').textContent = o.title || '';
+        document.getElementById('dlgMsg').textContent = o.message || '';
+        const inp = document.getElementById('dlgInput');
+        inp.classList.toggle('d-none', !o.input);
+        if (o.input) { inp.type = o.input; inp.value = o.value || ''; }
+        const yes = document.getElementById('dlgYes'), no = document.getElementById('dlgNo');
+        yes.textContent = o.ok || 'OK'; no.textContent = o.cancel || 'Cancel';
+        const inst = bootstrap.Modal.getOrCreateInstance(m);
+        let done = false;
+        const fin = v => { if (done) return; done = true; resolve(v); inst.hide(); };
+        yes.onclick = () => fin(o.input ? inp.value : true);
+        no.onclick = () => fin(o.input ? null : false);
+        m.addEventListener('hidden.bs.modal', () => fin(o.input ? null : false), { once: true });
+        inst.show();
+      });
+    }
+
+    // Turns a dropdown into a switch. The dropdown stays in the page (hidden), so existing code that reads or sets it keeps working.
+    function enhanceSeg(id) {
+      const sel = document.getElementById(id);
+      if (!sel || sel.dataset.seg) return;
+      sel.dataset.seg = '1';
+      sel.classList.add('d-none');
+      const box = document.createElement('div');
+      box.className = 'seg';
+      box.setAttribute('role', 'radiogroup');
+      Array.from(sel.options).forEach(o => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.textContent = o.dataset.short || o.text; b.dataset.v = o.value; b.setAttribute('role', 'radio');
+        b.onclick = () => { sel.value = o.value; sel.dispatchEvent(new Event('change', { bubbles: true })); };
+        box.appendChild(b);
+      });
+      sel.insertAdjacentElement('afterend', box);
+      const hint = sel.dataset.hint ? document.getElementById(sel.dataset.hint) : null;
+      const paint = () => {
+        Array.from(box.children).forEach(b => { const on = b.dataset.v === sel.value; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+        if (hint && sel.selectedOptions[0]) hint.textContent = sel.selectedOptions[0].text;
+      };
+      const d = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+      Object.defineProperty(sel, 'value', { get() { return d.get.call(this); }, set(v) { d.set.call(this, v); paint(); }, configurable: true });
+      sel.addEventListener('change', paint);
+      if (sel.form) sel.form.addEventListener('reset', () => setTimeout(paint, 0));
+      paint();
+    }
+
+    // hide the bottom bar while the on-screen keyboard is open
+    document.addEventListener('focusin', e => { if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) document.body.classList.add('kb'); });
+    document.addEventListener('focusout', () => setTimeout(() => { if (!/INPUT|TEXTAREA|SELECT/.test((document.activeElement || {}).tagName || '')) document.body.classList.remove('kb'); }, 120));
+
+    // ---------- opening splash: icon + name + credit, once per launch ----------
+    (function () {
+      const el = document.getElementById('splash');
+      if (!el) return;
+      try { sessionStorage.setItem('splash_shown', '1'); } catch (e) {}
+      // use the app's own icon and background colour from manifest.json when available
+      fetch('manifest.json').then(r => r.json()).then(m => {
+        if (m.background_color) el.style.background = m.background_color;
+        const icons = (m.icons || []).slice().sort((a, b) => parseInt(String(b.sizes || '0'), 10) - parseInt(String(a.sizes || '0'), 10));
+        if (icons.length && icons[0].src) {
+          const img = new Image();
+          img.style.cssText = 'width:100%;height:auto;border-radius:22%;';
+          img.onload = () => { const box = document.getElementById('splashLogo'); box.innerHTML = ''; box.appendChild(img); };
+          img.src = icons[0].src;
+        }
+      }).catch(() => {});
+      const hide = () => { el.style.opacity = '0'; setTimeout(() => el.remove(), 500); };
+      el.addEventListener('click', hide);
+      setTimeout(hide, 1800);
+    })();
 
     // ---------- small helpers ----------
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -522,7 +684,11 @@
     document.addEventListener("DOMContentLoaded", () => {
       loginModalInstance = new bootstrap.Modal(document.getElementById('loginModal'));
       setupDefaults();
+      enhanceSeg('status');
+      enhanceSeg('juStatus');
+      enhanceSeg('otCategoryType');
       refreshTechList();
+      refreshMeters();
       checkSession();
       updateSyncBadge();
       loadSchedulesReminder();
@@ -532,6 +698,7 @@
       window.addEventListener('online', async () => {
         updateSyncBadge();
         refreshTechList();
+        refreshMeters();
         await syncOfflineQueue();
         refreshAll();
       });
@@ -564,6 +731,32 @@
       } catch (e) { /* offline: keep the cached list */ }
     }
 
+    // Meter list comes from the Meters sheet (cached for offline use). config.js METERS is only a last-resort fallback.
+    function getMeters() {
+      let m = [];
+      try { m = JSON.parse(localStorage.getItem('meters_cache') || '[]'); } catch (e) {}
+      return (Array.isArray(m) && m.length) ? m : (CONFIG.METERS || []);
+    }
+    function renderMeterDropdown() {
+      const sel = document.getElementById('meterSelect');
+      if (!sel) return;
+      const keep = sel.value;                       // options are keyed by meter number, so a refresh never shifts the selection
+      sel.innerHTML = '<option value="">-- Select Meter --</option>' +
+        getMeters().map(m => `<option value="${esc(m.meter)}">${esc(m.type)} - ${esc(m.area)} (${esc(m.meter)})</option>`).join('');
+      sel.value = keep;
+    }
+    async function refreshMeters() {
+      if (!navigator.onLine) return;
+      try {
+        const res = await fetchWithTimeout(`${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&action=meters`, 8000);
+        const data = await res.json();
+        if (data.ok && Array.isArray(data.meters) && data.meters.length) {
+          localStorage.setItem('meters_cache', JSON.stringify(data.meters));
+          renderMeterDropdown();
+        }
+      } catch (e) { /* offline: keep the cached list */ }
+    }
+
     function setupDefaults() {
       const today = todayStr();
       document.getElementById('logDate').value = today;
@@ -584,10 +777,7 @@
       const pri = document.getElementById('priority');
       (CONFIG.PRIORITIES || []).forEach(p => pri.innerHTML += `<option value="${esc(p)}">${esc(p)}</option>`);
 
-      const meterSelect = document.getElementById('meterSelect');
-      (CONFIG.METERS || []).forEach((m, idx) => {
-        meterSelect.innerHTML += `<option value="${idx}">${esc(m.type)} - ${esc(m.area)} (${esc(m.meter)})</option>`;
-      });
+      renderMeterDropdown();
     }
 
     function displayMeterInfo() {
@@ -604,7 +794,8 @@
         return;
       }
 
-      const m = CONFIG.METERS[idx];
+      const m = getMeters().find(x => x.meter === idx);
+      if (!m) { card.classList.add('d-none'); return; }
       document.getElementById('infoType').textContent = m.type;
       document.getElementById('infoArea').textContent = m.area;
       document.getElementById('infoMeter').textContent = m.meter;
@@ -664,7 +855,13 @@
       }
     }
 
+    function navTo(n) { if (n === 'home') showDashboard(); else switchView(n); }
+    function setNavActive(n) {
+      document.querySelectorAll('#bottomNav [data-nav]').forEach(b => b.classList.toggle('act', b.dataset.nav === n));
+      window.scrollTo(0, 0);
+    }
     function showDashboard() {
+      setNavActive('home');
       document.getElementById('dashboardView').style.display = 'block';
       document.getElementById('formsView').style.display = 'none';
       loadSchedulesReminder();
@@ -673,6 +870,7 @@
     }
 
     function switchView(moduleName) {
+      setNavActive(moduleName);
       document.getElementById('dashboardView').style.display = 'none';
       document.getElementById('formsView').style.display = 'block';
 
@@ -693,6 +891,7 @@
         document.getElementById('logoutBtn').classList.remove('d-none');
         document.getElementById('appContent').style.display = 'block';
         loginModalInstance.hide();
+        document.getElementById('bottomNav').classList.add('on');
         migrateLegacySchedules();
         loadSchedulesReminder();
         renderMyDay();
@@ -700,6 +899,7 @@
       } else {
         document.getElementById('logoutBtn').classList.add('d-none');
         document.getElementById('appContent').style.display = 'none';
+        document.getElementById('bottomNav').classList.remove('on');
         loginModalInstance.show();
       }
     }
@@ -855,6 +1055,11 @@
       document.getElementById('myDayDone').textContent = done;
       document.getElementById('myDayPending').textContent = logs.length - done;
       document.getElementById('myDayOtHrs').textContent = hours;
+      const ring = document.getElementById('ringArc');
+      if (ring) {
+        ring.setAttribute('stroke-dasharray', (logs.length ? (done / logs.length * 238.8).toFixed(1) : 0) + ' 238.8');
+        document.getElementById('ringText').textContent = logs.length ? done + '/' + logs.length : '0';
+      }
 
       const badge = s => `<span class="badge ${s === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${esc(s || 'Pending')}</span>`;
       const notSynced = id => unsynced.has(id) ? ' <span class="badge bg-secondary">Not synced</span>' : '';
@@ -926,7 +1131,7 @@
           </div>
           <small class="text-muted d-block text-truncate">${esc(j.complaint)}</small>
           ${j.pending ? `<small class="text-warning d-block text-truncate">Reason: ${esc(j.pending)}</small>` : ''}
-          <button class="btn btn-sm btn-outline-success py-0 px-2 mt-1" onclick="openJobUpdate('${esc(j.id)}')"><i class="bi bi-pencil-square me-1"></i>Update / Complete</button>
+          <button class="btn btn-sm btn-outline-success py-0 px-2 mt-1" onclick="openJobUpdate('${esc(j.id)}')"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>Update / Complete</button>
         </div>`;
       }).join('') : '<p class="text-muted mb-0">No open jobs. Anything left Pending or On Hold will show here.</p>';
     }
@@ -1094,7 +1299,7 @@
       listContainer.innerHTML = upcoming.slice(0, 3).map(s => `
         <div class="border-bottom border-secondary pb-1 mb-1">
           <div class="d-flex justify-content-between fw-bold text-warning">
-            <span><i class="bi bi-geo-alt me-1"></i>${esc(s.location)}</span>
+            <span><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.2 7-11a7 7 0 0 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>${esc(s.location)}</span>
             <span>${esc(s.date)}${String(s.date) < today ? ' <span class="badge bg-danger">Overdue</span>' : ''}</span>
           </div>
           <small class="text-muted text-truncate d-block">${esc(s.desc)}</small>
@@ -1114,14 +1319,14 @@
       container.innerHTML = userSchedules.map(s => `
         <div class="card bg-dark p-2 mb-2 border-secondary small">
           <div class="d-flex justify-content-between align-items-center">
-            <span class="fw-bold text-info"><i class="bi bi-calendar-event me-1"></i>${esc(s.date)} (${esc(s.location)})</span>
+            <span class="fw-bold text-info"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M8 14h3v3H8z"/></svg>${esc(s.date)} (${esc(s.location)})</span>
             <span class="badge ${s.status === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${esc(s.status)}</span>
           </div>
           <div class="text-light my-1">${esc(s.desc)}</div>
           <div class="d-flex gap-2 mt-2">
-            ${s.status !== 'Completed' ? `<button class="btn btn-sm btn-outline-success py-0 px-2" onclick="updateScheduleStatus('${esc(s.id)}', 'Completed')"><i class="bi bi-check2 me-1"></i>Mark Done</button>` : ''}
-            <button class="btn btn-sm btn-outline-warning py-0 px-2" onclick="rescheduleTask('${esc(s.id)}')"><i class="bi bi-calendar-arrow-right me-1"></i>Reschedule</button>
-            <button class="btn btn-sm btn-outline-danger py-0 px-2 ms-auto" onclick="deleteSchedule('${esc(s.id)}')"><i class="bi bi-trash"></i></button>
+            ${s.status !== 'Completed' ? `<button class="btn btn-sm btn-outline-success py-0 px-2" onclick="updateScheduleStatus('${esc(s.id)}', 'Completed')"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg>Mark Done</button>` : ''}
+            <button class="btn btn-sm btn-outline-warning py-0 px-2" onclick="rescheduleTask('${esc(s.id)}')"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M9 15.5h6M13 12.5l3 3-3 3"/></svg>Reschedule</button>
+            <button class="btn btn-sm btn-outline-danger py-0 px-2 ms-auto" onclick="deleteSchedule('${esc(s.id)}')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
           </div>
         </div>
       `).join('');
@@ -1135,10 +1340,10 @@
       loadSchedulesReminder();
     }
 
-    function rescheduleTask(id) {
+    async function rescheduleTask(id) {
       const s = getSchedules().find(x => x.id === id);
       if (!s) return;
-      const newDate = prompt("Enter new schedule date (YYYY-MM-DD):", todayStr());
+      const newDate = await dialog({ title: 'Reschedule', message: 'Choose the new date.', input: 'date', value: todayStr(), ok: 'Save' });
       if (!newDate) return;
       schedOp('upsert', Object.assign({}, s, { date: newDate, status: 'Pending' }));
       renderManageSchedulesList();
@@ -1146,8 +1351,8 @@
       alert("Schedule updated successfully!");
     }
 
-    function deleteSchedule(id) {
-      if (!confirm("Are you sure you want to delete this schedule?")) return;
+    async function deleteSchedule(id) {
+      if (!(await dialog({ title: 'Delete schedule', message: 'Are you sure you want to delete this schedule?', ok: 'Delete' }))) return;
       schedOp('delete', null, id);
       renderManageSchedulesList();
       loadSchedulesReminder();
@@ -1164,13 +1369,17 @@
       const queue = getQueue();
       if (!navigator.onLine) {
         badge.className = "badge bg-warning-subtle text-warning border border-warning px-2 py-1 small cursor-pointer";
-        badge.innerHTML = `<i class="bi bi-wifi-off me-1"></i>Offline (${queue.length} pending)`;
+        badge.innerHTML = `<svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M8.5 16a5 5 0 0 1 7 0M5 12.5a10 10 0 0 1 4-2.3M12 19.5v.01"/></svg>Offline (${queue.length} pending)`;
+      } else if (queue.some(q => q.err)) {
+        const stuck = queue.filter(q => q.err).length;
+        badge.className = "badge bg-danger-subtle text-danger border border-danger px-2 py-1 small cursor-pointer";
+        badge.innerHTML = `<svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4L2.5 20h19z"/><path d="M12 10v5M12 18v.01"/></svg>${stuck} need attention - tap`;
       } else if (queue.length > 0) {
         badge.className = "badge bg-info-subtle text-info border border-info px-2 py-1 small cursor-pointer";
-        badge.innerHTML = `<i class="bi bi-arrow-repeat me-1"></i>Syncing (${queue.length} left)`;
+        badge.innerHTML = `<svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8M20 4v5h-5"/></svg>Syncing (${queue.length} left)`;
       } else {
         badge.className = "badge bg-success-subtle text-success border border-success px-2 py-1 small cursor-pointer";
-        badge.innerHTML = `<i class="bi bi-wifi me-1"></i>Online`;
+        badge.innerHTML = `<svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 19.5v.01"/></svg>Online`;
       }
     }
 
@@ -1180,55 +1389,85 @@
       syncOfflineQueue(true);
     }
 
+    const SYNC_REASONS = {
+      pin: "Your saved PIN is no longer accepted. Sign out and sign in again.",
+      name: "Your name is not in the technician list. Ask your supervisor.",
+      notfound: "A job update points to a job that is not on the server.",
+      invalid: "The server refused an update as invalid.",
+      oldserver: "The server script is out of date. Ask your supervisor to deploy the latest version.",
+      unknown: "The server did not accept an item and gave no reason."
+    };
+    const reasonText = r => String(r).indexOf('server:') === 0 ? 'Server error: ' + String(r).slice(7) : (SYNC_REASONS[r] || SYNC_REASONS.unknown);
+
     async function syncOfflineQueue(isManual = false) {
       if (isSyncing || !navigator.onLine) return;
       const queue = getQueue();
       if (queue.length === 0) return;
-      if (!localStorage.getItem("tech_name")) return;           // nobody signed in on this phone yet
+      const user = localStorage.getItem("tech_name");
+      if (!user) return;                                         // nobody signed in on this phone yet
 
       isSyncing = true;
       updateSyncBadge();
 
       const pin = localStorage.getItem("tech_pin") || "";
-      const doneKeys = new Set();
-      let successCount = 0, rejectedCount = 0, schedSynced = false;
+      const doneKeys = new Set(), errs = {};
+      let successCount = 0, schedSynced = false;
 
       for (const item of queue) {
+        const p = item.payload || {};
+        if (p.technician && normName(p.technician) !== normName(user)) continue;   // belongs to another technician who used this phone: waits for them
         try {
           const postBody = { key: CONFIG.KEY, pin: pin };
-          if (item.type === 'job') postBody.entries = [item.payload];
-          else if (item.type === 'utility') postBody.readings = [item.payload];
-          else if (item.type === 'overtime') postBody.overtime = [item.payload];
-          else if (item.type === 'sched') postBody.schedOps = [item.payload];
-          else if (item.type === 'logupd') postBody.logOps = [{ id: item.payload.id, updates: item.payload.updates }];
+          if (item.type === 'job') postBody.entries = [p];
+          else if (item.type === 'utility') postBody.readings = [p];
+          else if (item.type === 'overtime') postBody.overtime = [p];
+          else if (item.type === 'sched') postBody.schedOps = [p];
+          else if (item.type === 'logupd') postBody.logOps = [{ id: p.id, updates: p.updates }];
           else { doneKeys.add(qKey(item)); continue; }          // unknown type: drop
 
           const res = await fetch(CONFIG.SCRIPT_URL, { method: "POST", body: JSON.stringify(postBody) });
           const data = await res.json();
-          // An item only counts as synced if the server says it stored it (rejected PIN/name entries stay queued).
+          // An item only counts as synced if the server says it stored it.
           const stored = new Set([].concat(data.saved || [], data.savedU || [], data.savedOt || [], data.schedDone || [], data.logDone || []));
-          if (data.ok && stored.has(item.payload.id)) {
+          if (data.ok && stored.has(p.id)) {
             doneKeys.add(qKey(item));
             successCount++;
             if (item.type === 'sched') schedSynced = true;
-            if (item.type === 'job' || item.type === 'overtime') cacheAddDay(item.type, item.payload);
-          } else if (data.ok) {
-            rejectedCount++;
+            if (item.type === 'job' || item.type === 'overtime') cacheAddDay(item.type, p);
+          } else {
+            let reason = (data.reasons && data.reasons[p.id]) || '';
+            if (!data.ok) reason = 'server:' + (data.error || 'error');
+            else if (!reason) {                                  // answered, but never mentioned this item: the script predates this feature
+              const needs = { logupd: 'logDone', sched: 'schedDone' }[item.type];
+              reason = (needs && data[needs] === undefined) ? 'oldserver' : 'unknown';
+            }
+            errs[qKey(item)] = reason;
           }
         } catch (err) { /* network problem: leave it queued */ }
       }
 
-      // re-read the queue so anything added while syncing is not lost
-      saveQueue(getQueue().filter(q => !doneKeys.has(qKey(q))));
+      // re-read the queue so anything added while syncing is not lost, and remember why stuck items are stuck
+      const remaining = getQueue().filter(q => !doneKeys.has(qKey(q)));
+      remaining.forEach(q => { const r = errs[qKey(q)]; if (r) q.err = r; });
+      saveQueue(remaining);
       isSyncing = false;
       updateSyncBadge();
 
       renderMyDay();
       if (schedSynced) refreshSchedules();
-      if (isManual || successCount > 0 || rejectedCount > 0) {
-        let msg = `Synced ${successCount} record(s).`;
-        if (rejectedCount > 0) msg += ` ${rejectedCount} were rejected by the server (check your name/PIN with your supervisor). They are kept on this phone.`;
-        alert(msg);
+
+      // Only a manual sync explains problems; automatic syncs stay quiet unless something was saved.
+      const reasons = Object.values(errs);
+      if (isManual && reasons.length) {
+        const counts = {};
+        reasons.forEach(r => counts[r] = (counts[r] || 0) + 1);
+        const lines = Object.keys(counts).map(r => `- ${reasonText(r)}${counts[r] > 1 ? ' (' + counts[r] + ')' : ''}`);
+        alert(`Synced ${successCount} record(s).\n\nStill waiting on this phone:\n${lines.join('\n')}\n\nNothing has been lost.`);
+        if (counts.pin && await dialog({ title: 'Sign in again', message: 'Sign out now so you can sign in again with your PIN? Your waiting entries stay on this phone.', ok: 'Sign out' })) logout();
+      } else if (successCount > 0) {
+        alert(`Synced ${successCount} record(s)!`);
+      } else if (isManual) {
+        alert("All entries are synced!");
       }
     }
 
@@ -1239,7 +1478,7 @@
       e.preventDefault();
       const btn = document.getElementById('jobSubmitBtn');
       btn.disabled = true;
-      btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Saving...';
+      btn.innerHTML = '<svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10M7 21h10M8 3v3.5a4 4 0 0 0 1.6 3.2L12 12l-2.4 2.3A4 4 0 0 0 8 17.5V21M16 3v3.5a4 4 0 0 1-1.6 3.2L12 12l2.4 2.3a4 4 0 0 1 1.6 3.2V21"/></svg>Saving...';
 
       const tech = localStorage.getItem("tech_name");
       const pin = localStorage.getItem("tech_pin");
@@ -1295,7 +1534,7 @@
         finish();
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-send me-1"></i>Submit Job Log';
+        btn.innerHTML = '<svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></svg>Submit Job Log';
       }
     }
 
@@ -1303,18 +1542,19 @@
       e.preventDefault();
       const btn = document.getElementById('utilitySubmitBtn');
       btn.disabled = true;
-      btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Saving...';
+      btn.innerHTML = '<svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10M7 21h10M8 3v3.5a4 4 0 0 0 1.6 3.2L12 12l-2.4 2.3A4 4 0 0 0 8 17.5V21M16 3v3.5a4 4 0 0 1-1.6 3.2L12 12l2.4 2.3a4 4 0 0 1 1.6 3.2V21"/></svg>Saving...';
 
       const tech = localStorage.getItem("tech_name");
       const pin = localStorage.getItem("tech_pin");
       const idx = document.getElementById('meterSelect').value;
       if (idx === "") {
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Submit Utility Reading';
+        btn.innerHTML = '<svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>Submit Utility Reading';
         return;
       }
 
-      const m = CONFIG.METERS[idx];
+      const m = getMeters().find(x => x.meter === idx);
+      if (!m) { alert("Meter not found. Please reselect it."); btn.disabled = false; btn.innerHTML = '<svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>Submit Utility Reading'; return; }
       const dateVal = document.getElementById('readingDate').value;
       const val = document.getElementById('meterValue').value;
 
@@ -1367,7 +1607,7 @@
         finish();
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Submit Utility Reading';
+        btn.innerHTML = '<svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>Submit Utility Reading';
       }
     }
 
@@ -1375,7 +1615,7 @@
       e.preventDefault();
       const btn = document.getElementById('otSubmitBtn');
       btn.disabled = true;
-      btn.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Saving...';
+      btn.innerHTML = '<svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10M7 21h10M8 3v3.5a4 4 0 0 0 1.6 3.2L12 12l-2.4 2.3A4 4 0 0 0 8 17.5V21M16 3v3.5a4 4 0 0 1-1.6 3.2L12 12l2.4 2.3a4 4 0 0 1 1.6 3.2V21"/></svg>Saving...';
 
       const tech = localStorage.getItem("tech_name");
       const pin = localStorage.getItem("tech_pin");
@@ -1434,7 +1674,7 @@
         finish();
       } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="bi bi-clock me-1"></i>Submit Overtime Log';
+        btn.innerHTML = '<svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Submit Overtime Log';
       }
     }
   </script>
