@@ -330,6 +330,11 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
         </button>
       </li>
       <li class="nav-item" role="presentation">
+        <button class="nav-link" id="pills-insights-tab" data-bs-toggle="pill" data-bs-target="#pills-insights" type="button" role="tab">
+          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>Insights
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
         <button class="nav-link" id="pills-admin-techs-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-techs" type="button" role="tab">
           <i class="bi bi-people me-1"></i>Technicians
         </button>
@@ -556,6 +561,38 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
       </div>
 
       <!-- TAB 6: TECHNICIANS -->
+      <div class="tab-pane fade" id="pills-insights" role="tabpanel">
+        <div class="card p-3 shadow-sm mb-3">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h6 class="text-info fw-bold m-0">Insights for the selected period</h6>
+            <div class="d-flex flex-wrap align-items-center gap-2 small">
+              <label class="mb-0" for="insSpike">High-use alert at</label><input id="insSpike" type="number" step="0.5" min="1.2" class="form-control form-control-sm" style="width:72px" onchange="saveInsOpts()"><span>x usual</span>
+              <label class="mb-0 ms-2" for="insStale">Stale job after</label><input id="insStale" type="number" min="1" class="form-control form-control-sm" style="width:72px" onchange="saveInsOpts()"><span>days</span>
+            </div>
+          </div>
+          <small id="insPrevNote" class="text-muted d-block mt-2"></small>
+        </div>
+        <div class="row g-2 mb-3" id="insKpis"></div>
+        <div class="row g-3 mb-3">
+          <div class="col-md-7 col-12"><div class="card p-3 shadow-sm h-100"><h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2">Jobs per day</h6><div class="chart-box"><canvas id="chartDaily"></canvas></div></div></div>
+          <div class="col-md-5 col-12"><div class="card p-3 shadow-sm h-100"><h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2">How long open jobs have waited</h6><div class="chart-box"><canvas id="chartAge"></canvas></div></div></div>
+        </div>
+        <div class="card p-3 shadow-sm mb-3">
+          <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2"><h6 class="text-info fw-bold m-0">Utility alerts</h6><button class="btn btn-outline-success btn-sm py-0" onclick="csvAlerts()">Download CSV</button></div>
+          <div id="insAlerts"></div>
+        </div>
+        <div class="card p-3 shadow-sm mb-3"><h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2">Consumption compared with the previous period</h6><div id="insCons"></div></div>
+        <div class="row g-3 mb-3">
+          <div class="col-lg-6 col-12"><div class="card p-3 shadow-sm h-100"><h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2">Locations with the most jobs</h6><div id="insLoc"></div></div></div>
+          <div class="col-lg-6 col-12"><div class="card p-3 shadow-sm h-100"><h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2">Technician scorecard</h6><div id="insTech"></div></div></div>
+        </div>
+        <div class="card p-3 shadow-sm">
+          <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2"><h6 class="text-info fw-bold m-0">Overtime hours by technician</h6><button class="btn btn-outline-success btn-sm py-0" onclick="csvOt()">Download CSV</button></div>
+          <div id="insOt"></div>
+          <small class="text-muted d-block mt-2">Time to finish uses the Start (or Received) and Finish times entered on each job, so jobs without those times are left out of that figure. Overtime entries saved before the type field existed count as N.</small>
+        </div>
+      </div>
+
       <div class="tab-pane fade" id="pills-admin-techs" role="tabpanel">
         <div class="card p-3 shadow-sm mb-3">
           <h6 class="text-warning fw-bold mb-3 border-bottom border-secondary pb-2">
@@ -631,6 +668,8 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
       fillTechDropdown();
       document.getElementById('pills-charts-tab').addEventListener('shown.bs.tab', renderCharts);
       document.getElementById('pills-admin-techs-tab').addEventListener('shown.bs.tab', loadTechList);
+      document.getElementById('pills-insights-tab').addEventListener('shown.bs.tab', renderInsights);
+      initInsOpts();
 
       const adminCatSel = document.getElementById('adminSchedCategory');
       (CONFIG.CATEGORIES || []).forEach(c => adminCatSel.innerHTML += `<option value="${c}">${c}</option>`);
@@ -761,6 +800,8 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
       await migrateLocalSchedules();
       await loadAdminSchedules();
       renderCharts();
+      renderInsights();
+      loadPrevPeriod();
     }
 
     // --- Robust Fuzzy Technician Name Normalization ---
@@ -1446,7 +1487,177 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
 
     // --- EXCEL TEMPLATE POPULATION LOGIC ---
 
-    async function exportTemplateReport(type) {
+    let prevData = { loaded: false, logs: [], readings: [], ot: [], from: '', to: '' };
+    let lastAlerts = [], lastOtSummary = [];
+    const insOpts = () => ({ spike: parseFloat(localStorage.getItem('ins_spike')) || 2, stale: parseInt(localStorage.getItem('ins_stale'), 10) || 3 });
+    function initInsOpts() { const o = insOpts(); document.getElementById('insSpike').value = o.spike; document.getElementById('insStale').value = o.stale; }
+    function saveInsOpts() {
+      localStorage.setItem('ins_spike', document.getElementById('insSpike').value);
+      localStorage.setItem('ins_stale', document.getElementById('insStale').value);
+      renderInsights();
+    }
+    const r2 = n => Math.round(n * 100) / 100;
+    const dayDiff = (a, b) => Math.round(isoToSerial(b) - isoToSerial(a));
+    const normAreaI = v => String(v || '').toLowerCase().replace(/\barea\b/g, '').replace(/\s+/g, ' ').trim();
+
+    function tbl(head, rows, empty) {
+      if (!rows.length) return `<div class="text-muted small py-2">${empty || 'Nothing to show for this period.'}</div>`;
+      return `<div class="table-responsive"><table class="table table-dark table-sm small align-middle mb-0"><thead><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r => `<tr>${r.map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    }
+    function delta(cur, prev, unit, lowerIsBetter) {
+      if (!prevData.loaded || prev == null || cur == null) return '';
+      const d = r2(cur - prev);
+      if (!d) return '<small class="text-muted">same as previous</small>';
+      const good = lowerIsBetter ? d < 0 : d > 0;
+      return `<small class="${good ? 'text-success' : 'text-danger'}">${d > 0 ? '+' : ''}${d}${unit || ''} vs previous</small>`;
+    }
+    function jobHours(r) {                          // time from Start (or Received) to Finish
+      const a = r.start || r.received, b = r.finish, ok = /^\d{1,2}:\d{2}/;
+      if (!a || !b || !ok.test(a) || !ok.test(b)) return null;
+      const h = Number(calculateHours(a, b));
+      return (isNaN(h) || h > 16) ? null : h;       // ignore obviously wrong entries
+    }
+    function jobStats(logs) {
+      const done = logs.filter(r => r.status === 'Completed');
+      const hrs = done.map(jobHours).filter(h => h != null);
+      return { n: logs.length, done: done.length, rate: logs.length ? Math.round(done.length / logs.length * 100) : 0,
+               avgH: hrs.length ? r2(hrs.reduce((x, y) => x + y, 0) / hrs.length) : null };
+    }
+    function otRows(list) {                         // same slot saved twice counts once
+      const seen = new Map(), cats = ['N', 'WO', 'PH', 'N. Shift'];
+      list.forEach(r => {
+        const d = String(r.otDate || r.date || '').split('T')[0], t = normalizeTechName(r.technician);
+        const k = `${d}_${t}_${r.from}_${r.to}`, p = seen.get(k);
+        if (!p || String(r.submittedAt) >= String(p.submittedAt)) seen.set(k, { ...r, t: t, d: d });
+      });
+      return Array.from(seen.values()).map(r => ({ ...r, h: Number(calculateHours(r.from, r.to)) || 0, c: cats.includes(r.otCategoryType) ? r.otCategoryType : 'N' }));
+    }
+    function seriesOf(readings) {                   // per meter: dated readings plus the change since the previous reading
+      const latest = new Map();
+      readings.forEach(r => {
+        const d = String(r.date || '').split('T')[0], k = `${r.type}|${normAreaI(r.area)}|${d}`, p = latest.get(k);
+        if (!p || String(r.submittedAt) >= String(p.submittedAt)) latest.set(k, { ...r, d: d });
+      });
+      const out = new Map();
+      latest.forEach(r => { const k = `${r.type}|${normAreaI(r.area)}`; if (!out.has(k)) out.set(k, { type: r.type, area: r.area, list: [] }); out.get(k).list.push(r); });
+      out.forEach(s => {
+        s.list.sort((x, y) => x.d.localeCompare(y.d)); s.steps = [];
+        s.list.forEach((r, i) => {
+          if (!i) return;
+          const cur = parseFloat(r.reading), prev = parseFloat(s.list[i - 1].reading);
+          if (!isNaN(cur) && !isNaN(prev)) s.steps.push({ d: r.d, days: dayDiff(s.list[i - 1].d, r.d), cons: r2(cur - prev), cur: cur, prev: prev });
+        });
+      });
+      return out;
+    }
+    function utilityAlerts(o) {
+      const out = [], all = seriesOf(fetchedReadings);
+      all.forEach(s => {
+        const rates = s.steps.filter(x => x.cons > 0 && x.days > 0).map(x => x.cons / x.days).sort((x, y) => x - y);
+        const med = rates.length ? rates[Math.floor(rates.length / 2)] : 0;
+        s.steps.forEach(x => {
+          if (x.cons < 0) out.push({ sev: 'danger', s: s, d: x.d, msg: `Reading dropped from ${x.prev} to ${x.cur}` });
+          else if (x.days > 1) out.push({ sev: 'warning', s: s, d: x.d, msg: `${x.days - 1} day(s) with no reading before this one` });
+          if (x.cons > 0 && rates.length >= 4 && med > 0 && x.cons / x.days > o.spike * med) out.push({ sev: 'warning', s: s, d: x.d, msg: `High use: ${r2(x.cons / x.days)} per day against a usual ${r2(med)}` });
+        });
+      });
+      if (todayData.loaded) todayData.meters.forEach(m => {
+        if (!all.has(`${m.type}|${normAreaI(m.area)}`)) out.push({ sev: 'danger', s: { type: m.type, area: m.area }, d: '-', msg: 'No readings in this date range' });
+      });
+      return out.sort((x, y) => (x.sev === y.sev ? String(y.d).localeCompare(String(x.d)) : (x.sev === 'danger' ? -1 : 1)));
+    }
+    const consTotals = readings => { const m = new Map(); seriesOf(readings).forEach((s, k) => m.set(k, { type: s.type, area: s.area, total: r2(s.steps.reduce((t, x) => t + x.cons, 0)) })); return m; };
+
+    async function loadPrevPeriod() {
+      const apin = localStorage.getItem('admin_pin'), from = document.getElementById('filterFrom').value, to = document.getElementById('filterTo').value;
+      if (!apin || !from || !to) return;
+      const len = dayDiff(from, to) + 1, start = new Date(from + 'T00:00:00');
+      const pTo = localISO(addDays(start, -1)), pFrom = localISO(addDays(start, -len));
+      const base = `${CONFIG.SCRIPT_URL}?key=${encodeURIComponent(CONFIG.KEY)}&apin=${encodeURIComponent(apin)}&from=${pFrom}&to=${pTo}`;
+      const get = async u => { try { const j = await (await fetch(u)).json(); return j.ok && j.rows ? j.rows : null; } catch (e) { return null; } };
+      const [lg, rd, ot] = await Promise.all([get(base), get(base + '&action=readings'), get(base + '&action=overtime')]);
+      prevData = { loaded: !!(lg && rd && ot), logs: lg || [], readings: rd || [], ot: ot || [], from: pFrom, to: pTo };
+      renderInsights();
+    }
+
+    function renderInsights() {
+      const box = document.getElementById('insKpis');
+      if (!box) return;
+      const o = insOpts(), today = localISO(new Date());
+      const cur = jobStats(fetchedLogs), prv = jobStats(prevData.logs);
+      const ot = otRows(fetchedOt), otH = r2(ot.reduce((t, r) => t + r.h, 0)), pOtH = r2(otRows(prevData.ot).reduce((t, r) => t + r.h, 0));
+      const openAll = (todayData.loaded ? todayData.logs : fetchedLogs).filter(r => (r.status || 'Pending') !== 'Completed')
+        .map(r => ({ ...r, age: dayDiff(String(r.logDate).split('T')[0], today) }));
+      const stale = openAll.filter(r => r.age > o.stale);
+      const alerts = utilityAlerts(o); lastAlerts = alerts;
+      document.getElementById('insPrevNote').textContent = prevData.loaded
+        ? `Compared with the previous ${dayDiff(prevData.from, prevData.to) + 1} day(s): ${prevData.from} to ${prevData.to}.`
+        : 'Loading the previous period for comparison...';
+      const kpi = (t, v, extra) => `<div class="col-6 col-md-4 col-xl-2"><div class="card p-2 text-center stat-card h-100"><small class="text-muted d-block">${t}</small><span class="fw-bold fs-4">${v}</span><div>${extra || ''}</div></div></div>`;
+      box.innerHTML =
+        kpi('Jobs logged', cur.n, delta(cur.n, prv.n)) +
+        kpi('Completion rate', cur.rate + '%', delta(cur.rate, prv.rate, ' pts')) +
+        kpi('Avg time to finish', cur.avgH == null ? '-' : cur.avgH + ' h', delta(cur.avgH, prv.avgH, ' h', true)) +
+        kpi(`Open over ${o.stale} days`, stale.length, `<small class="text-muted">${openAll.length} open in total</small>`) +
+        kpi('Overtime hours', otH, delta(otH, pOtH, ' h', true)) +
+        kpi('Utility alerts', alerts.length, `<small class="text-muted">${alerts.filter(a => a.sev === 'danger').length} need checking</small>`);
+
+      // charts
+      const byDay = {};
+      fetchedLogs.forEach(r => { const d = String(r.logDate).split('T')[0]; byDay[d] = byDay[d] || { n: 0, c: 0 }; byDay[d].n++; if (r.status === 'Completed') byDay[d].c++; });
+      const days = Object.keys(byDay).sort();
+      mkChart('chartDaily', { type: 'line', data: { labels: days, datasets: [
+        { label: 'Logged', borderColor: '#38bdf8', backgroundColor: '#38bdf8', tension: .3, data: days.map(d => byDay[d].n) },
+        { label: 'Completed', borderColor: '#10b981', backgroundColor: '#10b981', tension: .3, data: days.map(d => byDay[d].c) }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } } });
+      const buckets = { '0-1 days': 0, '2-3 days': 0, '4-7 days': 0, 'Over 7 days': 0 };
+      openAll.forEach(r => { buckets[r.age <= 1 ? '0-1 days' : r.age <= 3 ? '2-3 days' : r.age <= 7 ? '4-7 days' : 'Over 7 days']++; });
+      mkChart('chartAge', { type: 'bar', data: { labels: Object.keys(buckets), datasets: [{ label: 'Open jobs', data: Object.values(buckets), backgroundColor: ['#10b981', '#f59e0b', '#fb923c', '#ef4444'] }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } } });
+
+      // utility alerts + consumption comparison
+      document.getElementById('insAlerts').innerHTML = tbl(['', 'Meter', 'Date', 'What happened'],
+        alerts.slice(0, 40).map(a => [`<span class="badge ${a.sev === 'danger' ? 'bg-danger' : 'bg-warning text-dark'}">${a.sev === 'danger' ? 'Check' : 'Note'}</span>`, `${esc(a.s.type)} - ${esc(a.s.area)}`, esc(a.d), esc(a.msg)]),
+        'No problems found. Readings look consistent for this period.') + (alerts.length > 40 ? `<small class="text-muted">Showing 40 of ${alerts.length}. Download the CSV for all.</small>` : '');
+      const ct = consTotals(fetchedReadings), pt = consTotals(prevData.readings);
+      document.getElementById('insCons').innerHTML = tbl(['Meter', 'This period', 'Previous', 'Change'],
+        Array.from(ct.entries()).sort((x, y) => (x[1].type + x[1].area).localeCompare(y[1].type + y[1].area)).map(([k, v]) => {
+          const p = pt.get(k), ch = p && p.total ? Math.round((v.total - p.total) / Math.abs(p.total) * 100) : null;
+          return [`${esc(v.type)} - ${esc(v.area)}`, v.total, prevData.loaded && p ? p.total : '-', ch == null ? '-' : `<span class="${ch > 0 ? 'text-danger' : 'text-success'}">${ch > 0 ? '+' : ''}${ch}%</span>`];
+        }), 'Not enough readings yet (each meter needs at least two days of readings).');
+
+      // repeat locations and technician scorecard
+      const loc = {};
+      fetchedLogs.forEach(r => { const k = String(r.location || '').trim().toUpperCase() || '-'; const e = loc[k] = loc[k] || { n: 0, open: 0, cats: {} }; e.n++; if (r.status !== 'Completed') e.open++; const c = r.category || '-'; e.cats[c] = (e.cats[c] || 0) + 1; });
+      document.getElementById('insLoc').innerHTML = tbl(['Location', 'Jobs', 'Open', 'Most common type'],
+        Object.entries(loc).sort((x, y) => y[1].n - x[1].n).slice(0, 8).map(([k, e]) => [`<strong>${esc(k)}</strong>${e.n >= 3 ? ' <span class="badge bg-danger">Recurring</span>' : ''}`, e.n, e.open, esc(Object.entries(e.cats).sort((x, y) => y[1] - x[1])[0][0])]));
+      const tech = {};
+      fetchedLogs.forEach(r => { const t = normalizeTechName(r.technician); (tech[t] = tech[t] || []).push(r); });
+      document.getElementById('insTech').innerHTML = tbl(['Technician', 'Jobs', 'Done', 'Avg time', 'Open now', 'OT hrs'],
+        Object.entries(tech).map(([t, list]) => ({ t: t, s: jobStats(list) })).sort((x, y) => y.s.n - x.s.n).map(({ t, s }) =>
+          [`<strong>${esc(t)}</strong>`, s.n, s.rate + '%', s.avgH == null ? '-' : s.avgH + ' h', openAll.filter(r => normalizeTechName(r.technician) === t).length, r2(ot.filter(r => r.t === t).reduce((x, r) => x + r.h, 0))]));
+
+      // overtime summary
+      const cats = ['N', 'WO', 'PH', 'N. Shift'], sum = {};
+      ot.forEach(r => { const e = sum[r.t] = sum[r.t] || { N: 0, WO: 0, PH: 0, 'N. Shift': 0 }; e[r.c] += r.h; });
+      const rows = Object.entries(sum).sort((x, y) => x[0].localeCompare(y[0])).map(([t, e]) => [t, ...cats.map(c => r2(e[c])), r2(cats.reduce((x, c) => x + e[c], 0))]);
+      if (rows.length) rows.push(['Total', ...cats.map((c, i) => r2(rows.reduce((x, r) => x + r[i + 1], 0))), r2(rows.reduce((x, r) => x + r[5], 0))]);
+      lastOtSummary = rows;
+      document.getElementById('insOt').innerHTML = tbl(['Technician', ...cats, 'Total hours'], rows.map((r, i) => i === rows.length - 1 ? r.map(c => `<strong>${esc(c)}</strong>`) : [esc(r[0]), ...r.slice(1)]));
+    }
+
+    function downloadCSV(name, head, rows) {
+      const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+      const text = '\ufeff' + [head, ...rows].map(r => r.map(q).join(',')).join('\r\n');
+      downloadBlob(new Blob([text], { type: 'text/csv;charset=utf-8' }), `${name}_${document.getElementById('filterFrom').value}_to_${document.getElementById('filterTo').value}.csv`);
+    }
+    function csvAlerts() { if (!lastAlerts.length) { alert('There are no alerts to download for this period.'); return; } downloadCSV('Utility_alerts', ['Level', 'Type', 'Area', 'Date', 'What happened'], lastAlerts.map(a => [a.sev === 'danger' ? 'Check' : 'Note', a.s.type, a.s.area, a.d, a.msg])); }
+    function csvOt() { if (!lastOtSummary.length) { alert('There is no overtime to download for this period.'); return; } downloadCSV('Overtime_summary', ['Technician', 'N', 'WO', 'PH', 'N. Shift', 'Total hours'], lastOtSummary); }
+
+    // --- EXCEL TEMPLATE POPULATION LOGIC ---
+
+    
+async function exportTemplateReport(type) {
       const fromDate = document.getElementById('filterFrom').value;
       const toDate = document.getElementById('filterTo').value;
 
