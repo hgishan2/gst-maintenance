@@ -79,7 +79,30 @@
     #adminTabs .nav-link { white-space: nowrap; }
     .chart-box { position: relative; height: 300px; }
     .range-btn { font-size: 0.75rem; }
-    .ic{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.125em;flex:none}
+  
+/* GST MAINTENANCE VISUAL REVAMP V3 — presentation layer only */
+:root{--bg-dark:#071426;--card-bg:#10233d;--border-color:#233d5d;--accent-blue:#35c5f4;--accent-amber:#ffbf5b;--accent-green:#42d6a4;--revamp-panel:#0c1c31;--revamp-raised:#142a46;--revamp-text:#eef6ff;--revamp-muted:#91a8c4;--revamp-glow:rgba(53,197,244,.16)}
+html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgba(26,91,147,.28),transparent 38%),linear-gradient(145deg,#071426 0%,#0a192d 55%,#081426 100%)!important;color:var(--revamp-text)!important;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif!important;letter-spacing:.005em;min-height:100vh}
+.navbar{background:rgba(7,20,38,.92)!important;backdrop-filter:blur(18px);border-bottom:1px solid #23415f!important;box-shadow:0 10px 35px rgba(0,0,0,.22)!important;min-height:76px;padding:12px 0!important}
+.navbar .container-fluid{max-width:1600px;padding-left:clamp(16px,3vw,44px)!important;padding-right:clamp(16px,3vw,44px)!important}
+.navbar-brand{gap:14px!important}.navbar-brand>i{display:grid;place-items:center;width:46px;height:46px;border:1px solid rgba(53,197,244,.38);border-radius:15px;background:linear-gradient(145deg,rgba(53,197,244,.19),rgba(53,197,244,.04));box-shadow:0 0 24px rgba(53,197,244,.08);font-size:1.45rem!important}.navbar-brand .fw-bold{font-size:1rem!important;letter-spacing:.015em}.navbar-brand small{display:block;margin-top:5px;color:#88a2c0!important;letter-spacing:.1em;text-transform:uppercase;font-size:.62rem!important}
+#appContent,#adminContent{width:min(1540px,calc(100% - 48px));max-width:none!important;margin:30px auto 60px!important;padding:0!important}
+.card{background:linear-gradient(145deg,rgba(18,41,68,.96),rgba(13,30,51,.98))!important;border:1px solid rgba(94,139,184,.22)!important;border-radius:18px!important;box-shadow:0 12px 32px rgba(0,0,0,.13),inset 0 1px 0 rgba(255,255,255,.025)!important;transition:border-color .2s,transform .2s,box-shadow .2s}
+.card:hover{border-color:rgba(53,197,244,.32)!important;box-shadow:0 16px 36px rgba(0,0,0,.2),0 0 0 1px rgba(53,197,244,.025)!important}
+.card h1,.card h2,.card h3,.card h4,.card h5,.card h6{letter-spacing:-.02em}.text-info{color:#5bd5fa!important}.text-muted{color:#91a8c4!important}.border-secondary{border-color:#294361!important}.bg-secondary{background:#203b5a!important}.bg-slate-900{background:#09182b!important}
+.btn{border-radius:10px!important;font-weight:650!important;letter-spacing:.005em;transition:transform .16s,box-shadow .16s,background .16s!important}.btn:hover{transform:translateY(-1px)}.btn-accent,.btn-info{background:linear-gradient(135deg,#48d1f5,#21a9df)!important;border:0!important;color:#06172a!important;box-shadow:0 6px 18px rgba(35,174,224,.16)}.btn-outline-info{border-color:#327ea8!important;color:#75d9fb!important}.btn-outline-info:hover{background:#123d5c!important;color:#fff!important}.btn-outline-light{border-color:#385573!important;color:#d7e7f8!important}.btn-outline-secondary{border-color:#344d6a!important;color:#b7c9dc!important}.btn-warning{box-shadow:0 6px 18px rgba(255,191,91,.12)}
+.form-control,.form-select{background:#08192c!important;border:1px solid #294563!important;border-radius:10px!important;color:#edf6ff!important;min-height:42px}.form-control::placeholder{color:#7088a5!important}.form-control:focus,.form-select:focus{border-color:#35c5f4!important;box-shadow:0 0 0 3px rgba(53,197,244,.13)!important;background:#0a1d33!important}.form-label{color:#a9bfd8!important;font-weight:650;letter-spacing:.015em}.table{--bs-table-bg:transparent;--bs-table-color:#d9e7f5;--bs-table-border-color:#243d59;vertical-align:middle}.table thead th{background:#102743!important;color:#8ecde8!important;text-transform:uppercase;font-size:.7rem;letter-spacing:.09em;border-bottom:1px solid #315270!important;padding:13px 12px}.table tbody td{padding:12px;border-color:rgba(80,117,153,.18)!important}.table tbody tr:hover>*{--bs-table-bg:rgba(53,197,244,.045);color:#fff}.table-responsive{border-radius:12px}
+.modal-backdrop.show{opacity:.78}.modal-content{background:linear-gradient(145deg,#122a46,#0b1a2d)!important;border:1px solid #34516f!important;border-radius:22px!important;box-shadow:0 30px 90px rgba(0,0,0,.5)!important}.modal-header,.modal-footer{border-color:#263f5c!important}.modal-title{letter-spacing:-.02em}.badge{font-weight:700;letter-spacing:.015em;border-radius:7px;padding:.45em .68em}.alert{border-radius:12px}
+/* technician landing experience */
+#appContent>.d-flex.justify-content-between{padding:22px 26px!important;margin-bottom:24px!important;border:1px solid rgba(76,136,184,.23);border-radius:18px;background:linear-gradient(110deg,rgba(21,54,86,.82),rgba(12,30,51,.48));box-shadow:inset 0 1px rgba(255,255,255,.035)}#activeTechDisplay{font-size:1.45rem!important;font-weight:750!important;letter-spacing:-.035em}#appContent .card.p-3{padding:22px!important}#dashboardView .card:first-child{background:linear-gradient(120deg,rgba(16,66,98,.8),rgba(15,35,59,.97))!important;border-color:rgba(53,197,244,.32)!important}#dashboardView .nav-card{min-height:154px;display:flex;flex-direction:column;justify-content:center;gap:8px;position:relative;overflow:hidden;text-align:left!important;padding:22px!important}#dashboardView .nav-card:before{content:"";position:absolute;width:110px;height:110px;border-radius:50%;right:-35px;top:-38px;background:rgba(53,197,244,.07)}#dashboardView .nav-card i{font-size:1.8rem!important;color:#5bd5fa!important}#dashboardView .nav-card:hover{transform:translateY(-4px);border-color:#35c5f4!important}
+/* admin overview and a true desktop workspace/sidebar */
+#adminContent>.card:first-child{padding:22px!important;background:linear-gradient(115deg,#112b48,#0d2037)!important;border-color:#2b4d6b!important}#adminContent .stat-card{min-height:110px;display:flex;justify-content:center;align-items:flex-start;text-align:left!important;padding:18px!important;position:relative;overflow:hidden}#adminContent .stat-card:after{content:"";position:absolute;width:90px;height:90px;border-radius:50%;right:-30px;bottom:-35px;background:rgba(53,197,244,.06)}#adminContent .stat-card small{font-size:.7rem;text-transform:uppercase;letter-spacing:.09em;color:#9bb2cd!important;font-weight:750}#adminContent .stat-card .fs-4{font-size:2rem!important;line-height:1.2;margin-top:8px;letter-spacing:-.04em}#adminContent .revamp-admin-workspace{display:grid;grid-template-columns:228px minmax(0,1fr);gap:22px;align-items:start;margin-top:22px}#adminTabs{display:flex!important;flex-direction:column!important;align-items:stretch;gap:5px!important;padding:12px!important;margin:0!important;background:linear-gradient(180deg,#0c1d32,#0a1728)!important;border:1px solid #203b58;border-radius:18px!important;position:sticky;top:96px;box-shadow:0 12px 30px rgba(0,0,0,.14)}#adminTabs .nav-item{width:100%}#adminTabs .nav-link{width:100%;text-align:left!important;display:flex;align-items:center;gap:8px;padding:13px 12px!important;border-radius:11px!important;color:#9db4ce!important;font-weight:650!important;font-size:.83rem!important;border:1px solid transparent}#adminTabs .nav-link i{width:20px;font-size:1rem}#adminTabs .nav-link:hover{background:#122c48!important;color:#eaf7ff!important}#adminTabs .nav-link.active{background:linear-gradient(110deg,#1c648b,#164d73)!important;border-color:rgba(91,213,250,.24)!important;color:#fff!important;box-shadow:0 7px 18px rgba(0,0,0,.18)}#adminTabsContent{min-width:0}#adminTabsContent>.tab-pane>.card,#adminTabsContent .tab-pane .card{padding:24px!important}#adminTabsContent h5,#adminTabsContent h6{font-size:1rem}#adminTabsContent .border-bottom{border-color:#284461!important}
+/* Login feels like a product, not a default modal */
+#loginModal .modal-dialog,#adminLoginModal .modal-dialog{max-width:460px}#loginModal .modal-content,#adminLoginModal .modal-content{padding:10px}#loginModal .modal-title,#adminLoginModal .modal-title{font-size:1.2rem}#loginModal .modal-header,#adminLoginModal .modal-header{padding:24px 24px 0!important}#loginModal .modal-body,#adminLoginModal .modal-body{padding:26px 24px!important}#loginModal .modal-footer,#adminLoginModal .modal-footer{padding:0 24px 24px!important}
+@media(max-width:991.98px){#appContent,#adminContent{width:calc(100% - 28px);margin-top:18px!important}#adminContent .revamp-admin-workspace{grid-template-columns:1fr;gap:14px}#adminTabs{position:static;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));flex-direction:unset!important}#adminTabs .nav-link{height:100%;font-size:.78rem!important;padding:11px 9px!important}#adminTabsContent>.tab-pane>.card,#adminTabsContent .tab-pane .card{padding:17px!important}#appContent>.d-flex.justify-content-between{padding:17px!important}}
+@media(max-width:575.98px){#appContent,#adminContent{width:calc(100% - 20px)}.navbar{min-height:66px}.navbar-brand>i{width:40px;height:40px;border-radius:12px}.navbar-brand .fw-bold{font-size:.9rem!important}#adminTabs{grid-template-columns:repeat(2,minmax(0,1fr));padding:8px!important}#adminTabs .nav-link{font-size:.72rem!important;justify-content:flex-start;gap:5px;padding:10px 7px!important}#dashboardView .nav-card{min-height:126px;padding:16px!important}#appContent .card.p-3{padding:16px!important}.table thead th{font-size:.62rem;padding:10px 8px}.table tbody td{padding:9px 8px}.btn{white-space:normal}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;scroll-behavior:auto!important}}
+
   </style>
 </head>
 <body>
@@ -88,7 +111,7 @@
   <nav class="navbar navbar-expand-lg navbar-dark sticky-top shadow-sm">
     <div class="container-fluid px-3">
       <a class="navbar-brand d-flex align-items-center gap-2" href="#">
-        <svg class="ic text-warning fs-4" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.4 8-8 9-4.6-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+        <i class="bi bi-shield-check text-warning fs-4"></i>
         <div>
           <div class="fw-bold fs-6 lh-1">Facility Management Portal</div>
           <small class="text-muted" style="font-size:0.75rem;">GST Operations Dashboard</small>
@@ -96,10 +119,10 @@
       </a>
       <div class="d-flex align-items-center gap-2">
         <a href="index.html" class="btn btn-sm btn-outline-info me-1">
-          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4M8 8l-4 4 4 4M4 12h11"/></svg>Technician View
+          <i class="bi bi-box-arrow-in-left me-1"></i>Technician View
         </a>
         <button id="adminLogoutBtn" class="btn btn-sm btn-outline-light d-none" onclick="adminLogout()">
-          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M16 8l4 4-4 4M20 12H9"/></svg>Sign Out
+          <i class="bi bi-box-arrow-right me-1"></i>Sign Out
         </button>
       </div>
     </div>
@@ -110,7 +133,7 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow-lg">
         <div class="modal-header border-bottom-0 pb-0">
-          <h5 class="modal-title fw-bold text-warning"><svg class="ic me-2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.4 8-8 9-4.6-1-8-4-8-9V6z"/><rect x="9.5" y="11" width="5" height="4" rx="1"/><path d="M10.5 11V9.5a1.5 1.5 0 0 1 3 0V11"/></svg>Admin Authentication</h5>
+          <h5 class="modal-title fw-bold text-warning"><i class="bi bi-shield-lock-fill me-2"></i>Admin Authentication</h5>
         </div>
         <div class="modal-body py-4">
           <div id="adminLoginAlert" class="alert alert-danger d-none py-2 small"></div>
@@ -127,7 +150,7 @@
         </div>
         <div class="modal-footer border-top-0 pt-0">
           <button type="button" class="btn btn-warning text-dark w-100 py-2 fs-6 fw-bold" onclick="verifyAdminLogin()">
-            <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-2"/></svg>Access Admin Portal
+            <i class="bi bi-unlock me-1"></i>Access Admin Portal
           </button>
         </div>
       </div>
@@ -139,7 +162,7 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content shadow-lg">
         <div class="modal-header border-bottom-0 pb-0">
-          <h6 class="modal-title fw-bold text-warning"><svg class="ic me-2" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg>Update Job</h6>
+          <h6 class="modal-title fw-bold text-warning"><i class="bi bi-pencil-square me-2"></i>Update Job</h6>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
@@ -173,7 +196,7 @@
           </div>
         </div>
         <div class="modal-footer border-top-0 pt-0">
-          <button type="button" class="btn btn-warning text-dark w-100 py-2 fw-bold" onclick="saveAdminJobUpdate()"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>Save Update</button>
+          <button type="button" class="btn btn-warning text-dark w-100 py-2 fw-bold" onclick="saveAdminJobUpdate()"><i class="bi bi-check2-circle me-1"></i>Save Update</button>
         </div>
       </div>
     </div>
@@ -203,18 +226,18 @@
         </div>
         <div class="col-md-3 col-6 d-flex gap-2 mt-md-4">
           <button class="btn btn-accent btn-sm w-100" onclick="loadDashboardData()">
-            <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8M20 4v5h-5"/></svg>Refresh Range
+            <i class="bi bi-arrow-clockwise me-1"></i>Refresh Range
           </button>
         </div>
         <div class="col-md-3 col-6 d-flex gap-2 mt-md-4">
           <div class="dropdown w-100">
             <button class="btn btn-outline-success btn-sm dropdown-toggle w-100 fw-semibold" type="button" data-bs-toggle="dropdown">
-              <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5M9.5 12l5 6M14.5 12l-5 6"/></svg>Export Reports
+              <i class="bi bi-file-earmark-excel me-1"></i>Export Reports
             </button>
             <ul class="dropdown-menu dropdown-menu-dark w-100">
-              <li><a class="dropdown-item small" href="#" onclick="exportTemplateReport('jobs')"><svg class="ic me-2 text-success" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg>Daily Work Order Log (.xlsx)</a></li>
-              <li><a class="dropdown-item small" href="#" onclick="exportTemplateReport('utilities')"><svg class="ic me-2 text-info" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg>Utility Meter Log (.xlsx)</a></li>
-              <li><a class="dropdown-item small" href="#" onclick="exportTemplateReport('overtime')"><svg class="ic me-2 text-warning" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Overtime Timesheet (.xlsx)</a></li>
+              <li><a class="dropdown-item small" href="#" onclick="exportTemplateReport('jobs')"><i class="bi bi-journal-text me-2 text-success"></i>Daily Work Order Log (.xlsx)</a></li>
+              <li><a class="dropdown-item small" href="#" onclick="exportTemplateReport('utilities')"><i class="bi bi-lightning-charge me-2 text-info"></i>Utility Meter Log (.xlsx)</a></li>
+              <li><a class="dropdown-item small" href="#" onclick="exportTemplateReport('overtime')"><i class="bi bi-clock-history me-2 text-warning"></i>Overtime Timesheet (.xlsx)</a></li>
             </ul>
           </div>
         </div>
@@ -224,23 +247,23 @@
     <!-- Today Overview -->
     <div class="card p-3 shadow-sm mb-3">
       <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-        <h6 class="text-warning fw-bold m-0"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="7" cy="16" r="3.5"/><circle cx="17" cy="16" r="3.5"/><path d="M4.5 13.5L7 5h3v7M19.5 13.5L17 5h-3v7M10 9h4"/></svg>Today Overview</h6>
+        <h6 class="text-warning fw-bold m-0"><i class="bi bi-binoculars me-1"></i>Today Overview</h6>
         <div class="d-flex align-items-center gap-2">
           <span id="todayDateBadge" class="badge bg-secondary"></span>
-          <button class="btn btn-outline-warning btn-sm py-0 px-2" onclick="loadTodayOverview()" title="Refresh"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.5-5.8M20 4v5h-5"/></svg></button>
+          <button class="btn btn-outline-warning btn-sm py-0 px-2" onclick="loadTodayOverview()" title="Refresh"><i class="bi bi-arrow-clockwise"></i></button>
         </div>
       </div>
       <div class="row g-3 small">
         <div class="col-md-4 col-12">
-          <div class="fw-semibold text-info mb-1"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/></svg>Meters not read today</div>
+          <div class="fw-semibold text-info mb-1"><i class="bi bi-speedometer2 me-1"></i>Meter readings today</div>
           <div id="tdMeters" class="text-muted">Loading...</div>
         </div>
         <div class="col-md-4 col-12">
-          <div class="fw-semibold text-info mb-1"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5 5L3 18l3 3 6.7-6.7a4 4 0 0 0 5-5l-2.4 2.4-2.6-.7-.7-2.6z"/></svg>Open jobs (Pending / On Hold)</div>
+          <div class="fw-semibold text-info mb-1"><i class="bi bi-wrench-adjustable me-1"></i>Open jobs (Pending / On Hold)</div>
           <div id="tdOpenJobs" class="text-muted">Loading...</div>
         </div>
         <div class="col-md-4 col-12">
-          <div class="fw-semibold text-info mb-1"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M9 15.5l2 2 4-4"/></svg>Schedules</div>
+          <div class="fw-semibold text-info mb-1"><i class="bi bi-calendar-check me-1"></i>Schedules</div>
           <div id="tdSched" class="text-muted">Loading...</div>
         </div>
       </div>
@@ -278,37 +301,37 @@
     <ul class="nav nav-pills nav-fill mb-3 gap-1 bg-slate-900 p-1 rounded-3" id="adminTabs" role="tablist">
       <li class="nav-item" role="presentation">
         <button class="nav-link active" id="pills-perf-tab" data-bs-toggle="pill" data-bs-target="#pills-perf" type="button" role="tab">
-          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V4M4 20h16M8 16v-4M12 16V8M16 16v-6"/></svg>Performance
+          <i class="bi bi-bar-chart-line me-1"></i>Performance
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="pills-admin-logs-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-logs" type="button" role="tab">
-          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12h6M9 16h4"/></svg>Job Logs
+          <i class="bi bi-journal-text me-1"></i>Job Logs
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="pills-admin-readings-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-readings" type="button" role="tab">
-          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 18a8 8 0 1 1 16 0"/><path d="M12 18l4-6"/></svg>Utilities
+          <i class="bi bi-speedometer me-1"></i>Utilities
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="pills-admin-ot-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-ot" type="button" role="tab">
-          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Overtime
+          <i class="bi bi-clock-history me-1"></i>Overtime
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="pills-admin-schedules-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-schedules" type="button" role="tab" onclick="loadAdminSchedules()">
-          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M9 15.5l2 2 4-4"/></svg>Schedules
+          <i class="bi bi-calendar-check me-1"></i>Schedules
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="pills-charts-tab" data-bs-toggle="pill" data-bs-target="#pills-charts" type="button" role="tab">
-          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V4M4 20h16M7 15l4-4 3 3 5-6"/></svg>Charts
+          <i class="bi bi-graph-up me-1"></i>Charts
         </button>
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="pills-admin-techs-tab" data-bs-toggle="pill" data-bs-target="#pills-admin-techs" type="button" role="tab">
-          <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.2a3 3 0 0 1 0 5.6M18 14.5c2 .8 3 2.7 3 5.5"/></svg>Technicians
+          <i class="bi bi-people me-1"></i>Technicians
         </button>
       </li>
     </ul>
@@ -320,7 +343,7 @@
       <div class="tab-pane fade show active" id="pills-perf" role="tabpanel">
         <div class="card p-3 shadow-sm">
           <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-            <h6 class="text-info fw-bold m-0"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="3.5"/><path d="M3 20c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M16 11l2 2 4-4"/></svg>Technician Activity & Output Breakdown</h6>
+            <h6 class="text-info fw-bold m-0"><i class="bi bi-person-check me-1"></i>Technician Activity & Output Breakdown</h6>
             <span id="perfRangeLabel" class="badge bg-secondary">Selected Period</span>
           </div>
           <div class="table-responsive" style="max-height: 500px;">
@@ -348,7 +371,7 @@
       <div class="tab-pane fade" id="pills-admin-logs" role="tabpanel">
         <div class="card p-3 shadow-sm">
           <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-            <h6 class="text-info fw-bold m-0"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M3.5 6l1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"/></svg>Maintenance Work Orders</h6>
+            <h6 class="text-info fw-bold m-0"><i class="bi bi-list-task me-1"></i>Maintenance Work Orders</h6>
             <div class="d-flex align-items-center gap-2">
               <div class="form-check form-switch m-0">
                 <input class="form-check-input" type="checkbox" id="logsOpenOnly" onchange="renderLogsTable(fetchedLogs)">
@@ -384,7 +407,7 @@
       <div class="tab-pane fade" id="pills-admin-readings" role="tabpanel">
         <div class="card p-3 shadow-sm">
           <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-            <h6 class="text-info fw-bold m-0"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg>Recorded Meter Readings</h6>
+            <h6 class="text-info fw-bold m-0"><i class="bi bi-lightning-charge me-1"></i>Recorded Meter Readings</h6>
             <span id="readingsStatusBadge" class="badge bg-secondary">Loading...</span>
           </div>
           <div class="table-responsive" style="max-height: 500px;">
@@ -411,7 +434,7 @@
       <div class="tab-pane fade" id="pills-admin-ot" role="tabpanel">
         <div class="card p-3 shadow-sm">
           <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-            <h6 class="text-info fw-bold m-0"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Overtime Submissions</h6>
+            <h6 class="text-info fw-bold m-0"><i class="bi bi-clock me-1"></i>Overtime Submissions</h6>
             <span id="otStatusBadge" class="badge bg-secondary">Loading...</span>
           </div>
           <div class="table-responsive" style="max-height: 500px;">
@@ -438,7 +461,7 @@
       <div class="tab-pane fade" id="pills-admin-schedules" role="tabpanel">
         <div class="card p-3 shadow-sm mb-3">
           <h6 class="text-warning fw-bold mb-3 border-bottom border-secondary pb-2">
-            <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M12 13v5M9.5 15.5h5"/></svg>Create Schedule for Technician
+            <i class="bi bi-calendar-plus me-1"></i>Create Schedule for Technician
           </h6>
           <form id="adminScheduleForm" onsubmit="handleAdminScheduleSubmit(event)">
             <div class="row g-2 mb-2">
@@ -468,14 +491,14 @@
               <textarea id="adminSchedDesc" class="form-control form-control-sm" rows="2" placeholder="Task details..." required></textarea>
             </div>
             <button type="submit" class="btn btn-warning text-dark w-100 py-2 fs-6 fw-bold">
-              <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M9 15.5l2 2 4-4"/></svg>Assign Schedule
+              <i class="bi bi-calendar-check me-1"></i>Assign Schedule
             </button>
           </form>
         </div>
 
         <div class="card p-3 shadow-sm">
           <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-            <h6 class="text-info fw-bold m-0"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M3.5 6l1 1 2-2M3.5 12l1 1 2-2M3.5 18l1 1 2-2"/></svg>All Technician Schedules</h6>
+            <h6 class="text-info fw-bold m-0"><i class="bi bi-list-check me-1"></i>All Technician Schedules</h6>
             <span id="adminSchedCountBadge" class="badge bg-secondary">0 Total</span>
           </div>
           <div class="table-responsive" style="max-height: 450px;">
@@ -502,7 +525,7 @@
       <div class="tab-pane fade" id="pills-charts" role="tabpanel">
         <div class="card p-3 shadow-sm mb-3">
           <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-            <h6 class="text-info fw-bold m-0"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg>Daily Consumption per Meter</h6>
+            <h6 class="text-info fw-bold m-0"><i class="bi bi-lightning-charge me-1"></i>Daily Consumption per Meter</h6>
             <select id="chartUtilType" class="form-select form-select-sm w-auto" onchange="renderCharts()">
               <option value="Electricity">Electricity</option>
               <option value="Water">Water</option>
@@ -514,19 +537,19 @@
         <div class="row g-3 mb-3">
           <div class="col-md-6 col-12">
             <div class="card p-3 shadow-sm h-100">
-              <h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v9h9"/><path d="M20.5 15A9 9 0 1 1 9 3.5"/></svg>Jobs by Category</h6>
+              <h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2"><i class="bi bi-pie-chart me-1"></i>Jobs by Category</h6>
               <div class="chart-box"><canvas id="chartCategory"></canvas></div>
             </div>
           </div>
           <div class="col-md-6 col-12">
             <div class="card p-3 shadow-sm h-100">
-              <h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M7 20v-8M12 20V6M17 20v-5"/></svg>Jobs per Technician</h6>
+              <h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2"><i class="bi bi-bar-chart me-1"></i>Jobs per Technician</h6>
               <div class="chart-box"><canvas id="chartTechJobs"></canvas></div>
             </div>
           </div>
         </div>
         <div class="card p-3 shadow-sm">
-          <h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Overtime Hours per Technician</h6>
+          <h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2"><i class="bi bi-clock-history me-1"></i>Overtime Hours per Technician</h6>
           <div class="chart-box"><canvas id="chartOt"></canvas></div>
           <small class="text-muted d-block mt-2">Overtime entries saved before this update have no type recorded, so they appear under N.</small>
         </div>
@@ -536,7 +559,7 @@
       <div class="tab-pane fade" id="pills-admin-techs" role="tabpanel">
         <div class="card p-3 shadow-sm mb-3">
           <h6 class="text-warning fw-bold mb-3 border-bottom border-secondary pb-2">
-            <svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="8" r="3.5"/><path d="M3 20c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M19 8v6M16 11h6"/></svg><span id="techFormTitle">Add Technician</span>
+            <i class="bi bi-person-plus me-1"></i><span id="techFormTitle">Add Technician</span>
           </h6>
           <form id="techForm" onsubmit="handleTechSubmit(event)">
             <div class="row g-2 mb-2">
@@ -560,14 +583,14 @@
               </div>
             </div>
             <div class="d-flex gap-2">
-              <button type="submit" class="btn btn-warning text-dark flex-grow-1 py-2 fw-bold"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg>Save Technician</button>
+              <button type="submit" class="btn btn-warning text-dark flex-grow-1 py-2 fw-bold"><i class="bi bi-save me-1"></i>Save Technician</button>
               <button type="button" id="techCancelBtn" class="btn btn-outline-secondary d-none" onclick="resetTechForm()">Cancel</button>
             </div>
           </form>
         </div>
         <div class="card p-3 shadow-sm">
           <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
-            <h6 class="text-info fw-bold m-0"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.2a3 3 0 0 1 0 5.6M18 14.5c2 .8 3 2.7 3 5.5"/></svg>Technicians</h6>
+            <h6 class="text-info fw-bold m-0"><i class="bi bi-people me-1"></i>Technicians</h6>
             <span id="techCountBadge" class="badge bg-secondary">0 Total</span>
           </div>
           <div class="table-responsive" style="max-height: 450px;">
@@ -851,9 +874,9 @@
           <td><span class="badge ${s.status === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${esc(s.status)}</span></td>
           <td class="text-center">
             <div class="btn-group btn-group-sm">
-              ${s.status !== 'Completed' ? `<button class="btn btn-outline-success py-0 px-2" title="Mark Done" onclick="adminUpdateStatus('${esc(s.id)}', 'Completed')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg></button>` : ''}
-              <button class="btn btn-outline-warning py-0 px-2" title="Reschedule" onclick="adminReschedule('${esc(s.id)}')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M9 15.5h6M13 12.5l3 3-3 3"/></svg></button>
-              <button class="btn btn-outline-danger py-0 px-2" title="Delete" onclick="adminDeleteSchedule('${esc(s.id)}')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+              ${s.status !== 'Completed' ? `<button class="btn btn-outline-success py-0 px-2" title="Mark Done" onclick="adminUpdateStatus('${esc(s.id)}', 'Completed')"><i class="bi bi-check2"></i></button>` : ''}
+              <button class="btn btn-outline-warning py-0 px-2" title="Reschedule" onclick="adminReschedule('${esc(s.id)}')"><i class="bi bi-calendar-arrow-right"></i></button>
+              <button class="btn btn-outline-danger py-0 px-2" title="Delete" onclick="adminDeleteSchedule('${esc(s.id)}')"><i class="bi bi-trash"></i></button>
             </div>
           </td>
         </tr>
@@ -961,7 +984,7 @@
           <td>${r.complaint || ''}</td>
           <td><span class="badge ${r.status === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${r.status || 'Pending'}</span></td>
           <td><small class="text-muted">${r.action || '-'}</small></td>
-          <td><button class="btn btn-outline-warning btn-sm py-0 px-2" title="Update status" onclick="openAdminJobUpdate('${esc(r.id)}')"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg></button></td>
+          <td><button class="btn btn-outline-warning btn-sm py-0 px-2" title="Update status" onclick="openAdminJobUpdate('${esc(r.id)}')"><i class="bi bi-pencil-square"></i></button></td>
         </tr>
       `).join('');
     }
@@ -1146,7 +1169,7 @@
       document.getElementById('tdMeters').innerHTML = !todayData.meters.length
         ? 'Meter list unavailable.'
         : missing.length === 0
-          ? '<span class="text-success"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>All ' + todayData.meters.length + ' meters read</span>'
+          ? '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>All ' + todayData.meters.length + ' meters read</span>'
           : `<div class="text-warning mb-1">${missing.length} of ${todayData.meters.length} still to read</div>` +
             missing.map(m => `<div>${esc(m.type)} - ${esc(m.area)} <span class="text-muted">(${esc(m.meter)})</span></div>`).join('');
 
@@ -1155,7 +1178,7 @@
         .map(l => ({ ...l, age: Math.round(isoToSerial(today) - isoToSerial(String(l.logDate).split('T')[0])) }))
         .sort((a, b) => b.age - a.age);
       document.getElementById('tdOpenJobs').innerHTML = open.length === 0
-        ? '<span class="text-success"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>No open jobs</span>'
+        ? '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>No open jobs</span>'
         : `<div class="text-warning mb-1">${open.length} open (last 90 days)</div>` +
           open.slice(0, 6).map(l => `<div class="border-bottom border-secondary pb-1 mb-1">
               <strong>${esc(l.location)}</strong> <span class="badge ${l.age > 3 ? 'bg-danger' : 'bg-secondary'}">${l.age}d</span>
@@ -1169,7 +1192,7 @@
       document.getElementById('tdSched').innerHTML =
         `<div class="mb-1"><span class="badge bg-info text-dark">${dueToday.length}</span> due today</div>` +
         (overdue.length === 0
-          ? '<div class="text-success"><svg class="ic me-1" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l3 3 5-6"/></svg>Nothing overdue</div>'
+          ? '<div class="text-success"><i class="bi bi-check-circle-fill me-1"></i>Nothing overdue</div>'
           : `<div class="text-danger mb-1">${overdue.length} overdue</div>` +
             overdue.slice(0, 5).map(s => `<div class="border-bottom border-secondary pb-1 mb-1"><strong>${esc(s.location)}</strong> <span class="text-muted">${esc(s.date)}</span>
               <div class="text-muted text-truncate">${esc(s.technician)} - ${esc(s.desc)}</div></div>`).join('') +
@@ -1352,8 +1375,8 @@
           <td>${t.hasPin ? '<span class="badge bg-success">Set</span>' : '<span class="badge bg-danger">No PIN</span>'}</td>
           <td class="text-center">
             <div class="btn-group btn-group-sm">
-              <button class="btn btn-outline-warning py-0 px-2" title="Edit / reset PIN" onclick="editTech(${i})"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13 7l4 4"/></svg></button>
-              <button class="btn btn-outline-danger py-0 px-2" title="Remove" onclick="deleteTech(${i})"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button>
+              <button class="btn btn-outline-warning py-0 px-2" title="Edit / reset PIN" onclick="editTech(${i})"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-outline-danger py-0 px-2" title="Remove" onclick="deleteTech(${i})"><i class="bi bi-trash"></i></button>
             </div>
           </td>
         </tr>`).join('');
@@ -1829,5 +1852,20 @@
       document.body.removeChild(link);
     }
   </script>
+<script>
+/* Visual Revamp v3: reorganize existing Bootstrap admin tabs into a sidebar workspace.
+   No tab IDs, event handlers, business logic, data fields, or backend calls are changed. */
+(function(){
+  function mountRevampWorkspace(){
+    var tabs=document.getElementById('adminTabs');
+    var panes=document.getElementById('adminTabsContent');
+    if(!tabs||!panes||tabs.closest('.revamp-admin-workspace')) return;
+    var workspace=document.createElement('div'); workspace.className='revamp-admin-workspace';
+    tabs.parentNode.insertBefore(workspace,tabs);
+    workspace.appendChild(tabs); workspace.appendChild(panes);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',mountRevampWorkspace,{once:true}); else mountRevampWorkspace();
+})();
+</script>
 </body>
 </html>
