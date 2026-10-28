@@ -2,7 +2,7 @@
 <html lang="en" data-bs-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">a
   <title>Facility Management - Admin Dashboard</title>
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
@@ -385,6 +385,15 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
               <span id="logsStatusBadge" class="badge bg-secondary">Loading...</span>
             </div>
           </div>
+          <div class="row g-2 mb-3">
+            <div class="col-lg-4"><input id="logsSearch" class="form-control form-control-sm" placeholder="Search work orders, locations, complaints…" oninput="renderLogsTable(fetchedLogs)" aria-label="Search job logs"></div>
+            <div class="col-6 col-lg-2"><select id="logsStatusFilter" class="form-select form-select-sm" onchange="renderLogsTable(fetchedLogs)"><option value="">All statuses</option><option>Completed</option><option>Pending</option><option>On Hold</option></select></div>
+            <div class="col-6 col-lg-2"><select id="logsPriorityFilter" class="form-select form-select-sm" onchange="renderLogsTable(fetchedLogs)"><option value="">All priorities</option><option>Normal</option><option>Urgent</option><option>Emergency</option></select></div>
+            <div class="col-6 col-lg-2"><select id="logsTechFilter" class="form-select form-select-sm" onchange="renderLogsTable(fetchedLogs)"><option value="">All technicians</option></select></div>
+            <div class="col-6 col-lg-2"><select id="logsCategoryFilter" class="form-select form-select-sm" onchange="renderLogsTable(fetchedLogs)"><option value="">All categories</option></select></div>
+            <div class="col-6"><button class="btn btn-outline-secondary btn-sm w-100" onclick="clearLogsFilters()"><i class="bi bi-x-circle me-1"></i>Clear filters</button></div>
+            <div class="col-6"><span id="logsFilterSummary" class="small text-muted d-inline-flex align-items-center h-100"></span></div>
+          </div>
           <div class="table-responsive" style="max-height: 500px;">
             <table class="table table-dark table-hover table-striped small">
               <thead>
@@ -761,6 +770,7 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
             ...r,
             technician: normalizeTechName(r.technician)
           }));
+          refreshLogFilterOptions();
           renderLogsTable(fetchedLogs);
           document.getElementById('statLogsCount').textContent = fetchedLogs.length;
           const completed = fetchedLogs.filter(r => r.status === 'Completed').length;
@@ -1006,13 +1016,39 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
       }).join('');
     }
 
+    function refreshLogFilterOptions() {
+      [['logsTechFilter', [...new Set(fetchedLogs.map(r => normalizeTechName(r.technician)).filter(Boolean))].sort()],
+       ['logsCategoryFilter', [...new Set(fetchedLogs.map(r => String(r.category || '').trim()).filter(Boolean))].sort()]].forEach(([id, options]) => {
+        const select = document.getElementById(id), previous = select.value;
+        const label = id === 'logsTechFilter' ? 'All technicians' : 'All categories';
+        select.innerHTML = `<option value="">${label}</option>` + options.map(value => `<option value="${esc(value)}">${esc(value)}</option>`).join('');
+        select.value = options.includes(previous) ? previous : '';
+      });
+    }
+
+    function clearLogsFilters() {
+      ['logsSearch','logsStatusFilter','logsPriorityFilter','logsTechFilter','logsCategoryFilter'].forEach(id => { document.getElementById(id).value = ''; });
+      document.getElementById('logsOpenOnly').checked = false;
+      renderLogsTable(fetchedLogs);
+    }
+
     function renderLogsTable(allRows) {
       const tbody = document.getElementById('logsTableBody');
       const openOnly = document.getElementById('logsOpenOnly') && document.getElementById('logsOpenOnly').checked;
-      const rows = openOnly ? allRows.filter(r => (r.status || 'Pending') !== 'Completed') : allRows;
-      document.getElementById('logsStatusBadge').textContent = openOnly ? `${rows.length} of ${allRows.length}` : `${rows.length} Total`;
+      const q = (document.getElementById('logsSearch')?.value || '').trim().toLowerCase();
+      const status = document.getElementById('logsStatusFilter')?.value || '';
+      const priority = document.getElementById('logsPriorityFilter')?.value || '';
+      const technician = document.getElementById('logsTechFilter')?.value || '';
+      const category = document.getElementById('logsCategoryFilter')?.value || '';
+      const rows = allRows.filter(r => {
+        const rowStatus = r.status || 'Pending';
+        const haystack = [r.wo,r.location,r.technician,r.complaint,r.action,r.category,r.priority,r.status].join(' ').toLowerCase();
+        return (!openOnly || rowStatus !== 'Completed') && (!status || rowStatus === status) && (!priority || r.priority === priority) && (!technician || normalizeTechName(r.technician) === technician) && (!category || String(r.category || '') === category) && (!q || haystack.includes(q));
+      });
+      document.getElementById('logsStatusBadge').textContent = `${rows.length} of ${allRows.length}`;
+      document.getElementById('logsFilterSummary').textContent = rows.length === allRows.length ? `Showing all ${rows.length} work orders` : `Showing ${rows.length} of ${allRows.length} work orders`;
       if (!rows.length) {
-        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-3">${openOnly ? 'No open jobs in this date range.' : 'No job logs found for date range.'}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-3">${openOnly ? 'No open jobs in this date range.' : 'No job logs match the selected filters.'}</td></tr>`;
         return;
       }
       tbody.innerHTML = rows.map(r => `
@@ -1029,7 +1065,6 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
         </tr>
       `).join('');
     }
-
     function renderReadingsTable(rows) {
       const tbody = document.getElementById('readingsTableBody');
       const localReadings = JSON.parse(localStorage.getItem("utility_readings_local") || "[]").map(r => ({
