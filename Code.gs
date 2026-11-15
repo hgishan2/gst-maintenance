@@ -1,6 +1,6 @@
 // Google Apps Script backend: receives daily-log jobs, overtime entries, and utility readings from phones.
 const SECRET = "GST12345";   // must match KEY in config.js
-const SCRIPT_VERSION = "2026-10-25";   // open YOUR_SCRIPT_URL?key=...&action=version to check which version is deployed
+const SCRIPT_VERSION = "2026-11-15";   // open YOUR_SCRIPT_URL?key=...&action=version to check which version is deployed
 let REASONS = {};                      // why an item was refused: id -> "pin" | "name" | "notfound" | "invalid"
 const COLS = ["id","submittedAt","building","logDate","supervisor","shift","wo","location","complaint","technician","action","category","priority","received","start","finish","materials","status","pending","remarks"];
 const KEEP_BACKUPS = 14;      // how many daily backup copies to keep
@@ -367,6 +367,22 @@ function doGet(e) {
       logs: recent.filter(r => String(r.logDate) === day),
       open: recent.filter(r => String(r.status || "Pending") !== "Completed"),
       overtime: read_("Overtime", OT_COLS, q).filter(mine) });
+  }
+  if (p.action === "myrecords") {                // a technician's OWN logs, overtime and meter readings for a date range
+    if (!pinOk_(readLists_().pins, p.name, p.pin)) return out_({ ok: false, error: "login required" });
+    const tzR = SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone();
+    const fmtR = t => Utilities.formatDate(new Date(t), tzR, "yyyy-MM-dd");
+    const MAX_DAYS = 180;                        // cap the range so one request stays small
+    let toR = /^\d{4}-\d{2}-\d{2}$/.test(p.to || "") ? p.to : fmtR(Date.now());
+    let fromR = /^\d{4}-\d{2}-\d{2}$/.test(p.from || "") ? p.from : fmtR(Date.now() - 30 * 86400000);
+    const earliest = fmtR(new Date(toR).getTime() - MAX_DAYS * 86400000);
+    if (fromR < earliest) fromR = earliest;
+    const keyR = normName_(p.name), qR = { from: fromR, to: toR };
+    const mineR = r => normName_(r.technician) === keyR;      // never return anyone else's rows
+    return out_({ ok: true, from: fromR, to: toR,
+      logs: read_("Logs", COLS, qR).filter(mineR),
+      overtime: read_("Overtime", OT_COLS, qR).filter(mineR),
+      readings: read_("Readings", U_COLS, qR).filter(mineR) });
   }
   if (p.action === "myschedules") {
     if (!pinOk_(readLists_().pins, p.name, p.pin)) return out_({ ok: false, error: "login required" });
