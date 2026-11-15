@@ -473,6 +473,23 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
 
       <!-- TAB 4: ADMIN SCHEDULES MANAGEMENT -->
       <div class="tab-pane fade" id="pills-admin-schedules" role="tabpanel">
+        <!-- Bulk PPM Schedule Importer Card -->
+        <div class="card p-3 shadow-sm mb-3 border-info">
+          <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
+            <h6 class="text-info fw-bold m-0"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Bulk PPM Schedule Import</h6>
+            <button type="button" class="btn btn-outline-info btn-sm" onclick="downloadPpmTemplate()">
+              <i class="bi bi-download me-1"></i>Download Template
+            </button>
+          </div>
+          <p class="small text-muted mb-2">Download the Excel template, fill in your PPM schedule, and upload it back to assign preventive maintenance tasks to technicians in bulk.</p>
+          <div class="input-group input-group-sm">
+            <input type="file" id="ppmFileImport" class="form-control" accept=".xlsx">
+            <button class="btn btn-accent px-3" type="button" onclick="handlePpmUpload()">
+              <i class="bi bi-upload me-1"></i>Import & Assign
+            </button>
+          </div>
+        </div>
+
         <div class="card p-3 shadow-sm mb-3">
           <h6 class="text-warning fw-bold mb-3 border-bottom border-secondary pb-2">
             <i class="bi bi-calendar-plus me-1"></i>Create Schedule for Technician
@@ -916,12 +933,23 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
         return;
       }
 
-      tbody.innerHTML = schedules.map(s => `
+      tbody.innerHTML = schedules.map(s => {
+        const isPpm = String(s.desc || '').startsWith('[PPM]') || String(s.id || '').startsWith('PPM-');
+        const badgeHtml = isPpm ? '<span class="badge bg-info text-dark me-1">PPM</span>' : '';
+        const cleanDesc = esc(String(s.desc || '').replace(/^\[PPM\]\s*/i, ''));
+        const details = s.status === 'Completed' && (s.start || s.finish || s.observations || s.remarks)
+          ? `<div class="text-success mt-1" style="font-size:0.75rem;">
+               ${(s.start || s.finish) ? `<span><i class="bi bi-clock me-1"></i>${esc(s.start || '?')} - ${esc(s.finish || '?')}</span>` : ''}
+               ${s.observations ? `<span class="ms-2"><strong>Obs:</strong> ${esc(s.observations)}</span>` : ''}
+               ${s.remarks ? `<div class="text-light"><strong>Remarks:</strong> ${esc(s.remarks)}</div>` : ''}
+             </div>`
+          : '';
+        return `
         <tr>
           <td>${esc(s.date)}</td>
           <td><strong>${esc(s.technician)}</strong></td>
           <td>${esc(s.location)}</td>
-          <td><small>${esc(s.desc)}</small></td>
+          <td><small>${badgeHtml}${cleanDesc}</small>${details}</td>
           <td><span class="badge ${s.status === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${esc(s.status)}</span></td>
           <td class="text-center">
             <div class="btn-group btn-group-sm">
@@ -931,7 +959,8 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
             </div>
           </td>
         </tr>
-      `).join('');
+      `;
+      }).join('');
     }
 
     async function adminUpdateStatus(id, newStatus) {
@@ -952,6 +981,130 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
         alert("Schedule rescheduled successfully!");
       } catch (e) { alert("Could not reschedule. Check your connection."); }
       await loadAdminSchedules();
+    }
+
+
+    // --- BULK PPM SCHEDULE TEMPLATE & UPLOAD ---
+    async function downloadPpmTemplate() {
+      try {
+        const workbook = await XlsxPopulate.fromBlankAsync();
+        const sheet = workbook.sheet(0);
+        sheet.name("PPM Import Template");
+
+        const headers = ["Technician Name", "Scheduled Date (YYYY-MM-DD)", "Location / Unit", "Category", "Task Description"];
+        headers.forEach((h, i) => {
+          const cell = sheet.cell(1, i + 1);
+          cell.value(h);
+          cell.style({ bold: true, fill: "0F2234", fontColor: "FFFFFF" });
+        });
+
+        const sampleTech = techNames()[0] || "MEHEDI HASAN LIYAKAT ALI";
+        const example = [sampleTech, localISO(new Date()), "Roof / Water Tank", "General Maintenance", "Monthly inspection, check float valve and clean filter"];
+        example.forEach((v, i) => { sheet.cell(2, i + 1).value(v); });
+
+        [30, 28, 24, 22, 48].forEach((w, i) => sheet.column(i + 1).width(w));
+
+        const outBuffer = await workbook.outputAsync();
+        downloadBlob(new Blob([outBuffer]), "PPM_Schedule_Template.xlsx");
+      } catch (err) {
+        console.error("Error generating PPM template", err);
+        alert("Could not generate PPM template.");
+      }
+    }
+
+    function parseExcelDateToISO(val) {
+      if (val == null || val === "") return "";
+      if (typeof val === "number") {
+        // Excel serial date
+        const utcDays = Math.floor(val - 25569);
+        const dt = new Date(utcDays * 86400 * 1000);
+        return dt.toISOString().slice(0, 10);
+      }
+      const s = String(val).trim();
+      if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) return localISO(d);
+      return s;
+    }
+
+    async function handlePpmUpload() {
+      const fileInput = document.getElementById('ppmFileImport');
+      if (!fileInput || !fileInput.files.length) {
+        alert("Please select an Excel (.xlsx) file first.");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = async function(e) {
+        try {
+          const buffer = e.target.result;
+          const workbook = await XlsxPopulate.fromDataAsync(buffer);
+          const sheet = workbook.sheet(0);
+          const usedRange = sheet.usedRange();
+          const rows = usedRange ? usedRange.value() : [];
+
+          if (!rows || rows.length < 2) {
+            alert("The uploaded spreadsheet appears to be empty.");
+            return;
+          }
+
+          const ops = [];
+          const nowTs = Date.now();
+
+          for (let i = 1; i < rows.length; i++) {
+            const r = rows[i];
+            if (!r || !r[0] || !r[1]) continue;
+
+            const techRaw = String(r[0]).trim();
+            const normTech = normalizeTechName(techRaw);
+            const dateVal = parseExcelDateToISO(r[1]);
+            const location = String(r[2] || '').trim();
+            const category = String(r[3] || 'General Maintenance').trim();
+            const rawDesc = String(r[4] || '').trim();
+
+            if (!dateVal || !location || !rawDesc) continue;
+
+            const desc = rawDesc.startsWith('[PPM]') ? rawDesc : '[PPM] ' + rawDesc;
+            const schedId = "PPM-" + nowTs + "-" + i;
+            ops.push({
+              op: "upsert",
+              id: schedId,
+              item: {
+                id: schedId,
+                technician: normTech,
+                date: dateVal,
+                location: location,
+                category: category,
+                desc: desc,
+                status: "Pending"
+              }
+            });
+          }
+
+          if (!ops.length) {
+            alert("No valid rows found in the spreadsheet. Make sure Technician Name, Date (YYYY-MM-DD), Location, and Task Description are filled.");
+            return;
+          }
+
+          if (!confirm(`Found ${ops.length} PPM task(s) to assign. Proceed with import?`)) return;
+
+          const success = await postSchedOps(ops);
+          if (success) {
+            alert(`Successfully imported and assigned ${ops.length} PPM task(s)!`);
+            fileInput.value = "";
+            await loadAdminSchedules();
+          } else {
+            alert("Some tasks failed to save. Check your connection and admin PIN.");
+          }
+        } catch (err) {
+          console.error("Error parsing PPM spreadsheet", err);
+          alert("Failed to parse the Excel file. Make sure it matches the template format (.xlsx).");
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
     }
 
     async function adminDeleteSchedule(id) {
