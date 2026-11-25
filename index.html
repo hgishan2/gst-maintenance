@@ -1190,8 +1190,9 @@
       saveDayCache(c);
     }
     function otHours(from, to) {
-      if (!from || !to) return 0;
-      const [fH, fM] = from.split(':').map(Number), [tH, tM] = to.split(':').map(Number);
+      if (!/^\d{1,2}:\d{2}$/.test(String(from || "")) || !/^\d{1,2}:\d{2}$/.test(String(to || ""))) return 0;
+      const [fH, fM] = String(from).split(':').map(Number), [tH, tM] = String(to).split(':').map(Number);
+      if (fH > 23 || tH > 23 || fM > 59 || tM > 59) return 0;
       let diff = (tH * 60 + tM) - (fH * 60 + fM);
       if (diff < 0) diff += 24 * 60;
       return Math.round((diff / 60) * 100) / 100;
@@ -1499,7 +1500,7 @@
         const cleanDesc = esc(String(s.desc || '').replace(/^\[PPM\]\s*/i, ''));
         const doneDetails = s.status === 'Completed' && (s.start || s.finish || s.observations || s.remarks)
           ? `<div class="mt-1 pt-1 border-top border-secondary text-muted" style="font-size:0.75rem;">
-               ${(s.start || s.finish) ? `<div>Time: <span class="text-light">${esc(s.start || '?')} - ${esc(s.finish || '?')}</span></div>` : ''}
+               ${(s.start || s.finish) ? `<div>Time: <span class="text-light">${esc(s.start || '?')} - ${esc(s.finish || '?')}${s.start && s.finish ? ` (${otHours(s.start, s.finish)} h)` : ''}</span></div>` : ''}
                ${s.observations ? `<div>Observations: <span class="text-light">${esc(s.observations)}</span></div>` : ''}
                ${s.remarks ? `<div>Remarks: <span class="text-light">${esc(s.remarks)}</span></div>` : ''}
              </div>`
@@ -1551,6 +1552,10 @@
 
       if (!start || !finish || !remarks) {
         alert("Please enter Start Time, Finish Time, and Comments / Remarks.");
+        return;
+      }
+      if (!otHours(start, finish)) {
+        alert("Start and Finish times must be valid and cannot be the same.");
         return;
       }
 

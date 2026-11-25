@@ -8,7 +8,7 @@ const U_COLS = ["id","submittedAt","technician","date","type","area","meter","ac
 const DEFAULT_METERS = [["Electricity","Common","21172699","2888542999"],["Electricity","101","21135023","4254023806"],["Electricity","205","21135492","20000282308"],
   ["Water","Common","10W708361","2888542999"],["Water","101","12A009001","4254023806"],["Water","205","12A009016","20000282308"],["Water","Fire Water","110194605","7004047472"]];
 const OT_COLS = ["id","submittedAt","technician","otDate","from","to","type","location","work","otCategoryType"];
-const S_COLS = ["id","createdAt","technician","date","location","category","desc","status","updatedAt"];
+const S_COLS = ["id","createdAt","technician","date","location","category","desc","status","updatedAt","start","finish","observations","remarks"];
 
 function tab_(name, cols) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -42,6 +42,16 @@ function append_(sh, cols, items) {            // adds new items only (by id); r
   });
   if (rows.length) sh.getRange(last + 1, 1, rows.length, cols.length).setNumberFormat("@").setValues(rows);
   return saved;
+}
+
+function workHours_(fromTime, toTime) {
+  if (!/^\d{1,2}:\d{2}$/.test(String(fromTime || "")) || !/^\d{1,2}:\d{2}$/.test(String(toTime || ""))) return 0;
+  const [fH, fM] = String(fromTime).split(":").map(Number);
+  const [tH, tM] = String(toTime).split(":").map(Number);
+  if (fH > 23 || tH > 23 || fM > 59 || tM > 59) return 0;
+  let diff = (tH * 60 + tM) - (fH * 60 + fM);
+  if (diff < 0) diff += 24 * 60;
+  return Math.round((diff / 60) * 100) / 100;
 }
 
 function doPost(e) {
@@ -94,10 +104,18 @@ function applySchedOps_(ops, d, pins) {
       return;
     }
     const now = new Date().toISOString();
+    const completedWithTimes = String(it.status || existing && existing[7] || "Pending") === "Completed";
+    if (completedWithTimes && it.start !== undefined && it.finish !== undefined && (!workHours_(it.start, it.finish))) {
+      REASONS[id] = "invalid";
+      rejected.push(id);
+      return;
+    }
     const rec = {
       id: id, createdAt: existing ? existing[1] : now, technician: owner,
       date: String(it.date || ""), location: String(it.location || ""), category: String(it.category || ""),
-      desc: String(it.desc || ""), status: String(it.status || "Pending"), updatedAt: now
+      desc: String(it.desc || ""), status: String(it.status || "Pending"), updatedAt: now,
+      start: String(it.start || ""), finish: String(it.finish || ""),
+      observations: String(it.observations || ""), remarks: String(it.remarks || "")
     };
     const row = S_COLS.map(c => rec[c] == null ? "" : String(rec[c]));
     if (rowNo > 0) sh.getRange(rowNo, 1, 1, S_COLS.length).setNumberFormat("@").setValues([row]);
