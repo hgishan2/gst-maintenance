@@ -939,7 +939,7 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
         const cleanDesc = esc(String(s.desc || '').replace(/^\[PPM\]\s*/i, ''));
         const details = s.status === 'Completed' && (s.start || s.finish || s.observations || s.remarks)
           ? `<div class="text-success mt-1" style="font-size:0.75rem;">
-               ${(s.start || s.finish) ? `<span><i class="bi bi-clock me-1"></i>${esc(s.start || '?')} - ${esc(s.finish || '?')}</span>` : ''}
+               ${(s.start || s.finish) ? `<span><i class="bi bi-clock me-1"></i>${esc(s.start || '?')} - ${esc(s.finish || '?')}${s.start && s.finish ? ` (${r2(calculateHours(s.start, s.finish))} h)` : ''}</span>` : ''}
                ${s.observations ? `<span class="ms-2"><strong>Obs:</strong> ${esc(s.observations)}</span>` : ''}
                ${s.remarks ? `<div class="text-light"><strong>Remarks:</strong> ${esc(s.remarks)}</div>` : ''}
              </div>`
@@ -2234,9 +2234,10 @@ async function exportTemplateReport(type) {
     }
 
     function calculateHours(fromTime, toTime) {
-      if (!fromTime || !toTime) return '';
-      const [fH, fM] = fromTime.split(':').map(Number);
-      const [tH, tM] = toTime.split(':').map(Number);
+      if (!/^\d{1,2}:\d{2}$/.test(String(fromTime || "")) || !/^\d{1,2}:\d{2}$/.test(String(toTime || ""))) return '';
+      const [fH, fM] = String(fromTime).split(':').map(Number);
+      const [tH, tM] = String(toTime).split(':').map(Number);
+      if (fH > 23 || tH > 23 || fM > 59 || tM > 59) return '';
       let diff = (tH * 60 + tM) - (fH * 60 + fM);
       if (diff < 0) diff += 24 * 60;
       return Math.round((diff / 60) * 100) / 100;
