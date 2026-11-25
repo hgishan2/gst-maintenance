@@ -101,6 +101,24 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
 #loginModal .modal-dialog,#adminLoginModal .modal-dialog{max-width:460px}#loginModal .modal-content,#adminLoginModal .modal-content{padding:10px}#loginModal .modal-title,#adminLoginModal .modal-title{font-size:1.2rem}#loginModal .modal-header,#adminLoginModal .modal-header{padding:24px 24px 0!important}#loginModal .modal-body,#adminLoginModal .modal-body{padding:26px 24px!important}#loginModal .modal-footer,#adminLoginModal .modal-footer{padding:0 24px 24px!important}
 @media(max-width:991.98px){#appContent,#adminContent{width:calc(100% - 28px);margin-top:18px!important}#adminContent .revamp-admin-workspace{grid-template-columns:1fr;gap:14px}#adminTabs{position:static;display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));flex-direction:unset!important}#adminTabs .nav-link{height:100%;font-size:.78rem!important;padding:11px 9px!important}#adminTabsContent>.tab-pane>.card,#adminTabsContent .tab-pane .card{padding:17px!important}#appContent>.d-flex.justify-content-between{padding:17px!important}}
 @media(max-width:575.98px){#appContent,#adminContent{width:calc(100% - 20px)}.navbar{min-height:66px}.navbar-brand>i{width:40px;height:40px;border-radius:12px}.navbar-brand .fw-bold{font-size:.9rem!important}#adminTabs{grid-template-columns:repeat(2,minmax(0,1fr));padding:8px!important}#adminTabs .nav-link{font-size:.72rem!important;justify-content:flex-start;gap:5px;padding:10px 7px!important}#dashboardView .nav-card{min-height:126px;padding:16px!important}#appContent .card.p-3{padding:16px!important}.table thead th{font-size:.62rem;padding:10px 8px}.table tbody td{padding:9px 8px}.btn{white-space:normal}}
+#pills-insights{min-width:0}
+#adminTabsContent #pills-insights .ins-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 16px!important}
+#pills-insights .ins-toolbar-heading{min-width:0}
+#pills-insights .ins-toolbar-controls{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px 16px}
+#pills-insights .ins-setting{display:flex;align-items:center;gap:7px;white-space:nowrap}
+#pills-insights .ins-setting label,#pills-insights .ins-setting span{font-size:.78rem}
+#pills-insights .ins-setting input{width:68px;min-height:34px;padding:4px 8px}
+#pills-insights .ins-prev-note{font-size:.75rem;line-height:1.35}
+#pills-insights .ins-kpi-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#adminTabsContent #pills-insights .ins-kpi-card{min-width:0;min-height:0!important;padding:10px 12px!important;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center!important}
+#pills-insights .ins-kpi-card small{min-height:2.2em;display:flex!important;align-items:center;justify-content:center;font-size:.7rem;line-height:1.2;letter-spacing:.045em}
+#pills-insights .ins-kpi-card .ins-kpi-value{font-size:1.45rem!important;line-height:1.1;margin:4px 0!important;letter-spacing:-.025em;overflow-wrap:anywhere}
+#pills-insights .ins-kpi-meta{min-height:1.35em;font-size:.72rem;line-height:1.35}
+#pills-insights .row>[class*="col-"]{min-width:0}
+#pills-insights .chart-box{min-width:0}
+@media(min-width:992px){#pills-insights .ins-kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:767.98px){#adminTabsContent #pills-insights .ins-toolbar{grid-template-columns:minmax(0,1fr);gap:8px;padding:11px 13px!important}#pills-insights .ins-toolbar-controls{justify-content:flex-start}}
+@media(max-width:359.98px){#pills-insights .ins-kpi-grid{grid-template-columns:minmax(0,1fr)}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;scroll-behavior:auto!important}}
 
   </style>
@@ -591,17 +609,25 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
 
       <!-- TAB 6: TECHNICIANS -->
       <div class="tab-pane fade" id="pills-insights" role="tabpanel">
-        <div class="card p-3 shadow-sm mb-3">
-          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div class="card ins-toolbar shadow-sm mb-3">
+          <div class="ins-toolbar-heading">
             <h6 class="text-info fw-bold m-0">Insights for the selected period</h6>
-            <div class="d-flex flex-wrap align-items-center gap-2 small">
-              <label class="mb-0" for="insSpike">High-use alert at</label><input id="insSpike" type="number" step="0.5" min="1.2" class="form-control form-control-sm" style="width:72px" onchange="saveInsOpts()"><span>x usual</span>
-              <label class="mb-0 ms-2" for="insStale">Stale job after</label><input id="insStale" type="number" min="1" class="form-control form-control-sm" style="width:72px" onchange="saveInsOpts()"><span>days</span>
+            <small id="insPrevNote" class="ins-prev-note text-muted d-block mt-1"></small>
+          </div>
+          <div class="ins-toolbar-controls small" aria-label="Insights settings">
+            <div class="ins-setting">
+              <label class="mb-0" for="insSpike">High-use alert at</label>
+              <input id="insSpike" type="number" step="0.5" min="1.2" class="form-control form-control-sm" onchange="saveInsOpts()">
+              <span>x usual</span>
+            </div>
+            <div class="ins-setting">
+              <label class="mb-0" for="insStale">Stale job after</label>
+              <input id="insStale" type="number" min="1" class="form-control form-control-sm" onchange="saveInsOpts()">
+              <span>days</span>
             </div>
           </div>
-          <small id="insPrevNote" class="text-muted d-block mt-2"></small>
         </div>
-        <div class="row g-2 mb-3" id="insKpis"></div>
+        <div class="ins-kpi-grid mb-3" id="insKpis"></div>
         <div class="row g-3 mb-3">
           <div class="col-md-7 col-12"><div class="card p-3 shadow-sm h-100"><h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2">Jobs per day</h6><div class="chart-box"><canvas id="chartDaily"></canvas></div></div></div>
           <div class="col-md-5 col-12"><div class="card p-3 shadow-sm h-100"><h6 class="text-info fw-bold mb-2 border-bottom border-secondary pb-2">How long open jobs have waited</h6><div class="chart-box"><canvas id="chartAge"></canvas></div></div></div>
@@ -1804,7 +1830,7 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
       document.getElementById('insPrevNote').textContent = prevData.loaded
         ? `Compared with the previous ${dayDiff(prevData.from, prevData.to) + 1} day(s): ${prevData.from} to ${prevData.to}.`
         : 'Loading the previous period for comparison...';
-      const kpi = (t, v, extra) => `<div class="col-6 col-md-4 col-xl-2"><div class="card p-2 text-center stat-card h-100"><small class="text-muted d-block">${t}</small><span class="fw-bold fs-4">${v}</span><div>${extra || ''}</div></div></div>`;
+      const kpi = (t, v, extra) => `<div class="card ins-kpi-card"><small class="text-muted">${t}</small><span class="fw-bold ins-kpi-value">${v}</span><div class="ins-kpi-meta">${extra || ''}</div></div>`;
       box.innerHTML =
         kpi('Jobs logged', cur.n, delta(cur.n, prv.n)) +
         kpi('Completion rate', cur.rate + '%', delta(cur.rate, prv.rate, ' pts')) +
