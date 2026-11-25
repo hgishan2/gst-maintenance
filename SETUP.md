@@ -12,4 +12,5 @@
    - Download daily log (Excel): one file, one sheet per day, Day/Night shift chosen on the page
    - Download overtime (Excel): one file, one sheet per technician (per month), Compatibility Report last
    - Download utility readings (Excel): Summary, Electricity, Water and Daily Readings sheets with consumption (today minus previous reading)
-   - Performance dashboard: jobs, completion %, job hours, overtime hours per technician
+   - Performance dashboard: jobs, completion %, total and average job hours per technician, and overtime entries
+   - Job Logs: duration per job; Insights: selected-period total job hours and per-technician totals and averages

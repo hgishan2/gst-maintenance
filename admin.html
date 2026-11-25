@@ -358,6 +358,8 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
                   <th>Technician Name</th>
                   <th class="text-center">Total Jobs</th>
                   <th class="text-center">Completed</th>
+                  <th class="text-center">Job Hours</th>
+                  <th class="text-center">Avg Hours / Timed Job</th>
                   <th class="text-center">Pending</th>
                   <th class="text-center">Utility Logs</th>
                   <th class="text-center">OT Entries</th>
@@ -365,7 +367,7 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
                 </tr>
               </thead>
               <tbody id="perfTableBody">
-                <tr><td colspan="7" class="text-center text-muted py-3">Loading performance data...</td></tr>
+                <tr><td colspan="9" class="text-center text-muted py-3">Loading performance data...</td></tr>
               </tbody>
             </table>
           </div>
@@ -405,12 +407,13 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
                   <th>Technician</th>
                   <th>Complaint</th>
                   <th>Status</th>
+                  <th>Duration</th>
                   <th>Action Taken</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody id="logsTableBody">
-                <tr><td colspan="9" class="text-center text-muted py-3">No log records loaded yet.</td></tr>
+                <tr><td colspan="10" class="text-center text-muted py-3">No log records loaded yet.</td></tr>
               </tbody>
             </table>
           </div>
@@ -615,7 +618,7 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
         <div class="card p-3 shadow-sm">
           <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2"><h6 class="text-info fw-bold m-0">Overtime hours by technician</h6><button class="btn btn-outline-success btn-sm py-0" onclick="csvOt()">Download CSV</button></div>
           <div id="insOt"></div>
-          <small class="text-muted d-block mt-2">Time to finish uses the Start (or Received) and Finish times entered on each job, so jobs without those times are left out of that figure. Overtime entries saved before the type field existed count as N.</small>
+          <small class="text-muted d-block mt-2">Job hours use Start (or Received) through Finish; missing, invalid, and over-16-hour entries are excluded. Overnight jobs are included. Overtime entries saved before the type field existed count as N.</small>
         </div>
       </div>
 
@@ -1119,43 +1122,54 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
       const techStats = {};
 
       techNames().forEach(t => {
-        techStats[t] = { jobs: 0, completed: 0, pending: 0, readings: 0, ot: 0 };
+        techStats[t] = { jobs: 0, completed: 0, jobHours: 0, timedCompleted: 0, pending: 0, readings: 0, ot: 0 };
       });
 
       fetchedLogs.forEach(r => {
         const t = normalizeTechName(r.technician);
-        if (!techStats[t]) techStats[t] = { jobs: 0, completed: 0, pending: 0, readings: 0, ot: 0 };
+        if (!techStats[t]) techStats[t] = { jobs: 0, completed: 0, jobHours: 0, timedCompleted: 0, pending: 0, readings: 0, ot: 0 };
         techStats[t].jobs++;
-        if (r.status === 'Completed') techStats[t].completed++;
+        if (r.status === 'Completed') {
+          techStats[t].completed++;
+          const hours = jobHours(r);
+          if (hours != null) {
+            techStats[t].jobHours += hours;
+            techStats[t].timedCompleted++;
+          }
+        }
         else techStats[t].pending++;
       });
 
       fetchedReadings.forEach(r => {
         const t = normalizeTechName(r.technician);
-        if (!techStats[t]) techStats[t] = { jobs: 0, completed: 0, pending: 0, readings: 0, ot: 0 };
+        if (!techStats[t]) techStats[t] = { jobs: 0, completed: 0, jobHours: 0, timedCompleted: 0, pending: 0, readings: 0, ot: 0 };
         techStats[t].readings++;
       });
 
       fetchedOt.forEach(r => {
         const t = normalizeTechName(r.technician);
-        if (!techStats[t]) techStats[t] = { jobs: 0, completed: 0, pending: 0, readings: 0, ot: 0 };
+        if (!techStats[t]) techStats[t] = { jobs: 0, completed: 0, jobHours: 0, timedCompleted: 0, pending: 0, readings: 0, ot: 0 };
         techStats[t].ot++;
       });
 
       const techList = Object.keys(techStats);
       if (!techList.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">No technician activity found for selected date range.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-3">No technician activity found for selected date range.</td></tr>';
         return;
       }
 
       tbody.innerHTML = techList.map(t => {
         const s = techStats[t];
         const rate = s.jobs > 0 ? Math.round((s.completed / s.jobs) * 100) : 0;
+        const totalHours = r2(s.jobHours);
+        const averageHours = s.timedCompleted ? r2(s.jobHours / s.timedCompleted) : null;
         return `
           <tr>
             <td><strong>${t}</strong></td>
             <td class="text-center"><span class="badge bg-secondary">${s.jobs}</span></td>
             <td class="text-center"><span class="badge bg-success">${s.completed}</span></td>
+            <td class="text-center">${totalHours} h</td>
+            <td class="text-center">${averageHours == null ? '-' : `${averageHours} h`}</td>
             <td class="text-center"><span class="badge bg-warning text-dark">${s.pending}</span></td>
             <td class="text-center"><span class="badge bg-info text-dark">${s.readings}</span></td>
             <td class="text-center"><span class="badge bg-primary">${s.ot}</span></td>
@@ -1201,22 +1215,26 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
       document.getElementById('logsStatusBadge').textContent = `${rows.length} of ${allRows.length}`;
       document.getElementById('logsFilterSummary').textContent = rows.length === allRows.length ? `Showing all ${rows.length} work orders` : `Showing ${rows.length} of ${allRows.length} work orders`;
       if (!rows.length) {
-        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-3">${openOnly ? 'No open jobs in this date range.' : 'No job logs match the selected filters.'}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted py-3">${openOnly ? 'No open jobs in this date range.' : 'No job logs match the selected filters.'}</td></tr>`;
         return;
       }
-      tbody.innerHTML = rows.map(r => `
-        <tr>
-          <td>${r.logDate || ''}</td>
-          <td><span class="badge bg-secondary">${r.shift || ''}</span></td>
-          <td>${r.wo || '-'}</td>
-          <td><strong>${r.location || ''}</strong></td>
-          <td>${normalizeTechName(r.technician)}</td>
-          <td>${r.complaint || ''}</td>
-          <td><span class="badge ${r.status === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${r.status || 'Pending'}</span></td>
-          <td><small class="text-muted">${r.action || '-'}</small></td>
-          <td><button class="btn btn-outline-warning btn-sm py-0 px-2" title="Update status" onclick="openAdminJobUpdate('${esc(r.id)}')"><i class="bi bi-pencil-square"></i></button></td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = rows.map(r => {
+        const hours = jobHours(r);
+        return `
+          <tr>
+            <td>${r.logDate || ''}</td>
+            <td><span class="badge bg-secondary">${r.shift || ''}</span></td>
+            <td>${r.wo || '-'}</td>
+            <td><strong>${r.location || ''}</strong></td>
+            <td>${normalizeTechName(r.technician)}</td>
+            <td>${r.complaint || ''}</td>
+            <td><span class="badge ${r.status === 'Completed' ? 'bg-success' : 'bg-warning text-dark'}">${r.status || 'Pending'}</span></td>
+            <td>${hours == null ? '-' : `${hours} h`}</td>
+            <td><small class="text-muted">${r.action || '-'}</small></td>
+            <td><button class="btn btn-outline-warning btn-sm py-0 px-2" title="Update status" onclick="openAdminJobUpdate('${esc(r.id)}')"><i class="bi bi-pencil-square"></i></button></td>
+          </tr>
+        `;
+      }).join('');
     }
     function renderReadingsTable(rows) {
       const tbody = document.getElementById('readingsTableBody');
@@ -1699,17 +1717,22 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
       const good = lowerIsBetter ? d < 0 : d > 0;
       return `<small class="${good ? 'text-success' : 'text-danger'}">${d > 0 ? '+' : ''}${d}${unit || ''} vs previous</small>`;
     }
-    function jobHours(r) {                          // time from Start (or Received) to Finish
-      const a = r.start || r.received, b = r.finish, ok = /^\d{1,2}:\d{2}/;
-      if (!a || !b || !ok.test(a) || !ok.test(b)) return null;
-      const h = Number(calculateHours(a, b));
-      return (isNaN(h) || h > 16) ? null : h;       // ignore obviously wrong entries
+    function jobHours(r) {
+      const start = String(r.start || r.received || '').trim();
+      const finish = String(r.finish || '').trim();
+      const timePattern = /^(?:[01]?\d|2[0-3]):[0-5]\d$/;
+      if (!timePattern.test(start) || !timePattern.test(finish)) return null;
+      const hours = calculateHours(start, finish);
+      if (hours === '') return null;
+      const duration = Number(hours);
+      return !Number.isFinite(duration) || duration > 16 ? null : duration;
     }
     function jobStats(logs) {
       const done = logs.filter(r => r.status === 'Completed');
       const hrs = done.map(jobHours).filter(h => h != null);
+      const totalH = r2(hrs.reduce((x, y) => x + y, 0));
       return { n: logs.length, done: done.length, rate: logs.length ? Math.round(done.length / logs.length * 100) : 0,
-               avgH: hrs.length ? r2(hrs.reduce((x, y) => x + y, 0) / hrs.length) : null };
+               totalH: totalH, avgH: hrs.length ? r2(totalH / hrs.length) : null };
     }
     function otRows(list) {                         // same slot saved twice counts once
       const seen = new Map(), cats = ['N', 'WO', 'PH', 'N. Shift'];
@@ -1786,6 +1809,7 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
         kpi('Jobs logged', cur.n, delta(cur.n, prv.n)) +
         kpi('Completion rate', cur.rate + '%', delta(cur.rate, prv.rate, ' pts')) +
         kpi('Avg time to finish', cur.avgH == null ? '-' : cur.avgH + ' h', delta(cur.avgH, prv.avgH, ' h', true)) +
+        kpi('Total job hours', cur.totalH + ' h', delta(cur.totalH, prv.totalH, ' h')) +
         kpi(`Open over ${o.stale} days`, stale.length, `<small class="text-muted">${openAll.length} open in total</small>`) +
         kpi('Overtime hours', otH, delta(otH, pOtH, ' h', true)) +
         kpi('Utility alerts', alerts.length, `<small class="text-muted">${alerts.filter(a => a.sev === 'danger').length} need checking</small>`);
@@ -1821,9 +1845,9 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
         Object.entries(loc).sort((x, y) => y[1].n - x[1].n).slice(0, 8).map(([k, e]) => [`<strong>${esc(k)}</strong>${e.n >= 3 ? ' <span class="badge bg-danger">Recurring</span>' : ''}`, e.n, e.open, esc(Object.entries(e.cats).sort((x, y) => y[1] - x[1])[0][0])]));
       const tech = {};
       fetchedLogs.forEach(r => { const t = normalizeTechName(r.technician); (tech[t] = tech[t] || []).push(r); });
-      document.getElementById('insTech').innerHTML = tbl(['Technician', 'Jobs', 'Done', 'Avg time', 'Open now', 'OT hrs'],
+      document.getElementById('insTech').innerHTML = tbl(['Technician', 'Jobs', 'Done', 'Total job hours', 'Avg job hours', 'Open now', 'OT hrs'],
         Object.entries(tech).map(([t, list]) => ({ t: t, s: jobStats(list) })).sort((x, y) => y.s.n - x.s.n).map(({ t, s }) =>
-          [`<strong>${esc(t)}</strong>`, s.n, s.rate + '%', s.avgH == null ? '-' : s.avgH + ' h', openAll.filter(r => normalizeTechName(r.technician) === t).length, r2(ot.filter(r => r.t === t).reduce((x, r) => x + r.h, 0))]));
+          [`<strong>${esc(t)}</strong>`, s.n, s.rate + '%', s.totalH + ' h', s.avgH == null ? '-' : s.avgH + ' h', openAll.filter(r => normalizeTechName(r.technician) === t).length, r2(ot.filter(r => r.t === t).reduce((x, r) => x + r.h, 0))]));
 
       // overtime summary
       const cats = ['N', 'WO', 'PH', 'N. Shift'], sum = {};
