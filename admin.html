@@ -119,7 +119,104 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
 @media(min-width:992px){#pills-insights .ins-kpi-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:767.98px){#adminTabsContent #pills-insights .ins-toolbar{grid-template-columns:minmax(0,1fr);gap:8px;padding:11px 13px!important}#pills-insights .ins-toolbar-controls{justify-content:flex-start}}
 @media(max-width:359.98px){#pills-insights .ins-kpi-grid{grid-template-columns:minmax(0,1fr)}}
-@media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;scroll-behavior:auto!important}}
+/* Operations workspace refinements */
+:root{--accent-blue:#35c5f4;--accent-amber:#ffbf5b;--accent-green:#42d6a4}
+html,body{max-width:100%;overflow-x:clip}
+body{background:radial-gradient(ellipse at 12% -12%,rgba(26,91,147,.24),transparent 38%),linear-gradient(145deg,#071426,#0a192d 55%,#081426)!important;color:#eef6ff}
+.navbar{background:rgba(7,20,38,.96)!important;min-height:68px;padding:8px 0!important}
+.navbar .container-fluid{max-width:1600px}
+.navbar-brand{min-width:0;gap:12px!important}.navbar-brand .fw-bold{font-size:.98rem!important}.navbar-brand small{color:#9bb2cd!important;font-size:.67rem!important}
+#adminContent{width:min(1600px,calc(100% - 40px));margin:18px auto 48px!important}
+#adminContent .admin-filter-bar{position:sticky;top:76px;z-index:1020;padding:12px 16px!important;background:rgba(12,30,51,.97)!important;border-color:#315270!important;backdrop-filter:blur(14px);box-shadow:0 10px 24px rgba(0,0,0,.24)!important}
+#adminContent .admin-filter-bar .range-btn{min-height:34px;padding:5px 10px!important;font-weight:700!important}
+#adminContent .admin-filter-bar .form-control{min-height:38px}
+#adminContent .admin-filter-bar .dropdown-menu{z-index:1050}
+#adminContent .today-overview{padding:16px 18px!important}
+#adminContent .admin-quick-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-inline:0}
+#adminContent .admin-quick-stats>[class*="col-"]{width:auto;padding:0}
+#adminContent .stat-card{min-height:76px!important;padding:12px 14px!important;justify-content:center!important;gap:2px}
+#adminContent .stat-card small{font-size:.67rem!important;letter-spacing:.07em}
+#adminContent .stat-card .fs-4{font-size:1.55rem!important;line-height:1.1;margin-top:3px!important}
+#adminContent .revamp-admin-workspace{grid-template-columns:208px minmax(0,1fr);gap:18px;margin-top:14px}
+#adminTabs{top:84px;max-height:calc(100vh - 100px);overflow-y:auto;overscroll-behavior:contain;padding:9px!important;border-radius:15px!important}
+#adminTabs .nav-link{min-height:44px;padding:10px 11px!important;font-size:.82rem!important}
+#adminTabs .nav-link.active{color:#fff!important}
+#adminTabs .nav-link:focus-visible{outline:2px solid #75d9fb;outline-offset:2px}
+#adminTabsContent{min-width:0}
+#adminTabsContent>.tab-pane>.card,#adminTabsContent .tab-pane .card{padding:18px!important}
+#adminTabsContent h5,#adminTabsContent h6{font-size:.96rem}
+#adminTabsContent .table-responsive{max-width:100%;overscroll-behavior-x:contain}
+#adminTabsContent .table{margin-bottom:0}
+#adminTabsContent .table thead th{position:sticky;top:0;z-index:2;padding:10px 10px;font-size:.66rem;letter-spacing:.06em}
+#adminTabsContent .table tbody td{padding:9px 10px;font-size:.82rem}
+#adminTabsContent .table-responsive[style*="max-height"]{scrollbar-color:#355574 #0b1c31;scrollbar-width:thin}
+#adminTabsContent .table-responsive table{min-width:0}
+#pills-perf .table,#pills-admin-logs .table{min-width:840px}
+#pills-admin-readings .table{min-width:580px}
+#pills-admin-ot .table{min-width:680px}
+#pills-admin-schedules .table{min-width:760px}
+#pills-admin-techs .table{min-width:580px}
+#pills-insights #insTech table{min-width:660px}
+#adminContent .btn{min-height:40px}
+#adminContent .btn-sm{min-height:36px}
+#adminContent .btn-accent{color:#06172a!important}
+#adminContent .btn-outline-info{color:#75d9fb!important}
+#adminContent .btn-accent{background:linear-gradient(135deg,#48d1f5,#21a9df)!important;border:0!important}
+#adminContent .btn-warning{background:#ffbf5b!important;color:#211605!important;border:0!important}
+#adminContent .btn-success{background:#42d6a4!important;color:#06251c!important;border:0!important}
+#adminContent .badge.bg-success{background:rgba(66,214,164,.16)!important;color:#76e3b6!important;border:1px solid rgba(66,214,164,.22)}
+#adminContent .badge.bg-warning{background:rgba(255,191,91,.16)!important;color:#ffd184!important;border:1px solid rgba(255,191,91,.25)}
+#adminContent .badge.bg-danger{background:rgba(255,113,113,.16)!important;color:#ff9a9a!important;border:1px solid rgba(255,113,113,.25)}
+#adminContent .badge.bg-info,#adminContent .badge.bg-primary{background:rgba(53,197,244,.14)!important;color:#75d9fb!important;border:1px solid rgba(53,197,244,.2)}
+#adminContent .badge.bg-secondary{background:#203b5a!important;color:#c0d0e2!important;border:1px solid #315270}
+@media(max-width:991.98px){
+  #adminContent{width:calc(100% - 28px);margin-top:14px!important}
+  #adminContent .admin-quick-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #adminContent .revamp-admin-workspace{grid-template-columns:minmax(0,1fr);gap:12px}
+  #adminTabs{position:sticky;top:76px;max-height:none;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px!important;overflow:visible;padding:7px!important}
+  #adminTabs .nav-item{min-width:0}
+  #adminTabs .nav-link{height:100%;justify-content:center;text-align:center!important;padding:8px 5px!important;font-size:.74rem!important;white-space:normal}
+  #adminTabs .nav-link i{width:auto;font-size:.92rem}
+  #adminTabsContent>.tab-pane>.card,#adminTabsContent .tab-pane .card{padding:16px!important}
+}
+@media(max-width:767.98px){
+  #adminContent .admin-filter-bar{top:68px;padding:10px 12px!important}
+  #adminContent .admin-filter-bar>.d-flex:first-child{flex-wrap:nowrap!important;overflow-x:auto;scrollbar-width:thin}
+  #adminContent .admin-filter-bar .range-btn{flex:0 0 auto}
+  #adminContent .admin-filter-bar .range-btn{padding:5px 8px!important;font-size:.72rem}
+  #adminTabs{grid-template-columns:repeat(2,minmax(0,1fr));top:68px}
+  #adminTabs .nav-link{min-height:46px;justify-content:flex-start;text-align:left!important;padding:9px 10px!important;font-size:.78rem!important}
+  #adminTabs .nav-link i{width:20px}
+  #adminContent .today-overview{padding:14px!important}
+  #adminContent .table-responsive{max-width:100%;-webkit-overflow-scrolling:touch}
+  #pills-insights .row.g-3>[class*="col-"]{width:100%}
+}
+@media(max-width:575.98px){
+  #adminContent{width:calc(100% - 20px)}
+  .navbar .container-fluid{flex-wrap:wrap;gap:4px!important}
+  .navbar .navbar-brand{width:100%;margin-right:0}
+  .navbar .container-fluid>.d-flex{width:100%;justify-content:space-between}
+  .navbar .navbar-brand small{display:none}
+  .navbar .btn{min-height:38px;font-size:.75rem!important;padding:6px 9px!important}
+  #adminContent .admin-filter-bar{position:sticky;top:104px;backdrop-filter:blur(12px);padding:10px!important}
+  #adminContent .admin-filter-bar .row>[class*="col-"]{width:50%}
+  #adminContent .admin-quick-stats{gap:7px}
+  #adminContent .stat-card{min-height:70px!important;padding:9px!important}
+  #adminContent .stat-card .fs-4{font-size:1.35rem!important}
+  #adminTabs{position:static;grid-template-columns:repeat(2,minmax(0,1fr));padding:6px!important}
+  #adminTabs .nav-link{min-height:48px;font-size:.74rem!important}
+  #adminTabsContent>.tab-pane>.card,#adminTabsContent .tab-pane .card{padding:13px!important}
+  #adminTabsContent .table thead th{padding:9px 8px;font-size:.61rem}
+  #adminTabsContent .table tbody td{padding:8px;font-size:.76rem}
+  #adminContent .btn{min-height:42px}
+  #pills-insights .ins-kpi-card{padding:9px!important}
+}
+@media(max-width:359.98px){
+  #adminContent .admin-quick-stats{grid-template-columns:minmax(0,1fr)}
+  #adminContent .admin-filter-bar .range-btn{font-size:.66rem;padding-inline:6px!important}
+  #adminTabs .nav-link{padding-inline:7px!important;font-size:.7rem!important}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
   </style>
 </head>
@@ -224,7 +321,7 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
   <div id="adminContent" class="container mt-3" style="display: none;">
 
     <!-- Filter & Export Controls Card -->
-    <div class="card p-3 shadow-sm mb-3">
+    <div id="adminFilterBar" class="card admin-filter-bar p-3 shadow-sm mb-3">
       <div class="d-flex flex-wrap gap-1 mb-2">
         <button class="btn btn-outline-info btn-sm range-btn" onclick="setRange('today')">Today</button>
         <button class="btn btn-outline-info btn-sm range-btn" onclick="setRange('yesterday')">Yesterday</button>
@@ -263,7 +360,7 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
     </div>
 
     <!-- Today Overview -->
-    <div class="card p-3 shadow-sm mb-3">
+    <div class="card today-overview p-3 shadow-sm mb-3">
       <div class="d-flex justify-content-between align-items-center mb-2 border-bottom border-secondary pb-2">
         <h6 class="text-warning fw-bold m-0"><i class="bi bi-binoculars me-1"></i>Today Overview</h6>
         <div class="d-flex align-items-center gap-2">
@@ -288,7 +385,7 @@ html{background:#071426} body{background:radial-gradient(ellipse at 12% -12%,rgb
     </div>
 
     <!-- Quick Stats Cards -->
-    <div class="row g-2 mb-3">
+    <div class="row admin-quick-stats g-2 mb-3">
       <div class="col-3">
         <div class="card p-2 text-center stat-card">
           <small class="text-muted d-block">Total Jobs</small>
